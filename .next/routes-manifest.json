@@ -60,6 +60,72 @@
       "namedRegex": "^/dashboard(?:/)?$"
     },
     {
+      "page": "/dashboard/agents",
+      "regex": "^/dashboard/agents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/agents(?:/)?$"
+    },
+    {
+      "page": "/dashboard/analytics",
+      "regex": "^/dashboard/analytics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/analytics(?:/)?$"
+    },
+    {
+      "page": "/dashboard/campaigns",
+      "regex": "^/dashboard/campaigns(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/campaigns(?:/)?$"
+    },
+    {
+      "page": "/dashboard/content",
+      "regex": "^/dashboard/content(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/content(?:/)?$"
+    },
+    {
+      "page": "/dashboard/identity",
+      "regex": "^/dashboard/identity(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/identity(?:/)?$"
+    },
+    {
+      "page": "/dashboard/onboarding",
+      "regex": "^/dashboard/onboarding(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/onboarding(?:/)?$"
+    },
+    {
+      "page": "/dashboard/organization",
+      "regex": "^/dashboard/organization(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/organization(?:/)?$"
+    },
+    {
+      "page": "/dashboard/payments",
+      "regex": "^/dashboard/payments(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/payments(?:/)?$"
+    },
+    {
+      "page": "/dashboard/social",
+      "regex": "^/dashboard/social(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/social(?:/)?$"
+    },
+    {
+      "page": "/dashboard/team",
+      "regex": "^/dashboard/team(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/team(?:/)?$"
+    },
+    {
+      "page": "/dashboard/website",
+      "regex": "^/dashboard/website(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/website(?:/)?$"
+    },
+    {
       "page": "/login",
       "regex": "^/login(?:/)?$",
       "routeKeys": {},
