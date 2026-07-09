@@ -7,6 +7,7 @@ import { QueryProvider } from '@/components/providers/query-provider';
 import { ToastProvider } from '@/components/providers/toast-provider';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
 import { GlobalErrorBoundary } from '@/components/providers/global-error-boundary';
+import { ModeIndicator } from '@/components/admin/mode-indicator';
 import './globals.css';
 
 const inter = Inter({
@@ -88,6 +89,7 @@ export default function RootLayout({
                 <AnalyticsProvider>
                   <ToastProvider>
                     {children}
+                    <ModeIndicator />
                   </ToastProvider>
                 </AnalyticsProvider>
               </AuthProvider>

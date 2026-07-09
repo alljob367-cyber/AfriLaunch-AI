@@ -1,0 +1,204 @@
+{
+  "mode": "demo",
+  "appName": "AfriLaunch AI",
+  "appUrl": "https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai",
+  "locale": "fr-FR",
+  "timezone": "Africa/Dakar",
+  "adminPasswordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+  "adminEmail": "admin@afrilaunch.ai",
+  "database": {
+    "provider": "sqlite",
+    "url": "file:/home/z/my-project/db/custom.db",
+    "ssl": false
+  },
+  "auth": {
+    "jwtSecret": "7f007d45eee19451c831a66cd9e408605190a212a8b6f319e3ab8329015314e4",
+    "sessionExpiryHours": 24,
+    "oauth": {
+      "google": {
+        "clientId": "",
+        "clientSecret": "",
+        "enabled": false
+      },
+      "github": {
+        "clientId": "",
+        "clientSecret": "",
+        "enabled": false
+      },
+      "apple": {
+        "clientId": "",
+        "clientSecret": "",
+        "enabled": false
+      }
+    }
+  },
+  "ai": {
+    "primary": "zai",
+    "providers": {
+      "openai": {
+        "apiKey": "",
+        "model": "gpt-4o",
+        "enabled": false
+      },
+      "anthropic": {
+        "apiKey": "",
+        "model": "claude-3-5-sonnet-20241022",
+        "enabled": false
+      },
+      "gemini": {
+        "apiKey": "",
+        "model": "gemini-1.5-pro",
+        "enabled": false
+      },
+      "zai": {
+        "apiKey": "",
+        "model": "glm-4.6",
+        "enabled": false
+      },
+      "custom": {
+        "baseUrl": "",
+        "apiKey": "",
+        "model": "",
+        "enabled": false
+      }
+    },
+    "fallback": true,
+    "maxTokensPerRequest": 4096
+  },
+  "payments": {
+    "currency": "USD",
+    "providers": {
+      "stripe": {
+        "publishableKey": "",
+        "secretKey": "",
+        "webhookSecret": "",
+        "enabled": false
+      },
+      "flutterwave": {
+        "publicKey": "",
+        "secretKey": "",
+        "encryptionKey": "",
+        "enabled": false
+      },
+      "paypal": {
+        "clientId": "",
+        "clientSecret": "",
+        "mode": "sandbox",
+        "enabled": false
+      },
+      "orangeMoney": {
+        "apiKey": "",
+        "merchantKey": "",
+        "enabled": false
+      },
+      "wave": {
+        "apiKey": "",
+        "enabled": false
+      },
+      "mobileMoney": {
+        "enabled": false
+      }
+    }
+  },
+  "social": {
+    "instagram": {
+      "accessToken": "",
+      "businessAccountId": "",
+      "enabled": false
+    },
+    "tiktok": {
+      "clientKey": "",
+      "clientSecret": "",
+      "accessToken": "",
+      "enabled": false
+    },
+    "facebook": {
+      "appId": "",
+      "appSecret": "",
+      "pageAccessToken": "",
+      "enabled": false
+    },
+    "whatsapp": {
+      "phoneNumberId": "",
+      "accessToken": "",
+      "businessId": "",
+      "enabled": false
+    },
+    "linkedin": {
+      "clientId": "",
+      "clientSecret": "",
+      "accessToken": "",
+      "enabled": false
+    },
+    "twitter": {
+      "apiKey": "",
+      "apiSecret": "",
+      "accessToken": "",
+      "accessSecret": "",
+      "enabled": false
+    }
+  },
+  "email": {
+    "provider": "none",
+    "from": "noreply@afrilaunch.ai",
+    "replyTo": "contact@afrilaunch.ai",
+    "resend": {
+      "apiKey": ""
+    },
+    "sendgrid": {
+      "apiKey": ""
+    },
+    "smtp": {
+      "host": "",
+      "port": 587,
+      "user": "",
+      "password": "",
+      "secure": false
+    }
+  },
+  "storage": {
+    "provider": "local",
+    "local": {
+      "path": "/home/z/my-project/uploads"
+    },
+    "s3": {
+      "bucket": "",
+      "region": "",
+      "accessKey": "",
+      "secretKey": "",
+      "endpoint": ""
+    },
+    "cloudinary": {
+      "cloudName": "",
+      "apiKey": "",
+      "apiSecret": ""
+    },
+    "maxFileSizeMb": 10
+  },
+  "webhooks": {
+    "inboundUrl": "",
+    "events": [
+      "payment.success",
+      "user.signup",
+      "agent.run"
+    ]
+  },
+  "features": {
+    "agents": true,
+    "payments": true,
+    "social": true,
+    "analytics": true,
+    "ecommerce": false,
+    "ai": true,
+    "multiTenant": false,
+    "whiteLabel": false,
+    "api": false
+  },
+  "logging": {
+    "level": "info",
+    "retention": 30
+  },
+  "createdAt": "2026-07-09T04:44:30.232Z",
+  "updatedAt": "2026-07-09T04:47:35.682Z",
+  "version": 5
+}

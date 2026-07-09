@@ -54,6 +54,108 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/admin/ai",
+      "regex": "^/admin/ai(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/ai(?:/)?$"
+    },
+    {
+      "page": "/admin/database",
+      "regex": "^/admin/database(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/database(?:/)?$"
+    },
+    {
+      "page": "/admin/email",
+      "regex": "^/admin/email(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/email(?:/)?$"
+    },
+    {
+      "page": "/admin/features",
+      "regex": "^/admin/features(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/features(?:/)?$"
+    },
+    {
+      "page": "/admin/general",
+      "regex": "^/admin/general(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/general(?:/)?$"
+    },
+    {
+      "page": "/admin/login",
+      "regex": "^/admin/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/login(?:/)?$"
+    },
+    {
+      "page": "/admin/logs",
+      "regex": "^/admin/logs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/logs(?:/)?$"
+    },
+    {
+      "page": "/admin/payments",
+      "regex": "^/admin/payments(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/payments(?:/)?$"
+    },
+    {
+      "page": "/admin/social",
+      "regex": "^/admin/social(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/social(?:/)?$"
+    },
+    {
+      "page": "/admin/storage",
+      "regex": "^/admin/storage(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/storage(?:/)?$"
+    },
+    {
+      "page": "/admin/users",
+      "regex": "^/admin/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/users(?:/)?$"
+    },
+    {
+      "page": "/admin/webhooks",
+      "regex": "^/admin/webhooks(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/webhooks(?:/)?$"
+    },
+    {
+      "page": "/api/admin/auth",
+      "regex": "^/api/admin/auth(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/auth(?:/)?$"
+    },
+    {
+      "page": "/api/admin/config",
+      "regex": "^/api/admin/config(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/config(?:/)?$"
+    },
+    {
+      "page": "/api/admin/mode",
+      "regex": "^/api/admin/mode(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/mode(?:/)?$"
+    },
+    {
+      "page": "/api/admin/password",
+      "regex": "^/api/admin/password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/password(?:/)?$"
+    },
+    {
+      "page": "/api/admin/test",
+      "regex": "^/api/admin/test(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/test(?:/)?$"
+    },
+    {
       "page": "/dashboard",
       "regex": "^/dashboard(?:/)?$",
       "routeKeys": {},
