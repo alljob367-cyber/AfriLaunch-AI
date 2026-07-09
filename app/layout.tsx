@@ -6,6 +6,7 @@ import { AuthProvider } from '@/components/providers/auth-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { ToastProvider } from '@/components/providers/toast-provider';
 import { AnalyticsProvider } from '@/components/providers/analytics-provider';
+import { GlobalErrorBoundary } from '@/components/providers/global-error-boundary';
 import './globals.css';
 
 const inter = Inter({
@@ -73,23 +74,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
+    <html lang="fr" suppressHydrationWarning data-scroll-behavior="smooth">
+      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange={false}
         >
-          <QueryProvider>
-            <AuthProvider>
-              <AnalyticsProvider>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </AnalyticsProvider>
-            </AuthProvider>
-          </QueryProvider>
+          <GlobalErrorBoundary>
+            <QueryProvider>
+              <AuthProvider>
+                <AnalyticsProvider>
+                  <ToastProvider>
+                    {children}
+                  </ToastProvider>
+                </AnalyticsProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </GlobalErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

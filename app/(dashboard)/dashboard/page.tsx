@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const { organization, isLoading: orgLoading } = useOrganization();
   const { stats } = useStats();
   const { checklist, recommendations, recentActivity } = useDashboardData();
-  const [greeting, setGreeting] = useState('Bonjour');
+  const [greeting, setGreeting] = useState<string | null>(null);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -73,8 +73,8 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-2xl">👋</span>
-                <h1 className="text-2xl font-bold text-foreground">
-                  {greeting},{' '}
+                <h1 className="text-2xl font-bold text-foreground" suppressHydrationWarning>
+                  {greeting ?? 'Bonjour'},{' '}
                   <span className="gradient-text">
                     {organization?.members?.[0]?.user?.firstName ?? 'Entrepreneur'}
                   </span>
