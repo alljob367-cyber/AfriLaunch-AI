@@ -39,12 +39,13 @@ export interface AppConfig {
   };
   // AI Providers
   ai: {
-    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'custom';
+    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'custom';
     providers: {
       openai: { apiKey: string; model: string; enabled: boolean };
       anthropic: { apiKey: string; model: string; enabled: boolean };
       gemini: { apiKey: string; model: string; enabled: boolean };
       zai: { apiKey: string; model: string; enabled: boolean };
+      mistral: { apiKey: string; model: string; endpoint: string; enabled: boolean };
       custom: { baseUrl: string; apiKey: string; model: string; enabled: boolean };
     };
     fallback: boolean; // if primary fails, try others
@@ -148,6 +149,7 @@ export function getDefaultConfig(): AppConfig {
         anthropic: { apiKey: '', model: 'claude-3-5-sonnet-20241022', enabled: false },
         gemini: { apiKey: '', model: 'gemini-1.5-pro', enabled: false },
         zai: { apiKey: '', model: 'glm-4.6', enabled: false },
+        mistral: { apiKey: '', model: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1', enabled: false },
         custom: { baseUrl: '', apiKey: '', model: '', enabled: false },
       },
       fallback: true,
@@ -362,10 +364,59 @@ export async function testDatabase(config: AppConfig): Promise<TestResult> {
 
 export async function testAiProvider(config: AppConfig, provider: string): Promise<TestResult> {
   const p = (config.ai.providers as any)[provider];
-  if (!p || !p.apiKey) return { ok: false, message: 'Clé API manquante' };
-  // Simulated test — real test would call the provider's API
+  if (!p) return { ok: false, message: 'Provider inconnu' };
+  if (!p.apiKey) return { ok: false, message: 'Clé API manquante' };
+
+  // Real API call for Mistral (OpenAI-compatible /chat/completions endpoint)
+  if (provider === 'mistral') {
+    try {
+      const endpoint = p.endpoint || 'https://api.mistral.ai/v1';
+      const res = await fetch(`${endpoint}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${p.apiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          model: p.model || 'mistral-large-latest',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+          ],
+          max_tokens: 50,
+          temperature: 0.1,
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errJson = JSON.parse(errBody);
+          errMsg = errJson.message || errJson.error?.message || errMsg;
+        } catch { /* not JSON */ }
+        if (res.status === 401) return { ok: false, message: `Mistral: clé API invalide (401). ${errMsg}` };
+        if (res.status === 404) return { ok: false, message: `Mistral: modèle "${p.model}" introuvable (404). ${errMsg}` };
+        return { ok: false, message: `Mistral: erreur ${res.status}. ${errMsg}` };
+      }
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+      return {
+        ok: true,
+        message: `Mistral AI connecté ✓ — modèle: ${data.model || p.model}`,
+        details: { reply: reply.slice(0, 120), usage: data.usage },
+      };
+    } catch (err) {
+      return { ok: false, message: `Mistral: erreur réseau — ${(err as Error).message}` };
+    }
+  }
+
+  // For other providers, do a simulated test (real calls require their SDKs)
   await new Promise((r) => setTimeout(r, 500));
-  return { ok: true, message: `${provider}: clé API valide (test simulé)`, details: { model: p.model } };
+  return { ok: true, message: `${provider}: clé API présente (test réel non implémenté pour ce provider)`, details: { model: p.model } };
 }
 
 export async function testPaymentProvider(config: AppConfig, provider: string): Promise<TestResult> {

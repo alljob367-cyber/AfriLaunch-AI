@@ -10,15 +10,16 @@ import {
 import { useConfig } from '@/hooks/use-config';
 import type { AppConfig } from '@/lib/config-store';
 
-type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'custom';
+type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'custom';
 
 type ProviderMap = AppConfig['ai']['providers'];
 
-const PROVIDER_META: Record<ProviderKey, { label: string; defaultModel: string; gradient: string }> = {
+const PROVIDER_META: Record<ProviderKey, { label: string; defaultModel: string; gradient: string; description?: string }> = {
   openai: { label: 'OpenAI', defaultModel: 'gpt-4o', gradient: 'from-emerald-500 to-green-600' },
   anthropic: { label: 'Anthropic', defaultModel: 'claude-3-5-sonnet-20241022', gradient: 'from-orange-500 to-amber-600' },
   gemini: { label: 'Google Gemini', defaultModel: 'gemini-1.5-pro', gradient: 'from-blue-500 to-sky-600' },
   zai: { label: 'Z.ai (GLM)', defaultModel: 'glm-4.6', gradient: 'from-violet-500 to-purple-600' },
+  mistral: { label: 'Mistral AI', defaultModel: 'mistral-large-latest', gradient: 'from-rose-500 to-orange-600', description: 'LLM français — idéal pour le marché africain francophone' },
   custom: { label: 'Custom (OpenAI-compatible)', defaultModel: 'your-model', gradient: 'from-gray-500 to-slate-600' },
 };
 
@@ -118,15 +119,16 @@ export default function AdminAiPage() {
             const meta = PROVIDER_META[key];
             const provider = draft.ai.providers[key];
             const customProvider = key === 'custom' ? (provider as ProviderMap['custom']) : null;
+            const mistralProvider = key === 'mistral' ? (provider as ProviderMap['mistral']) : null;
             const isConfigured = !!provider.apiKey || (!!customProvider && !!customProvider.baseUrl);
             return (
               <AdminCard
                 key={key}
                 title={meta.label}
-                description={key === 'custom' ? 'Endpoint OpenAI-compatible (vLLM, LM Studio, Ollama, etc.)' : undefined}
+                description={meta.description || (key === 'custom' ? 'Endpoint OpenAI-compatible (vLLM, LM Studio, Ollama, etc.)' : undefined)}
                 action={
                   <div className="flex items-center gap-2">
-                    <StatusBadge ok={isConfigured} />
+                    <StatusBadge ok={isConfigured && provider.enabled} />
                   </div>
                 }
               >
@@ -146,21 +148,44 @@ export default function AdminAiPage() {
                       hint="Endpoint OpenAI-compatible. Ex: http://localhost:11434/v1 pour Ollama."
                     />
                   )}
+                  {key === 'mistral' && mistralProvider && (
+                    <AdminInput
+                      label="Endpoint API"
+                      value={mistralProvider.endpoint}
+                      onChange={(v) => updateProvider('mistral', { endpoint: v })}
+                      placeholder="https://api.mistral.ai/v1"
+                      hint="Endpoint officiel Mistral. Ne changez que si vous utilisez un proxy."
+                    />
+                  )}
                   <AdminInput
                     label="Clé API"
                     value={provider.apiKey}
                     onChange={(v) => updateProvider(key, { apiKey: v })}
                     secret
                     placeholder={key === 'custom' ? 'sk-... (optionnel)' : 'sk-...'}
-                    hint={key === 'custom' ? 'Laissez vide si votre endpoint n\'requiert pas d\'authentification' : undefined}
+                    hint={key === 'mistral' ? 'Clé API depuis console.mistral.ai → API Keys' : (key === 'custom' ? 'Laissez vide si votre endpoint n\'requiert pas d\'authentification' : undefined)}
                   />
                   <AdminInput
                     label="Modèle"
                     value={provider.model}
                     onChange={(v) => updateProvider(key, { model: v })}
                     placeholder={meta.defaultModel}
-                    hint={`Modèle par défaut: ${meta.defaultModel}`}
+                    hint={key === 'mistral' ? 'Modèles disponibles: mistral-large-latest, mistral-medium-latest, mistral-small-latest, open-mistral-7b, open-mixtral-8x7b' : `Modèle par défaut: ${meta.defaultModel}`}
                   />
+                  {key === 'mistral' && (
+                    <div className="flex flex-wrap gap-2">
+                      {['mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest', 'open-mistral-7b', 'open-mixtral-8x7b'].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => updateProvider('mistral', { model: m })}
+                          className="text-xs px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-colors"
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <TestButton onTest={() => test('ai', key)} label={`Tester ${meta.label}`} />
                 </div>
               </AdminCard>

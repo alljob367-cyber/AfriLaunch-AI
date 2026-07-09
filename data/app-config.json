@@ -4,7 +4,7 @@
   "appUrl": "https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai",
   "locale": "fr-FR",
   "timezone": "Africa/Dakar",
-  "adminPasswordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+  "adminPasswordHash": null,
   "adminEmail": "admin@afrilaunch.ai",
   "database": {
     "provider": "sqlite",
@@ -12,7 +12,7 @@
     "ssl": false
   },
   "auth": {
-    "jwtSecret": "7f007d45eee19451c831a66cd9e408605190a212a8b6f319e3ab8329015314e4",
+    "jwtSecret": "4f8303eb4e04c32637e951640d1c73f3bc5c12595dec65ad72fa6c8e40344672",
     "sessionExpiryHours": 24,
     "oauth": {
       "google": {
@@ -33,7 +33,7 @@
     }
   },
   "ai": {
-    "primary": "zai",
+    "primary": "mistral",
     "providers": {
       "openai": {
         "apiKey": "",
@@ -54,6 +54,12 @@
         "apiKey": "",
         "model": "glm-4.6",
         "enabled": false
+      },
+      "mistral": {
+        "apiKey": "nmob0QUV45XHaHCVGYDusNUuqixzLcXf",
+        "model": "mistral-large-latest",
+        "endpoint": "https://api.mistral.ai/v1",
+        "enabled": true
       },
       "custom": {
         "baseUrl": "",
@@ -198,7 +204,7 @@
     "level": "info",
     "retention": 30
   },
-  "createdAt": "2026-07-09T04:44:30.232Z",
-  "updatedAt": "2026-07-09T04:47:35.682Z",
-  "version": 5
+  "createdAt": "2026-07-09T05:10:48.465Z",
+  "updatedAt": "2026-07-09T05:10:48.581Z",
+  "version": 3
 }
