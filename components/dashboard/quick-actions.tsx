@@ -4,8 +4,7 @@
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
-  Palette, Globe, Zap, PenSquare, Video, Image, Mail,
-  Share2, CreditCard, Phone, Bot, BarChart3, Megaphone,
+  Palette, Globe, PenSquare, Share2, CreditCard, Bot, BarChart3, Megaphone,
 } from 'lucide-react';
 
 const actions = [

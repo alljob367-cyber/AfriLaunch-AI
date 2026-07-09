@@ -2,20 +2,26 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Instagram, Facebook, Youtube, Twitter, Linkedin, MessageCircle } from 'lucide-react';
+import { Instagram, Facebook, Youtube, Twitter, Linkedin, MessageCircle, Plus } from 'lucide-react';
+import { useToast } from '@/components/providers/toast-provider';
 import { cn } from '@/lib/utils';
+
+type Platform = 'instagram' | 'facebook' | 'tiktok' | 'twitter' | 'linkedin' | 'whatsapp';
 
 interface SocialAccount {
   id: string;
-  platform: 'instagram' | 'facebook' | 'tiktok' | 'twitter' | 'linkedin' | 'whatsapp';
+  platform: Platform;
   handle: string;
   followers: number;
-  growth: number; // percent
+  growth: number;
   connected: boolean;
   color: string;
   Icon: React.ElementType;
 }
 
+// Lucide does not ship a TikTok icon; MessageCircle (WhatsApp) is reserved
+// for WhatsApp, and Youtube is closest in shape to TikTok's note glyph.
+// Using Youtube keeps the visual hierarchy consistent with other platforms.
 const accounts: SocialAccount[] = [
   { id: '1', platform: 'instagram', handle: '@teranga.mode', followers: 12480, growth: 12.4, connected: true, color: 'from-pink-500 to-rose-600', Icon: Instagram },
   { id: '2', platform: 'tiktok', handle: '@terangamode', followers: 28940, growth: 28.7, connected: true, color: 'from-slate-700 to-slate-900', Icon: Youtube },
@@ -32,8 +38,18 @@ function formatNum(n: number) {
 }
 
 export function SocialAccountsWidget() {
+  const { toast } = useToast();
   const totalFollowers = accounts.filter((a) => a.connected).reduce((sum, a) => sum + a.followers, 0);
   const connectedCount = accounts.filter((a) => a.connected).length;
+
+  const handleConnect = (account: SocialAccount) => {
+    // Demo only — real implementation would open an OAuth flow.
+    toast({
+      title: `Connexion ${account.platform}`,
+      description: `OAuth ${account.platform} simulé en démo. L'implémentation réelle nécessite un backend.`,
+      variant: 'warning',
+    });
+  };
 
   return (
     <div>
@@ -45,7 +61,7 @@ export function SocialAccountsWidget() {
           </p>
           <p className="text-xs text-muted-foreground">Abonnés cumulés</p>
         </div>
-        <div className="h-10 w-px bg-white/5" />
+        <div className="h-10 w-px bg-white/5" aria-hidden="true" />
         <div>
           <p className="text-2xl font-bold tabular-nums">
             {connectedCount}<span className="text-sm text-muted-foreground">/{accounts.length}</span>
@@ -55,9 +71,9 @@ export function SocialAccountsWidget() {
       </div>
 
       {/* Accounts list */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-none p-0 m-0" aria-label="Comptes réseaux sociaux">
         {accounts.map((acc, i) => (
-          <motion.div
+          <motion.li
             key={acc.id}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -74,7 +90,7 @@ export function SocialAccountsWidget() {
               acc.color,
               !acc.connected && 'opacity-40',
             )}>
-              <acc.Icon className="w-4 h-4 text-white" />
+              <acc.Icon className="w-4 h-4 text-white" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold truncate">{acc.handle}</p>
@@ -94,15 +110,21 @@ export function SocialAccountsWidget() {
               </div>
             </div>
             {acc.connected ? (
-              <div className="status-dot active flex-shrink-0" />
+              <div className="status-dot active flex-shrink-0" aria-label="Connecté" />
             ) : (
-              <button className="text-[10px] font-bold text-primary hover:underline">
-                + Connecter
+              <button
+                type="button"
+                onClick={() => handleConnect(acc)}
+                aria-label={`Connecter ${acc.platform}`}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-primary hover:underline"
+              >
+                <Plus className="w-3 h-3" aria-hidden="true" />
+                Connecter
               </button>
             )}
-          </motion.div>
+          </motion.li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

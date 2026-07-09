@@ -6,12 +6,16 @@ import type { Recommendation } from '@/components/dashboard/ai-recommendations';
 import type { ActivityItem } from '@/components/dashboard/recent-activity';
 
 // Aggregates mock dashboard data: checklist + AI recs + activity feed.
-export function useDashboardData() {
+export function useDashboardData<T = {
+  checklist: ChecklistItem[];
+  recommendations: Recommendation[];
+  recentActivity: ActivityItem[];
+}>(): T {
   const data = useMemo(() => {
     const checklist: ChecklistItem[] = [
       { id: '1', label: 'Créer votre organisation', description: 'Nommez votre business', completed: true, href: '/dashboard/organization' },
       { id: '2', label: 'Générer votre identité', description: 'Logo + charte graphique', completed: true, href: '/dashboard/identity' },
-      { id: '3', label: 'Lancer votre site web', description: 'Landing page prête', completed: true, href: '/dashboard/website' },
+      { id: '3', label: 'Lancer votre site web', description: 'Landing page prête', completed: false, href: '/dashboard/website' },
       { id: '4', label: 'Connecter les réseaux sociaux', description: 'Au moins 2 comptes', completed: false, href: '/dashboard/social' },
       { id: '5', label: 'Créer votre premier contenu', description: 'Post ou vidéo IA', completed: false, href: '/dashboard/content' },
       { id: '6', label: 'Activer les paiements', description: 'Mobile Money ou carte', completed: false, href: '/dashboard/payments' },
@@ -49,6 +53,15 @@ export function useDashboardData() {
         confidence: 78,
         action: 'Lancer une campagne',
       },
+      {
+        id: '4',
+        category: 'audience',
+        title: 'Réengagez 847 abonnés inactifs',
+        rationale: '847 abonnés n\'ont pas interagi depuis 30 jours. Une séquence email automatique pourrait en récupérer 30-40%.',
+        expectedImpact: '+340 abonnés récupérés',
+        confidence: 71,
+        action: 'Créer la séquence',
+      },
     ];
 
     const recentActivity: ActivityItem[] = [
@@ -57,9 +70,10 @@ export function useDashboardData() {
       { id: '3', type: 'audience', title: '+47 abonnés TikTok', description: 'Pic d\'engagement sur la vidéo "Lancement"', timestamp: 'Il y a 3 h', status: 'success' },
       { id: '4', type: 'payment', title: 'Paiement reçu — Orange Money', description: '12 500 FCFA — Commande #4821', timestamp: 'Il y a 4 h', status: 'success' },
       { id: '5', type: 'content_publish', title: 'Newsletter programmée', description: 'Envoi demain à 09h00 (1 240 abonnés)', timestamp: 'Il y a 5 h', status: 'warning' },
+      { id: '6', type: 'agent', title: 'Growth Agent a trouvé 3 opportunités', description: 'Nouveau créneau sur TikTok Afrique de l\'Ouest', timestamp: 'Il y a 7 h', status: 'success' },
     ];
 
-    return { checklist, recommendations, recentActivity };
+    return { checklist, recommendations, recentActivity } as T;
   }, []);
 
   return data;

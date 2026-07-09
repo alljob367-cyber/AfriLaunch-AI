@@ -4,10 +4,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import Link from 'next/link';
-import {
-  Rocket, Sparkles, Globe, Zap, ArrowRight, Star, Check,
-  Play, Shield, Users, BarChart3, Palette,
-} from 'lucide-react';
+import { Rocket, Sparkles, ArrowRight, Play } from 'lucide-react';
 import { PricingSection } from '@/components/marketing/pricing';
 import { TestimonialsSection } from '@/components/marketing/testimonials';
 import { FeaturesSection } from '@/components/marketing/features';
@@ -41,10 +38,14 @@ export default function LandingPage() {
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
-          {['Fonctionnalités', 'Agents IA', 'Tarifs', 'Blog'].map(item => (
-            <Link key={item} href={`#${item.toLowerCase().replace(' ', '-')}`}
+          {[
+            { label: 'Fonctionnalités', href: '#fonctionnalités' },
+            { label: 'Agents IA', href: '#agents-ia' },
+            { label: 'Tarifs', href: '#tarifs' },
+          ].map(item => (
+            <Link key={item.label} href={item.href}
               className="hover:text-white transition-colors">
-              {item}
+              {item.label}
             </Link>
           ))}
         </div>
@@ -139,15 +140,16 @@ export default function LandingPage() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
 
-            <button
+            <Link
+              href="/dashboard"
               className="group flex items-center gap-3 px-6 py-4 rounded-2xl font-medium
                          glass border border-white/10 hover:bg-white/10 transition-all"
             >
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                <Play className="w-4 h-4 text-white ml-0.5" />
+                <Play className="w-4 h-4 text-white ml-0.5" aria-hidden="true" />
               </div>
               Voir la démo (2 min)
-            </button>
+            </Link>
           </motion.div>
 
           {/* Stats */}
@@ -207,7 +209,7 @@ export default function LandingPage() {
                 Commencer maintenant — Gratuit
                 <ArrowRight className="w-6 h-6" />
               </Link>
-              <p className="text-gray-600 text-sm mt-6">
+              <p className="text-gray-500 text-sm mt-6">
                 ✓ Aucune carte bancaire requise ✓ Annulation à tout moment ✓ Support 24/7
               </p>
             </div>
@@ -226,10 +228,10 @@ export default function LandingPage() {
               </div>
               <span className="font-bold">AfriLaunch AI</span>
             </div>
-            <p className="text-gray-600 text-sm text-center">
-              © 2025 AfriLaunch AI. Construit avec ❤️ pour l'Afrique.
+            <p className="text-gray-500 text-sm text-center">
+              © {new Date().getFullYear()} AfriLaunch AI. Construit avec ❤️ pour l&apos;Afrique.
             </p>
-            <div className="flex items-center gap-6 text-sm text-gray-600">
+            <div className="flex items-center gap-6 text-sm text-gray-500">
               {['Confidentialité', 'Conditions', 'Contact'].map(link => (
                 <Link key={link} href={`/${link.toLowerCase()}`}
                   className="hover:text-white transition-colors">

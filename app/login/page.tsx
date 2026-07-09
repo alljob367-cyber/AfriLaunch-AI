@@ -1,8 +1,8 @@
-// AfriLaunch AI — Login Page (placeholder)
+// AfriLaunch AI — Login Page
 'use client';
 
 import Link from 'next/link';
-import { Rocket, ArrowRight, Mail, Lock } from 'lucide-react';
+import { Rocket, ArrowRight, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -14,6 +14,23 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('demo@afrilaunch.ai');
   const [password, setPassword] = useState('demo1234');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      toast({ title: 'Connexion réussie', description: 'Redirection vers le dashboard...', variant: 'success' });
+      // Brief delay so the user can see the success toast before navigation.
+      setTimeout(() => router.push('/dashboard'), 600);
+    } catch (err) {
+      console.error('[login]', err);
+      toast({ title: 'Erreur de connexion', description: 'Vérifiez vos identifiants.', variant: 'error' });
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#050508] text-white flex items-center justify-center px-6 relative overflow-hidden">
@@ -33,49 +50,57 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold mb-2">Bon retour 👋</h1>
           <p className="text-sm text-gray-400 mb-8">Connectez-vous à votre compte</p>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              login(email, password);
-              toast({ title: 'Connexion réussie', description: 'Redirection vers le dashboard...', variant: 'success' });
-              setTimeout(() => router.push('/dashboard'), 600);
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-gray-400 mb-1.5 block">EMAIL</label>
+              <label htmlFor="login-email" className="text-xs font-semibold text-gray-400 mb-1.5 block">EMAIL</label>
               <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 transition-colors">
-                <Mail className="w-4 h-4 text-gray-500" />
+                <Mail className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <input
+                  id="login-email"
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-transparent flex-1 outline-none text-sm placeholder:text-gray-600"
                   placeholder="vous@exemple.com"
+                  autoComplete="email"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-400 mb-1.5 block">MOT DE PASSE</label>
+              <label htmlFor="login-password" className="text-xs font-semibold text-gray-400 mb-1.5 block">MOT DE PASSE</label>
               <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 transition-colors">
-                <Lock className="w-4 h-4 text-gray-500" />
+                <Lock className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <input
+                  id="login-password"
                   type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-transparent flex-1 outline-none text-sm placeholder:text-gray-600"
                   placeholder="••••••••"
+                  autoComplete="current-password"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Se connecter
-              <ArrowRight className="w-4 h-4" />
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Connexion...
+                </>
+              ) : (
+                <>
+                  Se connecter
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </>
+              )}
             </button>
           </form>
 
@@ -88,7 +113,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          🎬 Démo : cliquez sur "Se connecter" pour explorer le dashboard
+          🎬 Démo : cliquez sur &quot;Se connecter&quot; pour explorer le dashboard
         </p>
       </div>
     </div>

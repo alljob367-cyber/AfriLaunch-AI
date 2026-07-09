@@ -3,68 +3,138 @@
 
 import { motion } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-interface ContentCalendarProps {
-  posts?: Array<{
-    id: string;
-    date: number; // day of month
-    title: string;
-    platform: string;
-    time: string;
-    color: string;
-  }>;
+interface CalendarPost {
+  id: string;
+  date: Date; // full date of the post
+  title: string;
+  platform: string;
+  time: string;
+  color: string;
 }
 
-const samplePosts: NonNullable<ContentCalendarProps['posts']> = [
-  { id: '1', date: 9, title: 'Reel "Coulisses atelier"', platform: 'Instagram', time: '19:30', color: 'bg-pink-500' },
-  { id: '2', date: 9, title: 'Newsletter mensuelle', platform: 'Email', time: '09:00', color: 'bg-orange-500' },
-  { id: '3', date: 12, title: 'Tuto "Comment styliser"', platform: 'TikTok', time: '18:00', color: 'bg-slate-500' },
-  { id: '4', date: 14, title: 'Carrousel "Collection été"', platform: 'Instagram', time: '12:00', color: 'bg-pink-500' },
-  { id: '5', date: 16, title: 'Live Q&A', platform: 'Facebook', time: '20:00', color: 'bg-blue-500' },
-  { id: '6', date: 22, title: 'Article blog SEO', platform: 'Site web', time: '10:00', color: 'bg-emerald-500' },
-];
+interface ContentCalendarProps {
+  posts?: CalendarPost[];
+}
+
+// Mock posts anchored to the current month so the widget always shows
+// upcoming content relative to "today".
+function buildMockPosts(now: Date): CalendarPost[] {
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const mk = (day: number, hour: number, minute: number, title: string, platform: string, color: string): CalendarPost => ({
+    id: `${day}-${title}`,
+    date: new Date(y, m, day, hour, minute),
+    title,
+    platform,
+    time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    color,
+  });
+
+  const posts: CalendarPost[] = [];
+  // Use next few days from today, capping at month end
+  const lastDay = new Date(y, m + 1, 0).getDate();
+  const days = [d, d + 3, d + 5, d + 7, d + 13].filter((x) => x <= lastDay);
+  if (days[0]) posts.push(mk(days[0], 19, 30, 'Reel "Coulisses atelier"', 'Instagram', 'bg-pink-500'));
+  if (days[0]) posts.push(mk(days[0], 9, 0, 'Newsletter mensuelle', 'Email', 'bg-orange-500'));
+  if (days[1]) posts.push(mk(days[1], 18, 0, 'Tuto "Comment styliser"', 'TikTok', 'bg-slate-500'));
+  if (days[2]) posts.push(mk(days[2], 12, 0, 'Carrousel "Collection été"', 'Instagram', 'bg-pink-500'));
+  if (days[3]) posts.push(mk(days[3], 20, 0, 'Live Q&A', 'Facebook', 'bg-blue-500'));
+  if (days[4]) posts.push(mk(days[4], 10, 0, 'Article blog SEO', 'Site web', 'bg-emerald-500'));
+  return posts;
+}
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-export function ContentCalendar({ posts = samplePosts }: ContentCalendarProps) {
-  const [cursor, setCursor] = useState({ month: 6, year: 2025 }); // Juillet 2025
-  const today = 9;
-  const daysInMonth = 31;
+export function ContentCalendar({ posts }: ContentCalendarProps) {
+  const now = useMemo(() => new Date(), []);
+  const [cursor, setCursor] = useState({ month: now.getMonth(), year: now.getFullYear() });
 
-  // Build calendar grid (starting on Tuesday = index 1 for July 2025)
-  const firstDayIdx = 1;
-  const cells: (number | null)[] = [
-    ...Array(firstDayIdx).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
+  const resolvedPosts = useMemo(() => posts ?? buildMockPosts(now), [posts, now]);
 
-  const postsForDay = (day: number | null) =>
-    day ? posts.filter((p) => p.date === day) : [];
+  const daysInMonth = useMemo(
+    () => new Date(cursor.year, cursor.month + 1, 0).getDate(),
+    [cursor],
+  );
+  // Monday-first index (Mon=0 ... Sun=6)
+  const firstDayIdx = useMemo(
+    () => (new Date(cursor.year, cursor.month, 1).getDay() + 6) % 7,
+    [cursor],
+  );
+
+  const cells: (number | null)[] = useMemo(() => {
+    const arr: (number | null)[] = [...Array(firstDayIdx).fill(null)];
+    for (let i = 1; i <= daysInMonth; i++) arr.push(i);
+    while (arr.length % 7 !== 0) arr.push(null);
+    return arr;
+  }, [firstDayIdx, daysInMonth]);
+
+  const postsForDay = (day: number | null) => {
+    if (!day) return [];
+    return resolvedPosts.filter((p) => {
+      const d = p.date;
+      return (
+        d.getFullYear() === cursor.year &&
+        d.getMonth() === cursor.month &&
+        d.getDate() === day
+      );
+    });
+  };
+
+  const todayDay = now.getDate();
+  const isCurrentMonth = cursor.month === now.getMonth() && cursor.year === now.getFullYear();
+
+  const upcoming = useMemo(() => {
+    const future = resolvedPosts
+      .filter((p) => p.date.getTime() >= now.getTime())
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 3);
+    return future.length > 0 ? future : resolvedPosts.slice(0, 3);
+  }, [resolvedPosts, now]);
+
+  const goPrev = () => {
+    setCursor((c) => {
+      const m = c.month - 1;
+      if (m < 0) return { month: 11, year: c.year - 1 };
+      return { ...c, month: m };
+    });
+  };
+  const goNext = () => {
+    setCursor((c) => {
+      const m = c.month + 1;
+      if (m > 11) return { month: 0, year: c.year + 1 };
+      return { ...c, month: m };
+    });
+  };
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-primary" />
+          <Calendar className="w-4 h-4 text-primary" aria-hidden="true" />
           <h3 className="font-semibold text-sm">
             {MONTHS[cursor.month]} {cursor.year}
           </h3>
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setCursor((c) => ({ ...c, month: (c.month + 11) % 12 }))}
-            className="glass rounded-lg p-1.5 hover:bg-white/10"
+            type="button"
+            onClick={goPrev}
+            aria-label="Mois précédent"
+            className="glass rounded-lg p-1.5 hover:bg-white/10 transition-colors"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => setCursor((c) => ({ ...c, month: (c.month + 1) % 12 }))}
-            className="glass rounded-lg p-1.5 hover:bg-white/10"
+            type="button"
+            onClick={goNext}
+            aria-label="Mois suivant"
+            className="glass rounded-lg p-1.5 hover:bg-white/10 transition-colors"
           >
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
@@ -84,7 +154,7 @@ export function ContentCalendar({ posts = samplePosts }: ContentCalendarProps) {
       <div className="grid grid-cols-7 gap-1 mb-4">
         {cells.map((day, i) => {
           const dayPosts = postsForDay(day);
-          const isToday = day === today;
+          const isToday = day !== null && isCurrentMonth && day === todayDay;
           return (
             <div
               key={i}
@@ -116,7 +186,7 @@ export function ContentCalendar({ posts = samplePosts }: ContentCalendarProps) {
         <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2">
           À venir
         </p>
-        {posts.slice(0, 3).map((post, i) => (
+        {upcoming.map((post, i) => (
           <motion.div
             key={post.id}
             initial={{ opacity: 0, x: -10 }}
@@ -125,8 +195,8 @@ export function ContentCalendar({ posts = samplePosts }: ContentCalendarProps) {
             className="flex items-center gap-3 p-2.5 rounded-lg glass hover:bg-white/10 transition-colors cursor-pointer"
           >
             <div className={cn('w-9 h-9 rounded-lg flex flex-col items-center justify-center text-white text-[10px] font-bold', post.color)}>
-              <span className="text-[9px] leading-none opacity-80">{MONTHS[cursor.month].slice(0, 3)}</span>
-              <span className="text-sm leading-none">{post.date}</span>
+              <span className="text-[9px] leading-none opacity-80">{MONTHS[post.date.getMonth()].slice(0, 3)}</span>
+              <span className="text-sm leading-none">{post.date.getDate()}</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold truncate">{post.title}</p>

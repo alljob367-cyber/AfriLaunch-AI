@@ -115,7 +115,7 @@ export function TestimonialsSection() {
                 <div>
                   <p className="font-semibold text-sm">{t.name}</p>
                   <p className="text-xs text-gray-500">{t.role}</p>
-                  <p className="text-xs text-gray-600">{t.location}</p>
+                  <p className="text-xs text-gray-500">{t.location}</p>
                 </div>
               </div>
             </motion.div>
@@ -129,7 +129,7 @@ export function TestimonialsSection() {
           viewport={{ once: true }}
           className="mt-20 pt-12 border-t border-white/5"
         >
-          <p className="text-center text-xs uppercase tracking-widest text-gray-600 mb-6">
+          <p className="text-center text-xs uppercase tracking-widest text-gray-500 mb-6">
             Vu dans
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 text-gray-500 font-bold text-lg">

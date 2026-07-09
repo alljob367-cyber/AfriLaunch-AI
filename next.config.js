@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  typescript: { ignoreBuildErrors: true },
+  typescript: { ignoreBuildErrors: false },
   // Gateway (Alibaba FC + Caddy) serves prerendered HTML as static files and
   // 301-redirects /dir → /dir/ for directories. Next.js by default does the
   // opposite (308 /dir/ → /dir), which creates an infinite redirect loop on

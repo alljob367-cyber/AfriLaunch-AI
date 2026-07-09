@@ -1,23 +1,21 @@
 // AfriLaunch AI — Dashboard Principal
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import {
-  Rocket, TrendingUp, Users, Globe, Zap, ArrowRight,
-  CheckCircle2, Circle, ChevronRight, Sparkles, Bell,
-  BarChart3, PieChart, Activity, Star, Crown, Target,
+  Globe, Zap, ChevronRight, Sparkles, Bell, Activity, Target, Calendar as CalendarIcon,
 } from 'lucide-react';
 
-import { DashboardHeader } from '@/components/dashboard/header';
-import { ProgressChecklist } from '@/components/dashboard/progress-checklist';
+import { ProgressChecklist, type ChecklistItem } from '@/components/dashboard/progress-checklist';
 import { StatsGrid } from '@/components/dashboard/stats-grid';
-import { RecentActivity } from '@/components/dashboard/recent-activity';
-import { AIRecommendations } from '@/components/dashboard/ai-recommendations';
+import { RecentActivity, type ActivityItem } from '@/components/dashboard/recent-activity';
+import { AIRecommendations, type Recommendation } from '@/components/dashboard/ai-recommendations';
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { SocialAccountsWidget } from '@/components/dashboard/social-accounts-widget';
 import { ContentCalendar } from '@/components/dashboard/content-calendar';
 import { OnboardingBanner } from '@/components/dashboard/onboarding-banner';
+import { useAuth } from '@/components/providers/auth-provider';
 import { useOrganization } from '@/hooks/use-organization';
 import { useStats } from '@/hooks/use-stats';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
@@ -36,9 +34,14 @@ const itemVariants = {
 };
 
 export default function DashboardPage() {
-  const { organization, isLoading: orgLoading } = useOrganization();
+  const { user } = useAuth();
+  const { organization } = useOrganization();
   const { stats } = useStats();
-  const { checklist, recommendations, recentActivity } = useDashboardData();
+  const { checklist, recommendations, recentActivity } = useDashboardData<{
+    checklist: ChecklistItem[];
+    recommendations: Recommendation[];
+    recentActivity: ActivityItem[];
+  }>();
   const [greeting, setGreeting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,9 +51,12 @@ export default function DashboardPage() {
     else setGreeting('Bonsoir');
   }, []);
 
-  const completedSteps = checklist?.filter((item: any) => item.completed).length ?? 0;
+  const completedSteps = checklist?.filter((item) => item.completed).length ?? 0;
   const totalSteps = checklist?.length ?? 10;
   const progressPercent = Math.round((completedSteps / totalSteps) * 100);
+
+  // Prefer the logged-in user's first name; fall back to the mock org member.
+  const displayName = user?.firstName ?? organization?.members?.[0]?.user?.firstName ?? 'Entrepreneur';
 
   return (
     <div className="min-h-screen mesh-bg">
@@ -63,7 +69,7 @@ export default function DashboardPage() {
 
       <div className="relative z-10 p-6 max-w-[1600px] mx-auto">
         {/* Header */}
-        <motion.div
+        <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -72,12 +78,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-2xl">👋</span>
+                <span className="text-2xl" role="img" aria-label="Bonjour">👋</span>
                 <h1 className="text-2xl font-bold text-foreground" suppressHydrationWarning>
                   {greeting ?? 'Bonjour'},{' '}
-                  <span className="gradient-text">
-                    {organization?.members?.[0]?.user?.firstName ?? 'Entrepreneur'}
-                  </span>
+                  <span className="gradient-text">{displayName}</span>
                 </h1>
               </div>
               <p className="text-muted-foreground text-sm">
@@ -91,16 +95,20 @@ export default function DashboardPage() {
             {/* Quick Stats Pills */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="glass rounded-full px-4 py-2 flex items-center gap-2 text-sm">
-                <div className="status-dot active" />
+                <div className="status-dot active" aria-hidden="true" />
                 <span className="text-muted-foreground">Plateforme active</span>
               </div>
               <div className="glass rounded-full px-4 py-2 flex items-center gap-2 text-sm">
-                <Zap className="w-4 h-4 text-yellow-500" />
+                <Zap className="w-4 h-4 text-yellow-500" aria-hidden="true" />
                 <span className="font-medium">{stats?.aiCredits ?? 100} crédits IA</span>
               </div>
-              <button className="glass rounded-full p-2 relative hover:scale-105 transition-transform">
-                <Bell className="w-5 h-5" />
-                {stats?.unreadNotifications > 0 && (
+              <button
+                type="button"
+                aria-label={`${stats?.unreadNotifications ?? 0} notifications non lues`}
+                className="glass rounded-full p-2 relative hover:scale-105 transition-transform"
+              >
+                <Bell className="w-5 h-5" aria-hidden="true" />
+                {(stats?.unreadNotifications ?? 0) > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
                     {stats.unreadNotifications}
                   </span>
@@ -108,10 +116,10 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
-        </motion.div>
+        </motion.header>
 
-        {/* Onboarding Banner (si nouvelle inscription) */}
-        {progressPercent < 30 && (
+        {/* Onboarding Banner (visible tant que le profil est < 50% complété) */}
+        {progressPercent < 50 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -134,19 +142,19 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Progress Checklist */}
-          <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4">
+          <motion.section variants={itemVariants} className="col-span-12 lg:col-span-4">
             <div className="card-premium h-full">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
+                    <Target className="w-5 h-5 text-primary" aria-hidden="true" />
                     Votre parcours
                   </h2>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {completedSteps}/{totalSteps} étapes complétées
                   </p>
                 </div>
-                <div className="relative w-14 h-14">
+                <div className="relative w-14 h-14" role="img" aria-label={`${progressPercent}% complété`}>
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
                     <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor"
                       className="text-border" strokeWidth="4" />
@@ -168,61 +176,78 @@ export default function DashboardPage() {
               </div>
               <ProgressChecklist items={checklist} />
             </div>
-          </motion.div>
+          </motion.section>
 
           {/* AI Recommendations */}
-          <motion.div variants={itemVariants} className="col-span-12 lg:col-span-8">
+          <motion.section variants={itemVariants} className="col-span-12 lg:col-span-8">
             <div className="card-premium h-full">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-violet-500" />
+                  <Sparkles className="w-5 h-5 text-violet-500" aria-hidden="true" />
                   Recommandations IA
                 </h2>
                 <span className="badge-new">Mis à jour</span>
               </div>
               <AIRecommendations recommendations={recommendations} />
             </div>
-          </motion.div>
+          </motion.section>
 
           {/* Quick Actions */}
-          <motion.div variants={itemVariants} className="col-span-12">
+          <motion.section variants={itemVariants} className="col-span-12">
             <div className="card-premium">
               <h2 className="text-lg font-semibold flex items-center gap-2 mb-6">
-                <Zap className="w-5 h-5 text-yellow-500" />
+                <Zap className="w-5 h-5 text-yellow-500" aria-hidden="true" />
                 Actions rapides
               </h2>
               <QuickActions />
             </div>
-          </motion.div>
+          </motion.section>
 
           {/* Social Accounts Widget */}
-          <motion.div variants={itemVariants} className="col-span-12 lg:col-span-6">
+          <motion.section variants={itemVariants} className="col-span-12 lg:col-span-6">
             <div className="card-premium h-full">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-cyan-500" />
+                  <Globe className="w-5 h-5 text-cyan-500" aria-hidden="true" />
                   Réseaux sociaux
                 </h2>
-                <button className="text-sm text-primary hover:underline flex items-center gap-1">
-                  Gérer <ChevronRight className="w-4 h-4" />
+                <button
+                  type="button"
+                  aria-label="Gérer les réseaux sociaux"
+                  className="text-sm text-primary hover:underline flex items-center gap-1"
+                >
+                  Gérer <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
               <SocialAccountsWidget />
             </div>
-          </motion.div>
+          </motion.section>
 
           {/* Recent Activity */}
-          <motion.div variants={itemVariants} className="col-span-12 lg:col-span-6">
+          <motion.section variants={itemVariants} className="col-span-12 lg:col-span-6">
             <div className="card-premium h-full">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-green-500" />
+                  <Activity className="w-5 h-5 text-green-500" aria-hidden="true" />
                   Activités récentes
                 </h2>
               </div>
               <RecentActivity items={recentActivity} />
             </div>
-          </motion.div>
+          </motion.section>
+
+          {/* Content Calendar */}
+          <motion.section variants={itemVariants} className="col-span-12">
+            <div className="card-premium">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <CalendarIcon className="w-5 h-5 text-pink-500" aria-hidden="true" />
+                  Calendrier de contenu
+                </h2>
+              </div>
+              <ContentCalendar />
+            </div>
+          </motion.section>
         </motion.div>
       </div>
     </div>

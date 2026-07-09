@@ -1,20 +1,45 @@
-// AfriLaunch AI — Register Page (placeholder)
+// AfriLaunch AI — Register Page
 'use client';
 
 import Link from 'next/link';
-import { Rocket, ArrowRight, Mail, Lock, User } from 'lucide-react';
+import { Rocket, ArrowRight, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { useToast } from '@/components/providers/toast-provider';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const { register } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planFromQuery = searchParams.get('plan');
+
   const [firstName, setFirstName] = useState('Aïssatou');
   const [email, setEmail] = useState('demo@afrilaunch.ai');
   const [password, setPassword] = useState('demo1234');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await register({ firstName, email, password });
+      toast({
+        title: 'Compte créé !',
+        description: planFromQuery
+          ? `Bienvenue sur AfriLaunch AI — plan ${planFromQuery} activé 🎉`
+          : 'Bienvenue sur AfriLaunch AI 🎉',
+        variant: 'success',
+      });
+      setTimeout(() => router.push('/dashboard'), 800);
+    } catch (err) {
+      console.error('[register]', err);
+      toast({ title: 'Erreur d\'inscription', description: 'Veuillez réessayer.', variant: 'error' });
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#050508] text-white flex items-center justify-center px-6 relative overflow-hidden">
@@ -36,60 +61,72 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold mb-2">Lancez votre business 🚀</h1>
           <p className="text-sm text-gray-400 mb-8">Aucune carte bancaire requise</p>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              register({ firstName, email, password });
-              toast({ title: 'Compte créé !', description: 'Bienvenue sur AfriLaunch AI 🎉', variant: 'success' });
-              setTimeout(() => router.push('/dashboard'), 800);
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-gray-400 mb-1.5 block">PRÉNOM</label>
+              <label htmlFor="register-firstname" className="text-xs font-semibold text-gray-400 mb-1.5 block">PRÉNOM</label>
               <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 transition-colors">
-                <User className="w-4 h-4 text-gray-500" />
+                <User className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <input
+                  id="register-firstname"
                   type="text"
+                  required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="bg-transparent flex-1 outline-none text-sm"
+                  autoComplete="given-name"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-400 mb-1.5 block">EMAIL</label>
+              <label htmlFor="register-email" className="text-xs font-semibold text-gray-400 mb-1.5 block">EMAIL</label>
               <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 transition-colors">
-                <Mail className="w-4 h-4 text-gray-500" />
+                <Mail className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <input
+                  id="register-email"
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-transparent flex-1 outline-none text-sm"
+                  autoComplete="email"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-gray-400 mb-1.5 block">MOT DE PASSE</label>
+              <label htmlFor="register-password" className="text-xs font-semibold text-gray-400 mb-1.5 block">MOT DE PASSE</label>
               <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 border border-white/5 focus-within:border-indigo-500/50 transition-colors">
-                <Lock className="w-4 h-4 text-gray-500" />
+                <Lock className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <input
+                  id="register-password"
                   type="password"
+                  required
+                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-transparent flex-1 outline-none text-sm"
+                  autoComplete="new-password"
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              Créer mon compte gratuit
-              <ArrowRight className="w-4 h-4" />
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  Création...
+                </>
+              ) : (
+                <>
+                  Créer mon compte gratuit
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </>
+              )}
             </button>
           </form>
 
@@ -102,9 +139,19 @@ export default function RegisterPage() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          En continuant, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité.
+          En continuant, vous acceptez nos Conditions d&apos;utilisation et notre Politique de confidentialité.
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  // useSearchParams() must be inside a Suspense boundary per Next.js 16 requirements
+  // for static rendering.
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }
