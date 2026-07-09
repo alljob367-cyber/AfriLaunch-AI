@@ -29,7 +29,6 @@
   "/admin/page": "app/admin/page.js",
   "/api/admin/auth/route": "app/api/admin/auth/route.js",
   "/api/admin/config/route": "app/api/admin/config/route.js",
-  "/api/admin/mode/route": "app/api/admin/mode/route.js",
   "/api/admin/password/route": "app/api/admin/password/route.js",
   "/api/admin/test/route": "app/api/admin/test/route.js",
   "/login/page": "app/login/page.js",

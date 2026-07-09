@@ -2,9 +2,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Instagram, Facebook, Youtube, Twitter, Linkedin, MessageCircle, Plus } from 'lucide-react';
+import { Instagram, Facebook, Youtube, Twitter, Linkedin, MessageCircle, Plus, Share2 } from 'lucide-react';
 import { useToast } from '@/components/providers/toast-provider';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
 type Platform = 'instagram' | 'facebook' | 'tiktok' | 'twitter' | 'linkedin' | 'whatsapp';
 
@@ -22,14 +23,6 @@ interface SocialAccount {
 // Lucide does not ship a TikTok icon; MessageCircle (WhatsApp) is reserved
 // for WhatsApp, and Youtube is closest in shape to TikTok's note glyph.
 // Using Youtube keeps the visual hierarchy consistent with other platforms.
-const accounts: SocialAccount[] = [
-  { id: '1', platform: 'instagram', handle: '@teranga.mode', followers: 12480, growth: 12.4, connected: true, color: 'from-pink-500 to-rose-600', Icon: Instagram },
-  { id: '2', platform: 'tiktok', handle: '@terangamode', followers: 28940, growth: 28.7, connected: true, color: 'from-slate-700 to-slate-900', Icon: Youtube },
-  { id: '3', platform: 'facebook', handle: 'Teranga Mode', followers: 5320, growth: 4.2, connected: true, color: 'from-blue-500 to-blue-700', Icon: Facebook },
-  { id: '4', platform: 'twitter', handle: '@terangamode', followers: 1840, growth: -2.1, connected: true, color: 'from-slate-600 to-slate-800', Icon: Twitter },
-  { id: '5', platform: 'whatsapp', handle: '+221 77 123 45 67', followers: 0, growth: 0, connected: false, color: 'from-green-500 to-emerald-600', Icon: MessageCircle },
-  { id: '6', platform: 'linkedin', handle: 'Teranga Mode SARL', followers: 420, growth: 8.5, connected: false, color: 'from-sky-500 to-blue-700', Icon: Linkedin },
-];
 
 function formatNum(n: number) {
   if (n === 0) return '—';
@@ -37,8 +30,25 @@ function formatNum(n: number) {
   return n.toString();
 }
 
-export function SocialAccountsWidget() {
+interface SocialAccountsWidgetProps {
+  accounts?: SocialAccount[];
+}
+
+export function SocialAccountsWidget({ accounts = [] }: SocialAccountsWidgetProps) {
   const { toast } = useToast();
+
+  if (accounts.length === 0) {
+    return (
+      <EmptyState
+        icon={Share2}
+        title="Aucun réseau connecté"
+        description="Connectez Instagram, TikTok, Facebook et plus pour publier automatiquement et centraliser vos messages."
+        action={{ label: 'Connecter mes réseaux', href: '/dashboard/social' }}
+        gradient="from-green-500 to-emerald-600"
+      />
+    );
+  }
+
   const totalFollowers = accounts.filter((a) => a.connected).reduce((sum, a) => sum + a.followers, 0);
   const connectedCount = accounts.filter((a) => a.connected).length;
 

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
 interface CalendarPost {
   id: string;
@@ -19,33 +20,7 @@ interface ContentCalendarProps {
   posts?: CalendarPost[];
 }
 
-// Mock posts anchored to the current month so the widget always shows
-// upcoming content relative to "today".
-function buildMockPosts(now: Date): CalendarPost[] {
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const d = now.getDate();
-  const mk = (day: number, hour: number, minute: number, title: string, platform: string, color: string): CalendarPost => ({
-    id: `${day}-${title}`,
-    date: new Date(y, m, day, hour, minute),
-    title,
-    platform,
-    time: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-    color,
-  });
-
-  const posts: CalendarPost[] = [];
-  // Use next few days from today, capping at month end
-  const lastDay = new Date(y, m + 1, 0).getDate();
-  const days = [d, d + 3, d + 5, d + 7, d + 13].filter((x) => x <= lastDay);
-  if (days[0]) posts.push(mk(days[0], 19, 30, 'Reel "Coulisses atelier"', 'Instagram', 'bg-pink-500'));
-  if (days[0]) posts.push(mk(days[0], 9, 0, 'Newsletter mensuelle', 'Email', 'bg-orange-500'));
-  if (days[1]) posts.push(mk(days[1], 18, 0, 'Tuto "Comment styliser"', 'TikTok', 'bg-slate-500'));
-  if (days[2]) posts.push(mk(days[2], 12, 0, 'Carrousel "Collection été"', 'Instagram', 'bg-pink-500'));
-  if (days[3]) posts.push(mk(days[3], 20, 0, 'Live Q&A', 'Facebook', 'bg-blue-500'));
-  if (days[4]) posts.push(mk(days[4], 10, 0, 'Article blog SEO', 'Site web', 'bg-emerald-500'));
-  return posts;
-}
+// Mock posts have been removed — pass real posts via the `posts` prop.
 
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
@@ -54,7 +29,7 @@ export function ContentCalendar({ posts }: ContentCalendarProps) {
   const now = useMemo(() => new Date(), []);
   const [cursor, setCursor] = useState({ month: now.getMonth(), year: now.getFullYear() });
 
-  const resolvedPosts = useMemo(() => posts ?? buildMockPosts(now), [posts, now]);
+  const resolvedPosts = posts ?? [];
 
   const daysInMonth = useMemo(
     () => new Date(cursor.year, cursor.month + 1, 0).getDate(),
@@ -89,12 +64,25 @@ export function ContentCalendar({ posts }: ContentCalendarProps) {
   const isCurrentMonth = cursor.month === now.getMonth() && cursor.year === now.getFullYear();
 
   const upcoming = useMemo(() => {
+    if (resolvedPosts.length === 0) return [];
     const future = resolvedPosts
       .filter((p) => p.date.getTime() >= now.getTime())
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 3);
     return future.length > 0 ? future : resolvedPosts.slice(0, 3);
   }, [resolvedPosts, now]);
+
+  if (!posts || posts.length === 0) {
+    return (
+      <EmptyState
+        icon={Calendar}
+        title="Calendrier vide"
+        description="Programmez vos posts, reels et newsletters pour publier au meilleur moment."
+        action={{ label: 'Créer du contenu', href: '/dashboard/content' }}
+        gradient="from-pink-500 to-rose-600"
+      />
+    );
+  }
 
   const goPrev = () => {
     setCursor((c) => {

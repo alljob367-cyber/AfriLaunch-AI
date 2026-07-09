@@ -2,8 +2,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, Eye, Share2, MousePointer } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Users, Eye, Share2, MousePointer } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
 // Icon registry — allows `useStats()` to return string keys instead of
 // component references (which would break React serialization in some cases).
@@ -29,55 +30,27 @@ export interface Stat {
 interface StatsGridProps {
   stats?: {
     metrics?: Stat[];
-  };
+  } | null;
 }
 
-const defaultStats: Stat[] = [
-  {
-    label: 'Portée totale',
-    value: '24,891',
-    change: +18.2,
-    changeLabel: 'vs mois dernier',
-    icon: 'eye',
-    color: 'text-blue-500',
-    gradient: 'from-blue-500/20 to-blue-600/5',
-  },
-  {
-    label: 'Abonnés cumulés',
-    value: '3,247',
-    change: +12.5,
-    changeLabel: 'vs mois dernier',
-    icon: 'users',
-    color: 'text-violet-500',
-    gradient: 'from-violet-500/20 to-violet-600/5',
-  },
-  {
-    label: 'Interactions',
-    value: '1,089',
-    change: +8.7,
-    changeLabel: 'vs mois dernier',
-    icon: 'share',
-    color: 'text-cyan-500',
-    gradient: 'from-cyan-500/20 to-cyan-600/5',
-  },
-  {
-    label: 'Clics site web',
-    value: '542',
-    change: -3.1,
-    changeLabel: 'vs mois dernier',
-    icon: 'click',
-    color: 'text-green-500',
-    gradient: 'from-green-500/20 to-green-600/5',
-  },
-];
-
 export function StatsGrid({ stats }: StatsGridProps) {
-  // Use passed stats if available, otherwise fall back to defaults.
-  const displayStats = stats?.metrics ?? defaultStats;
+  const displayStats = stats?.metrics;
+
+  if (!displayStats || displayStats.length === 0) {
+    return (
+      <EmptyState
+        icon={BarChart3}
+        title="Aucune statistique"
+        description="Vos métriques apparaîtront ici une fois que vous aurez publié du contenu et connecté vos réseaux sociaux."
+        action={{ label: 'Créer du contenu', href: '/dashboard/content' }}
+        gradient="from-blue-500 to-cyan-600"
+      />
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {displayStats.map((stat, i) => {
+      {displayStats!.map((stat, i) => {
         const Icon = ICON_MAP[stat.icon] ?? Eye;
         return (
           <motion.div

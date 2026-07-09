@@ -4,9 +4,10 @@
 import { motion } from 'framer-motion';
 import {
   Palette, Share2, Zap, Users, CreditCard, FileText,
-  TrendingUp, Bot,
+  TrendingUp, Bot, Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
 export interface ActivityItem {
   id: string;
@@ -21,15 +22,6 @@ interface RecentActivityProps {
   items?: ActivityItem[];
 }
 
-const defaultItems: ActivityItem[] = [
-  { id: '1', type: 'branding', title: 'Nouveau logo généré', description: 'Par le Branding Agent — 4 variants', timestamp: 'Il y a 12 min', status: 'success' },
-  { id: '2', type: 'social', title: 'Post publié sur Instagram', description: '+142 likes en 1h', timestamp: 'Il y a 1 h', status: 'success' },
-  { id: '3', type: 'audience', title: '+47 abonnés TikTok', description: 'Pic d\'engagement sur la vidéo "Lancement"', timestamp: 'Il y a 3 h', status: 'success' },
-  { id: '4', type: 'payment', title: 'Paiement reçu — Orange Money', description: '12 500 FCFA — Commande #4821', timestamp: 'Il y a 4 h', status: 'success' },
-  { id: '5', type: 'content_publish', title: 'Newsletter programmée', description: 'Envoi demain à 09h00 (1 240 abonnés)', timestamp: 'Il y a 5 h', status: 'warning' },
-  { id: '6', type: 'agent', title: 'Growth Agent a trouvé 3 opportunités', description: 'Nouveau créneau sur TikTok Afrique de l\'Ouest', timestamp: 'Il y a 7 h', status: 'success' },
-];
-
 const iconMap = {
   branding: { Icon: Palette, color: 'text-violet-400 bg-violet-500/10' },
   social: { Icon: Share2, color: 'text-green-400 bg-green-500/10' },
@@ -42,11 +34,23 @@ const iconMap = {
 } as const;
 
 export function RecentActivity({ items }: RecentActivityProps) {
-  const list = items ?? defaultItems;
+  const list = items;
+
+  if (!list || list.length === 0) {
+    return (
+      <EmptyState
+        icon={Activity}
+        title="Aucune activité récente"
+        description="Vos actions (publications, paiements, générations IA) apparaîtront ici."
+        action={{ label: 'Explorer les agents IA', href: '/dashboard/agents' }}
+        gradient="from-green-500 to-emerald-600"
+      />
+    );
+  }
 
   return (
     <div className="space-y-1">
-      {list.map((item, i) => {
+      {list!.map((item, i) => {
         const { Icon, color } = iconMap[item.type];
         return (
           <motion.div

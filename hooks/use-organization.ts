@@ -1,32 +1,36 @@
 'use client';
 
-// Stub hook returning a fake organization — wires the dashboard to mock data
-// so the preview renders without a backend.
-export function useOrganization() {
-  const organization = {
-    id: 'org-teranga-mode',
-    name: 'Teranga Mode',
-    slug: 'teranga-mode',
-    plan: 'pro',
-    createdAt: '2025-01-12T09:30:00Z',
-    members: [
-      {
-        id: 'm-1',
-        role: 'OWNER',
-        user: {
-          id: 'u-1',
-          firstName: 'Aïssatou',
-          lastName: 'Diallo',
-          email: 'aissatou@terangamode.sn',
-          avatarUrl: null,
-        },
-      },
-    ],
-  };
+// Returns the current user's organization.
+// In production, this would fetch from the API. Without a backend, returns null
+// and the dashboard shows an onboarding/empty state.
 
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  createdAt: string;
+  members: Array<{
+    id: string;
+    role: string;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      avatarUrl: string | null;
+    };
+  }>;
+}
+
+export function useOrganization(): {
+  organization: Organization | null;
+  isLoading: boolean;
+  error: Error | null;
+} {
   return {
-    organization,
+    organization: null,
     isLoading: false,
-    error: null as Error | null,
+    error: null,
   };
 }

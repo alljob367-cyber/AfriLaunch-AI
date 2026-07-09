@@ -77,3 +77,43 @@ Stage Summary:
 - Each page has form fields, test buttons (where applicable), and SaveBar
 - All in French, dark theme, accessibility-compliant
 
+---
+Task ID: empty-states-1
+Agent: general-purpose
+Task: Update 6 dashboard components with empty states (stats-grid, progress-checklist, recent-activity, ai-recommendations, social-accounts-widget, content-calendar)
+
+Work Log:
+- Updated stats-grid.tsx (removed defaultStats, added EmptyState)
+- Updated progress-checklist.tsx (removed defaultItems, added EmptyState)
+- Updated recent-activity.tsx (removed defaultItems, added EmptyState)
+- Updated ai-recommendations.tsx (removed defaultRecs, added EmptyState)
+- Updated social-accounts-widget.tsx (removed hardcoded accounts, added EmptyState)
+- Updated content-calendar.tsx (removed buildMockPosts, added EmptyState)
+
+Stage Summary:
+- All 6 components now show empty states when no data
+- Mock data removed
+- Existing rendering preserved for when data exists
+---
+Task ID: empty-states-2
+Agent: general-purpose
+Task: Update 11 dashboard modules with empty states (agents, identity, website, content, social, campaigns, payments, analytics, team, organization, onboarding)
+
+Work Log:
+- Rewrote agents/page.tsx (removed 13 hardcoded agents, category tabs, stats cards and modal; added EmptyState with link to /admin/ai)
+- Rewrote identity/page.tsx (removed mock palettes/logos/brand name "Teranga Mode" and form; added EmptyState with onClick toast)
+- Rewrote website/page.tsx (removed 6 templates + 2 mock sites + stats; added EmptyState with onClick toast)
+- Rewrote content/page.tsx (removed 5 recent contents + mock generator + stats; added EmptyState with onClick toast)
+- Rewrote social/page.tsx (removed 6 platform accounts + 4 inbox messages; added EmptyState with onClick toast)
+- Rewrote campaigns/page.tsx (removed 3 campaigns + create form + stats; added EmptyState with onClick toast)
+- Rewrote payments/page.tsx (removed 4 payment methods + 6 transactions + virtual card + stats; added EmptyState with link to /admin/payments)
+- Rewrote analytics/page.tsx (removed bar chart + platform performance + heatmap + stats; added EmptyState with link to /dashboard/social)
+- Rewrote team/page.tsx (removed 4 members + 2 invites + invite form + stats; added EmptyState with onClick toast)
+- Rewrote organization/page.tsx (removed pre-filled form with "Teranga Mode", Pro subscription card and 4 toggles; replaced with empty create-organization form: name input, description textarea, country select, "Créer mon organisation" submit button toasting on success)
+- Rewrote onboarding/page.tsx (set all 10 steps to incomplete, progress 0/10 = 0%, removed "Prochaines étapes recommandées" section)
+
+Stage Summary:
+- All 11 modules now show empty states or empty forms
+- Mock data fully removed
+- Organization page now has a create form for first-time users
+- Onboarding page shows 0% progress

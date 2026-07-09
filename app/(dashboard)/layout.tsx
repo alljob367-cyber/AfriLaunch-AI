@@ -52,12 +52,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { organization } = useOrganization();
 
   const orgName = organization?.name ?? 'Mon organisation';
-  const initials = orgName
+  const initials = (orgName || 'MO')
     .split(' ')
     .slice(0, 2)
-    .map((w) => w[0])
+    .map((w) => (w && w[0]) ? w[0] : '')
     .join('')
-    .toUpperCase();
+    .toUpperCase() || 'MO';
 
   return (
     <div className="min-h-screen bg-[#050508] text-white flex">
@@ -133,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-3 border-t border-white/5">
           <div className="flex items-center gap-3 p-2 rounded-xl glass">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-bold text-xs">
-              {(user?.firstName ?? 'U')[0].toUpperCase()}
+              {((user?.firstName ?? 'U')[0] || 'U').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{user?.firstName ?? 'Entrepreneur'}</p>

@@ -15,9 +15,9 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const planFromQuery = searchParams.get('plan');
 
-  const [firstName, setFirstName] = useState('Aïssatou');
-  const [email, setEmail] = useState('demo@afrilaunch.ai');
-  const [password, setPassword] = useState('demo1234');
+  const [firstName, setFirstName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {

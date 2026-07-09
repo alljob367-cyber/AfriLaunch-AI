@@ -144,12 +144,6 @@
       "namedRegex": "^/api/admin/config(?:/)?$"
     },
     {
-      "page": "/api/admin/mode",
-      "regex": "^/api/admin/mode(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/api/admin/mode(?:/)?$"
-    },
-    {
       "page": "/api/admin/password",
       "regex": "^/api/admin/password(?:/)?$",
       "routeKeys": {},

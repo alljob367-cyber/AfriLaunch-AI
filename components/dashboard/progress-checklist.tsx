@@ -2,8 +2,9 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronRight, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
 export interface ChecklistItem {
   id: string;
@@ -17,26 +18,25 @@ interface ProgressChecklistProps {
   items?: ChecklistItem[];
 }
 
-const defaultItems: ChecklistItem[] = [
-  { id: '1', label: 'Créer votre organisation', description: 'Nommez votre business', completed: true, href: '/dashboard/organization' },
-  { id: '2', label: 'Générer votre identité', description: 'Logo + charte graphique', completed: true, href: '/dashboard/identity' },
-  { id: '3', label: 'Lancer votre site web', description: 'Landing page prête', completed: true, href: '/dashboard/website' },
-  { id: '4', label: 'Connecter les réseaux sociaux', description: 'Au moins 2 comptes', completed: false, href: '/dashboard/social' },
-  { id: '5', label: 'Créer votre premier contenu', description: 'Post ou vidéo IA', completed: false, href: '/dashboard/content' },
-  { id: '6', label: 'Activer les paiements', description: 'Mobile Money ou carte', completed: false, href: '/dashboard/payments' },
-  { id: '7', label: 'Lancer un agent IA', description: 'Branding, Content, etc.', completed: false, href: '/dashboard/agents' },
-  { id: '8', label: 'Planifier une campagne', description: 'Pub ou newsletter', completed: false, href: '/dashboard/campaigns' },
-  { id: '9', label: 'Configurer l\'analytics', description: 'Connecter vos sources', completed: false, href: '/dashboard/analytics' },
-  { id: '10', label: 'Inviter votre équipe', description: 'Membres & rôles', completed: false, href: '/dashboard/team' },
-];
-
 export function ProgressChecklist({ items }: ProgressChecklistProps) {
-  const list = items ?? defaultItems;
+  const list = items;
+
+  if (!list || list.length === 0) {
+    return (
+      <EmptyState
+        icon={Target}
+        title="Parcours non démarré"
+        description="Créez votre organisation pour débloquer votre parcours de configuration étape par étape."
+        action={{ label: 'Créer mon organisation', href: '/dashboard/organization' }}
+        gradient="from-indigo-500 to-violet-600"
+      />
+    );
+  }
 
   return (
     <div className="space-y-1.5">
       <AnimatePresence>
-        {list.map((item, i) => (
+        {list!.map((item, i) => (
           <motion.a
             key={item.id}
             href={item.href ?? '#'}

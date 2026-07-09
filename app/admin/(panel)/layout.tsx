@@ -7,15 +7,10 @@ import Link from 'next/link';
 import {
   Shield, Settings, Database, Bot, CreditCard, Share2, Mail,
   HardDrive, Webhook, ToggleLeft, FileText, Users, LogOut,
-  Loader2, Rocket, AlertTriangle,
+  Loader2, Rocket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/providers/toast-provider';
-
-interface ConfigState {
-  mode: 'demo' | 'real';
-  appName: string;
-}
 
 const navItems = [
   { href: '/admin/general', label: 'Général', icon: Settings, color: 'text-slate-400' },
@@ -37,7 +32,6 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   const { toast } = useToast();
   const [authChecked, setAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [config, setConfig] = useState<ConfigState | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Auth guard
@@ -57,19 +51,6 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
         setAuthChecked(true);
       });
   }, [router]);
-
-  // Load config
-  useEffect(() => {
-    if (!authenticated) return;
-    fetch('/api/admin/config', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.config) {
-          setConfig({ mode: data.config.mode, appName: data.config.appName });
-        }
-      })
-      .catch(() => { /* ignore */ });
-  }, [authenticated]);
 
   const handleLogout = async () => {
     await fetch('/api/admin/auth?action=logout', { method: 'POST', credentials: 'include' });
@@ -120,31 +101,6 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
           </Link>
         </div>
 
-        {/* Mode indicator */}
-        {config && (
-          <div className="p-4 border-b border-white/5">
-            <div className={cn(
-              'flex items-center gap-3 p-3 rounded-xl border',
-              config.mode === 'real'
-                ? 'bg-green-500/10 border-green-500/30'
-                : 'bg-amber-500/10 border-amber-500/30',
-            )}>
-              <div className={cn(
-                'w-2.5 h-2.5 rounded-full',
-                config.mode === 'real' ? 'bg-green-500 animate-pulse' : 'bg-amber-500',
-              )} aria-hidden="true" />
-              <div className="flex-1">
-                <p className="text-xs font-bold uppercase tracking-wide">
-                  {config.mode === 'real' ? 'Mode Réel' : 'Mode Démo'}
-                </p>
-                <p className="text-[10px] text-gray-500">
-                  {config.mode === 'real' ? 'Données réelles actives' : 'Données mockées'}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-3 custom-scrollbar">
           <ul className="space-y-0.5 list-none p-0 m-0">
@@ -174,14 +130,6 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
 
         {/* Footer actions */}
         <div className="p-3 border-t border-white/5 space-y-2">
-          {config?.mode === 'demo' && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                <span>L'app est en <strong>mode démo</strong>. Configurez vos clés API puis passez en mode réel dans Général.</span>
-              </div>
-            </div>
-          )}
           <Link
             href="/dashboard"
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"

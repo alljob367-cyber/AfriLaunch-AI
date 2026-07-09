@@ -1,15 +1,14 @@
-// AfriLaunch AI — Admin > General settings (mode toggle, app info, password)
+// AfriLaunch AI — Admin > General settings (app info, password)
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Shield, Globe, Lock, AlertTriangle, Check, Zap } from 'lucide-react';
+import { Settings, Shield, Lock, Check } from 'lucide-react';
 import {
-  AdminPageHeader, AdminCard, AdminInput, AdminSelect, AdminToggle,
-  SaveBar, LoadingState, StatusBadge,
+  AdminPageHeader, AdminCard, AdminInput, AdminSelect,
+  SaveBar, LoadingState,
 } from '@/components/admin/ui';
 import { useConfig } from '@/hooks/use-config';
 import { useToast } from '@/components/providers/toast-provider';
-import { cn } from '@/lib/utils';
 
 export default function AdminGeneralPage() {
   const { config, loading, saving, save, reload } = useConfig();
@@ -28,7 +27,6 @@ export default function AdminGeneralPage() {
 
   const handleSave = async () => {
     const ok = await save({
-      mode: draft.mode,
       appName: draft.appName,
       appUrl: draft.appUrl,
       locale: draft.locale,
@@ -75,80 +73,12 @@ export default function AdminGeneralPage() {
       <div className="relative z-10 p-6 md:p-8 max-w-4xl mx-auto">
         <AdminPageHeader
           title="Configuration générale"
-          description="Basculez entre mode démo et réel, configurez les informations de l'app et la sécurité admin."
+          description="Informations de l'application et sécurité administrateur."
           icon={Settings}
           color="from-slate-500 to-gray-600"
         />
 
         <div className="space-y-6">
-          {/* MODE TOGGLE — most important */}
-          <AdminCard
-            title="Mode de l'application"
-            description="Détermine si l'app utilise des données mockées (démo) ou de vraies intégrations API (réel)"
-            action={<StatusBadge ok={draft.mode === 'real'} label={draft.mode === 'real' ? 'RÉEL' : 'DÉMO'} />}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => update('mode', 'demo')}
-                className={cn(
-                  'p-5 rounded-2xl border-2 text-left transition-all',
-                  draft.mode === 'demo' ? 'border-amber-500 bg-amber-500/10' : 'border-white/5 glass hover:border-white/15',
-                )}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                    <Zap className="w-5 h-5 text-white" aria-hidden="true" />
-                  </div>
-                  {draft.mode === 'demo' && <Check className="w-5 h-5 text-amber-400" aria-hidden="true" />}
-                </div>
-                <p className="font-bold mb-1">Mode Démo</p>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Données mockées, aucune intégration réelle. Idéal pour tester l'UI sans clés API.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => update('mode', 'real')}
-                className={cn(
-                  'p-5 rounded-2xl border-2 text-left transition-all',
-                  draft.mode === 'real' ? 'border-green-500 bg-green-500/10' : 'border-white/5 glass hover:border-white/15',
-                )}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-white" aria-hidden="true" />
-                  </div>
-                  {draft.mode === 'real' && <Check className="w-5 h-5 text-green-400" aria-hidden="true" />}
-                </div>
-                <p className="font-bold mb-1">Mode Réel</p>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Utilise les clés API configurées. Vrais paiements, vraies IA, vraies integrations.
-                </p>
-              </button>
-            </div>
-
-            {draft.mode === 'real' && (
-              <div className="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <div className="text-xs text-amber-300">
-                    <p className="font-bold mb-1">⚠️ Activation du mode réel</p>
-                    <p>Vérifiez que vous avez configuré au minimum :</p>
-                    <ul className="list-disc list-inside mt-1 space-y-0.5">
-                      <li>Base de données (onglet Base de données)</li>
-                      <li>Provider IA (onglet IA &amp; LLM) — requis pour les agents</li>
-                      <li>Au moins un provider de paiement (onglet Paiements)</li>
-                      <li>Email (onglet Email) — pour les notifications</li>
-                    </ul>
-                    <p className="mt-2">Sans ces configs, certaines fonctionnalités retourneront des erreurs.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </AdminCard>
-
           {/* App info */}
           <AdminCard title="Informations de l'application" description="Nom et URL utilisés dans les emails, métadonnées, etc.">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

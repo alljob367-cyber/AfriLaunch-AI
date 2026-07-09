@@ -6,6 +6,7 @@ import {
   Sparkles, TrendingUp, Clock, Target, ArrowRight, Lightbulb,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
 export interface Recommendation {
   id: string;
@@ -21,45 +22,6 @@ interface AIRecommendationsProps {
   recommendations?: Recommendation[];
 }
 
-const defaultRecs: Recommendation[] = [
-  {
-    id: '1',
-    category: 'timing',
-    title: 'Publiez sur TikTok à 19h30 (GMT)',
-    rationale: 'Vos abonnés africains sont 3× plus actifs entre 19h et 21h. Votre dernier post à 14h n\'a atteint que 23% de votre audience potentielle.',
-    expectedImpact: '+180% de portée estimée',
-    confidence: 92,
-    action: 'Programmer un post',
-  },
-  {
-    id: '2',
-    category: 'content',
-    title: 'Créez une série "Coulisses de mon business"',
-    rationale: 'Les contenus behind-the-scène génèrent 2.4× plus d\'engagement dans votre secteur. Aucun post de ce type publié ce mois-ci.',
-    expectedImpact: '+85% d\'interactions',
-    confidence: 87,
-    action: 'Générer avec Content Agent',
-  },
-  {
-    id: '3',
-    category: 'growth',
-    title: 'Ciblez le marché ivoirien',
-    rationale: 'Vos 3 concurrents directs voient une croissance de +340% en Côte d\'Ivoire. Aucune campagne n\'y est actuellement active.',
-    expectedImpact: '+1 200 abonnés / mois',
-    confidence: 78,
-    action: 'Lancer une campagne',
-  },
-  {
-    id: '4',
-    category: 'audience',
-    title: 'Réengagez 847 abonnés inactifs',
-    rationale: '847 abonnés n\'ont pas interagi depuis 30 jours. Une séquence email automatique pourrait en récupérer 30-40%.',
-    expectedImpact: '+340 abonnés récupérés',
-    confidence: 71,
-    action: 'Créer la séquence',
-  },
-];
-
 const categoryConfig = {
   growth: { Icon: TrendingUp, label: 'Croissance', color: 'from-green-500 to-emerald-600' },
   content: { Icon: Lightbulb, label: 'Contenu', color: 'from-pink-500 to-rose-600' },
@@ -68,11 +30,23 @@ const categoryConfig = {
 } as const;
 
 export function AIRecommendations({ recommendations }: AIRecommendationsProps) {
-  const recs = recommendations ?? defaultRecs;
+  const recs = recommendations;
+
+  if (!recs || recs.length === 0) {
+    return (
+      <EmptyState
+        icon={Sparkles}
+        title="Aucune recommandation IA"
+        description="Configurez un provider IA dans l'admin et lancez vos premiers agents pour recevoir des recommandations personnalisées."
+        action={{ label: 'Configurer l\'IA', href: '/admin/ai' }}
+        gradient="from-violet-500 to-purple-600"
+      />
+    );
+  }
 
   return (
     <div className="space-y-3">
-      {recs.map((rec, i) => {
+      {recs!.map((rec, i) => {
         const cfg = categoryConfig[rec.category];
         return (
           <motion.div

@@ -13,7 +13,6 @@ const SESSIONS_PATH = path.join('/home/z/my-project/data', 'admin-sessions.json'
 // ─── Types ────────────────────────────────────────────────────────────
 export interface AppConfig {
   // App-wide
-  mode: 'demo' | 'real';
   appName: string;
   appUrl: string;
   locale: string;
@@ -122,7 +121,6 @@ export interface AppConfig {
 export function getDefaultConfig(): AppConfig {
   const now = new Date().toISOString();
   return {
-    mode: 'demo',
     appName: 'AfriLaunch AI',
     appUrl: 'https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai',
     locale: 'fr-FR',

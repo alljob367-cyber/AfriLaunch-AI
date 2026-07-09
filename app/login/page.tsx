@@ -12,8 +12,8 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const [email, setEmail] = useState('demo@afrilaunch.ai');
-  const [password, setPassword] = useState('demo1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -113,7 +113,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">
-          🎬 Démo : cliquez sur &quot;Se connecter&quot; pour explorer le dashboard
+          🔒 Connexion sécurisée · Sessions chiffrées
         </p>
       </div>
     </div>
