@@ -1,0 +1,292 @@
+version: "3.9"
+
+# AfriLaunch AI — Docker Compose (Développement)
+# Production: Kubernetes (voir /infrastructure/k8s/)
+
+networks:
+  afrilaunch-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  elasticsearch-data:
+  kafka-data:
+
+services:
+
+  # ─── Base de Données ────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: afrilaunch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: afrilaunch_db
+      POSTGRES_USER: ${DB_USER:-afrilaunch}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=en_US.utf8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - afrilaunch-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: afrilaunch-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD required}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - afrilaunch-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Elasticsearch ──────────────────────────────────────────
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    container_name: afrilaunch-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - afrilaunch-net
+
+  # ─── Apache Kafka ────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: afrilaunch-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - afrilaunch-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: afrilaunch-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    networks:
+      - afrilaunch-net
+
+  # ─── Microservices Backend ───────────────────────────────────
+  auth-service:
+    build:
+      context: ../../src/backend/auth-service
+      dockerfile: Dockerfile
+    container_name: afrilaunch-auth
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks:
+      - afrilaunch-net
+
+  identity-service:
+    build:
+      context: ../../src/backend/identity-service
+      dockerfile: Dockerfile
+    container_name: afrilaunch-identity
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3002
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "3002:3002"
+    networks:
+      - afrilaunch-net
+
+  social-service:
+    build:
+      context: ../../src/backend/social-service
+      dockerfile: Dockerfile
+    container_name: afrilaunch-social
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3003
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - "3003:3003"
+    networks:
+      - afrilaunch-net
+
+  payment-service:
+    build:
+      context: ../../src/backend/payment-service
+      dockerfile: Dockerfile
+    container_name: afrilaunch-payment
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3004
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - "3004:3004"
+    networks:
+      - afrilaunch-net
+
+  content-service:
+    build:
+      context: ../../src/backend/content-service
+      dockerfile: Dockerfile
+    container_name: afrilaunch-content
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3005
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+    ports:
+      - "3005:3005"
+    networks:
+      - afrilaunch-net
+
+  ai-orchestrator:
+    build:
+      context: ../../src/backend/ai-orchestrator
+      dockerfile: Dockerfile
+    container_name: afrilaunch-ai
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 8000
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    networks:
+      - afrilaunch-net
+
+  notification-service:
+    build:
+      context: ../../src/backend/notification-service
+      dockerfile: Dockerfile
+    container_name: afrilaunch-notifications
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3007
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/afrilaunch_db
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "3007:3007"
+    networks:
+      - afrilaunch-net
+
+  # ─── Frontend ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../../src/frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:80}
+    container_name: afrilaunch-frontend
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    networks:
+      - afrilaunch-net
+    depends_on:
+      - auth-service
+      - identity-service
+      - ai-orchestrator
+
+  # ─── API Gateway (Nginx) ─────────────────────────────────────
+  gateway:
+    image: nginx:alpine
+    container_name: afrilaunch-gateway
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - afrilaunch-net
+    depends_on:
+      - frontend
+      - auth-service
+      - ai-orchestrator
+
+  # ─── Monitoring ──────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: afrilaunch-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - afrilaunch-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: afrilaunch-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - ./monitoring/grafana:/var/lib/grafana
+    ports:
+      - "3100:3000"
+    networks:
+      - afrilaunch-net
+    depends_on:
+      - prometheus

@@ -1,0 +1,8 @@
+{
+  "/(dashboard)/dashboard/page": "/dashboard",
+  "/(marketing)/page": "/",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/login/page": "/login",
+  "/register/page": "/register"
+}
