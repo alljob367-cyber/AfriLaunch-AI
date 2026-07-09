@@ -10,7 +10,7 @@ import {
 import { useConfig } from '@/hooks/use-config';
 import type { AppConfig } from '@/lib/config-store';
 
-type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'custom';
+type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'custom';
 
 type ProviderMap = AppConfig['ai']['providers'];
 
@@ -20,6 +20,7 @@ const PROVIDER_META: Record<ProviderKey, { label: string; defaultModel: string; 
   gemini: { label: 'Google Gemini', defaultModel: 'gemini-1.5-pro', gradient: 'from-blue-500 to-sky-600' },
   zai: { label: 'Z.ai (GLM)', defaultModel: 'glm-4.6', gradient: 'from-violet-500 to-purple-600' },
   mistral: { label: 'Mistral AI', defaultModel: 'mistral-large-latest', gradient: 'from-rose-500 to-orange-600', description: 'LLM français — idéal pour le marché africain francophone' },
+  groq: { label: 'Groq', defaultModel: 'llama-3.3-70b-versatile', gradient: 'from-orange-500 to-red-600', description: 'Inférence ultra-rapide (Llama, Mixtral, Gemma) — idéal pour les agents temps réel' },
   custom: { label: 'Custom (OpenAI-compatible)', defaultModel: 'your-model', gradient: 'from-gray-500 to-slate-600' },
 };
 
@@ -120,6 +121,7 @@ export default function AdminAiPage() {
             const provider = draft.ai.providers[key];
             const customProvider = key === 'custom' ? (provider as ProviderMap['custom']) : null;
             const mistralProvider = key === 'mistral' ? (provider as ProviderMap['mistral']) : null;
+            const groqProvider = key === 'groq' ? (provider as ProviderMap['groq']) : null;
             const isConfigured = !!provider.apiKey || (!!customProvider && !!customProvider.baseUrl);
             return (
               <AdminCard
@@ -157,20 +159,29 @@ export default function AdminAiPage() {
                       hint="Endpoint officiel Mistral. Ne changez que si vous utilisez un proxy."
                     />
                   )}
+                  {key === 'groq' && groqProvider && (
+                    <AdminInput
+                      label="Endpoint API"
+                      value={groqProvider.endpoint}
+                      onChange={(v) => updateProvider('groq', { endpoint: v })}
+                      placeholder="https://api.groq.com/openai/v1"
+                      hint="Endpoint officiel Groq. Ne changez que si vous utilisez un proxy."
+                    />
+                  )}
                   <AdminInput
                     label="Clé API"
                     value={provider.apiKey}
                     onChange={(v) => updateProvider(key, { apiKey: v })}
                     secret
                     placeholder={key === 'custom' ? 'sk-... (optionnel)' : 'sk-...'}
-                    hint={key === 'mistral' ? 'Clé API depuis console.mistral.ai → API Keys' : (key === 'custom' ? 'Laissez vide si votre endpoint n\'requiert pas d\'authentification' : undefined)}
+                    hint={key === 'mistral' ? 'Clé API depuis console.mistral.ai → API Keys' : (key === 'groq' ? 'Clé API depuis console.groq.com → API Keys (format: gsk_...)' : (key === 'custom' ? 'Laissez vide si votre endpoint n\'requiert pas d\'authentification' : undefined))}
                   />
                   <AdminInput
                     label="Modèle"
                     value={provider.model}
                     onChange={(v) => updateProvider(key, { model: v })}
                     placeholder={meta.defaultModel}
-                    hint={key === 'mistral' ? 'Modèles disponibles: mistral-large-latest, mistral-medium-latest, mistral-small-latest, open-mistral-7b, open-mixtral-8x7b' : `Modèle par défaut: ${meta.defaultModel}`}
+                    hint={key === 'mistral' ? 'Modèles disponibles: mistral-large-latest, mistral-medium-latest, mistral-small-latest, open-mistral-7b, open-mixtral-8x7b' : (key === 'groq' ? 'Modèles: llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768, gemma2-9b-it' : `Modèle par défaut: ${meta.defaultModel}`)}
                   />
                   {key === 'mistral' && (
                     <div className="flex flex-wrap gap-2">
@@ -179,6 +190,20 @@ export default function AdminAiPage() {
                           key={m}
                           type="button"
                           onClick={() => updateProvider('mistral', { model: m })}
+                          className="text-xs px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-colors"
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {key === 'groq' && (
+                    <div className="flex flex-wrap gap-2">
+                      {['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => updateProvider('groq', { model: m })}
                           className="text-xs px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-colors"
                         >
                           {m}

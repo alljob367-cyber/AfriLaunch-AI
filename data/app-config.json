@@ -7,9 +7,9 @@
   "adminPasswordHash": null,
   "adminEmail": "admin@afrilaunch.ai",
   "database": {
-    "provider": "sqlite",
+    "provider": "postgresql",
     "url": "file:/home/z/my-project/db/custom.db",
-    "ssl": false
+    "ssl": true
   },
   "auth": {
     "jwtSecret": "4f8303eb4e04c32637e951640d1c73f3bc5c12595dec65ad72fa6c8e40344672",
@@ -66,6 +66,12 @@
         "apiKey": "",
         "model": "",
         "enabled": false
+      },
+      "groq": {
+        "apiKey": "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",
+        "model": "llama-3.3-70b-versatile",
+        "endpoint": "https://api.groq.com/openai/v1",
+        "enabled": true
       }
     },
     "fallback": true,
@@ -196,8 +202,8 @@
     "analytics": true,
     "ecommerce": false,
     "ai": true,
-    "multiTenant": false,
-    "whiteLabel": false,
+    "multiTenant": true,
+    "whiteLabel": true,
     "api": false
   },
   "logging": {
@@ -205,6 +211,6 @@
     "retention": 30
   },
   "createdAt": "2026-07-09T05:10:48.465Z",
-  "updatedAt": "2026-07-09T05:18:42.267Z",
-  "version": 4
+  "updatedAt": "2026-07-09T05:52:31.922Z",
+  "version": 8
 }
