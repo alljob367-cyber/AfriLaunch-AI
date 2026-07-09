@@ -26,6 +26,7 @@
   "/admin/(panel)/users/page": "app/admin/(panel)/users/page.js",
   "/admin/(panel)/webhooks/page": "app/admin/(panel)/webhooks/page.js",
   "/admin/login/page": "app/admin/login/page.js",
+  "/admin/page": "app/admin/page.js",
   "/api/admin/auth/route": "app/api/admin/auth/route.js",
   "/api/admin/config/route": "app/api/admin/config/route.js",
   "/api/admin/mode/route": "app/api/admin/mode/route.js",
