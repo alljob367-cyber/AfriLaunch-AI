@@ -1,5 +1,5 @@
 {
-  "mode": "demo",
+  "mode": "real",
   "appName": "AfriLaunch AI",
   "appUrl": "https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai",
   "locale": "fr-FR",
@@ -205,6 +205,6 @@
     "retention": 30
   },
   "createdAt": "2026-07-09T05:10:48.465Z",
-  "updatedAt": "2026-07-09T05:10:48.581Z",
-  "version": 3
+  "updatedAt": "2026-07-09T05:18:42.267Z",
+  "version": 4
 }
