@@ -94,6 +94,15 @@ export interface AppConfig {
     inboundUrl: string;
     events: string[]; // e.g. ['payment.success', 'user.signup', 'agent.run']
   };
+  // Telegram Bot
+  telegram: {
+    botToken: string;
+    webhookSecret: string;
+    enabled: boolean;
+    welcomeMessage: string;
+    defaultAgent: string; // agent id used when no /command is specified
+    allowedUserIds: number[]; // empty = allow everyone
+  };
   // Feature flags
   features: {
     agents: boolean;
@@ -192,6 +201,14 @@ export function getDefaultConfig(): AppConfig {
     webhooks: {
       inboundUrl: '',
       events: ['payment.success', 'user.signup', 'agent.run'],
+    },
+    telegram: {
+      botToken: '',
+      webhookSecret: crypto.randomBytes(16).toString('hex'),
+      enabled: false,
+      welcomeMessage: '👋 Bienvenue sur AfriLaunch AI Bot !\n\nJe dispose de 13 agents IA spécialisés pour votre business africain. Utilisez les commandes ci-dessous pour interagir avec un agent spécifique :\n\n/branding — Identité de marque\n/content — Création de contenu\n/seo — Optimisation SEO\n/ads — Publicités\n/support — Service client\n/analytics — Analytics\n/ecommerce — E-commerce\n/email — Email marketing\n/video — Scripts vidéo\n/translate — Traduction\n/dev — Code & intégrations\n/legal — Contrats & conformité\n/growth — Stratégie de croissance\n\n/agents — Liste tous les agents\n/help — Aide\n\nOu envoyez simplement un message et l\'agent par défaut vous répondra.',
+      defaultAgent: 'growth',
+      allowedUserIds: [],
     },
     features: {
       agents: true,

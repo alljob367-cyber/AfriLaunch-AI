@@ -602,6 +602,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/admin/telegram": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin/telegram",
+      "dataRoute": "/admin/telegram.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/admin/users": {
       "experimentalBypassFor": [
         {
@@ -756,8 +781,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "6aa3cfefab30f2f18020edc654b10054",
-    "previewModeSigningKey": "dc7fbaf317b4eb9f1e06a3fc3925fa862828ff92d0818a97ae29e5740a39014c",
-    "previewModeEncryptionKey": "3f0eaa5ac368024f08577314768fe5c73c5b92cfe7eb21c3445f3fd9d77e4d14"
+    "previewModeId": "6fd711856b16cc1edd1fa7e4a5cd4ed9",
+    "previewModeSigningKey": "5724aec3065da080d854fea32d00f6b266d07b3d49056b891b334c27e68afb7f",
+    "previewModeEncryptionKey": "ad028390ed005c16fb42df686679af902335ce44153073fdd5d43f12a90a8b4e"
   }
 }

@@ -23,6 +23,7 @@
   "/admin/(panel)/payments/page": "/admin/payments",
   "/admin/(panel)/social/page": "/admin/social",
   "/admin/(panel)/storage/page": "/admin/storage",
+  "/admin/(panel)/telegram/page": "/admin/telegram",
   "/admin/(panel)/users/page": "/admin/users",
   "/admin/(panel)/webhooks/page": "/admin/webhooks",
   "/admin/login/page": "/admin/login",
@@ -31,6 +32,9 @@
   "/api/admin/config/route": "/api/admin/config",
   "/api/admin/password/route": "/api/admin/password",
   "/api/admin/test/route": "/api/admin/test",
+  "/api/telegram/setup/route": "/api/telegram/setup",
+  "/api/telegram/status/route": "/api/telegram/status",
+  "/api/telegram/webhook/route": "/api/telegram/webhook",
   "/login/page": "/login",
   "/register/page": "/register"
 }

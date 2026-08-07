@@ -245,6 +245,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/admin/(panel)/telegram/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/telegram">> = Specific
+  const handler = {} as typeof import("../../app/admin/(panel)/telegram/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/admin/(panel)/users/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/admin/users">> = Specific
@@ -330,6 +339,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/test">> = Specific
   const handler = {} as typeof import("../../app/api/admin/test/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/telegram/setup/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/telegram/setup">> = Specific
+  const handler = {} as typeof import("../../app/api/telegram/setup/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/telegram/status/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/telegram/status">> = Specific
+  const handler = {} as typeof import("../../app/api/telegram/status/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/telegram/webhook/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/telegram/webhook">> = Specific
+  const handler = {} as typeof import("../../app/api/telegram/webhook/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

@@ -120,6 +120,12 @@
       "namedRegex": "^/admin/storage(?:/)?$"
     },
     {
+      "page": "/admin/telegram",
+      "regex": "^/admin/telegram(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/telegram(?:/)?$"
+    },
+    {
       "page": "/admin/users",
       "regex": "^/admin/users(?:/)?$",
       "routeKeys": {},
@@ -154,6 +160,24 @@
       "regex": "^/api/admin/test(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/admin/test(?:/)?$"
+    },
+    {
+      "page": "/api/telegram/setup",
+      "regex": "^/api/telegram/setup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/telegram/setup(?:/)?$"
+    },
+    {
+      "page": "/api/telegram/status",
+      "regex": "^/api/telegram/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/telegram/status(?:/)?$"
+    },
+    {
+      "page": "/api/telegram/webhook",
+      "regex": "^/api/telegram/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/telegram/webhook(?:/)?$"
     },
     {
       "page": "/dashboard",
