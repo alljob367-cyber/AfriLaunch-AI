@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   Rocket, LayoutDashboard, Palette, Globe, PenSquare, Share2,
   Bot, Megaphone, CreditCard, BarChart3, Users, Settings,
-  ChevronRight, Sparkles,
+  ChevronRight, Sparkles, Store, Gift, Send,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -42,6 +42,10 @@ const navSections = [
       { href: '/dashboard/payments', label: 'Paiements', icon: CreditCard },
       { href: '/dashboard/team', label: 'Équipe', icon: Users },
       { href: '/dashboard/organization', label: 'Organisation', icon: Settings },
+      { href: '/dashboard/subscription', label: 'Abonnement', icon: CreditCard, color: 'text-indigo-400' },
+      { href: '/dashboard/marketplace', label: 'Marketplace', icon: Store, color: 'text-pink-400' },
+      { href: '/dashboard/referral', label: 'Parrainage', icon: Gift, color: 'text-emerald-400' },
+      { href: '/dashboard/telegram-link', label: 'Lier Telegram', icon: Send, color: 'text-sky-400' },
     ],
   },
 ];

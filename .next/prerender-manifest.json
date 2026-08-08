@@ -102,6 +102,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/dashboard/billing": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/billing",
+      "dataRoute": "/dashboard/billing.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/dashboard/campaigns": {
       "experimentalBypassFor": [
         {
@@ -167,6 +192,31 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/dashboard/identity",
       "dataRoute": "/dashboard/identity.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/dashboard/marketplace": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/marketplace",
+      "dataRoute": "/dashboard/marketplace.rsc",
       "prefetchDataRoute": null,
       "allowHeader": [
         "host",
@@ -277,6 +327,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/dashboard/referral": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/referral",
+      "dataRoute": "/dashboard/referral.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/dashboard/social": {
       "experimentalBypassFor": [
         {
@@ -302,6 +377,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/dashboard/subscription": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/subscription",
+      "dataRoute": "/dashboard/subscription.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/dashboard/team": {
       "experimentalBypassFor": [
         {
@@ -317,6 +417,31 @@
       "initialRevalidateSeconds": false,
       "srcRoute": "/dashboard/team",
       "dataRoute": "/dashboard/team.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/dashboard/telegram-link": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/telegram-link",
+      "dataRoute": "/dashboard/telegram-link.rsc",
       "prefetchDataRoute": null,
       "allowHeader": [
         "host",
@@ -781,8 +906,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "6fd711856b16cc1edd1fa7e4a5cd4ed9",
-    "previewModeSigningKey": "5724aec3065da080d854fea32d00f6b266d07b3d49056b891b334c27e68afb7f",
-    "previewModeEncryptionKey": "ad028390ed005c16fb42df686679af902335ce44153073fdd5d43f12a90a8b4e"
+    "previewModeId": "ac9cba6bae26f1c4e0e19c66940be6c2",
+    "previewModeSigningKey": "241b03b8d2e5d042f360f5a74c9c21b9822b80fe3ecd0556943fa77d1fe03191",
+    "previewModeEncryptionKey": "c82fc05e9954dbcb058b528f1d8f5eab1eda4c5b9d801cc194e1036dd95242e3"
   }
 }

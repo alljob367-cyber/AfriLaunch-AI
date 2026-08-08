@@ -2,22 +2,21 @@
 'use client';
 
 import Link from 'next/link';
-import { Rocket, ArrowRight, Mail, Lock, User, Loader2 } from 'lucide-react';
-import { useAuth } from '@/components/providers/auth-provider';
+import { Rocket, ArrowRight, Mail, Lock, User, Loader2, Gift } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { useToast } from '@/components/providers/toast-provider';
 
 function RegisterForm() {
-  const { register } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const planFromQuery = searchParams.get('plan');
+  const refCode = searchParams.get('ref') ?? '';
 
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referredBy, setReferredBy] = useState(refCode);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -25,18 +24,33 @@ function RegisterForm() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      await register({ firstName, email, password });
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          firstName,
+          email,
+          password,
+          referredBy: referredBy || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        toast({ title: 'Échec de l\'inscription', description: data.error || 'Erreur', variant: 'error' });
+        setSubmitting(false);
+        return;
+      }
       toast({
-        title: 'Compte créé !',
-        description: planFromQuery
-          ? `Bienvenue sur AfriLaunch AI — plan ${planFromQuery} activé 🎉`
-          : 'Bienvenue sur AfriLaunch AI 🎉',
+        title: 'Compte créé ! 🎉',
+        description: referredBy
+          ? 'Bienvenue ! Vous avez reçu 50 crédits de parrainage bonus.'
+          : 'Bienvenue sur AfriLaunch AI. 50 crédits offerts pour commencer.',
         variant: 'success',
       });
       setTimeout(() => router.push('/dashboard'), 800);
     } catch (err) {
-      console.error('[register]', err);
-      toast({ title: 'Erreur d\'inscription', description: 'Veuillez réessayer.', variant: 'error' });
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
       setSubmitting(false);
     }
   }
@@ -56,7 +70,7 @@ function RegisterForm() {
 
         <div className="glass rounded-3xl p-8 border border-white/10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 mb-4">
-            <span className="text-xs font-bold text-green-400">✓ Essai gratuit 14 jours</span>
+            <span className="text-xs font-bold text-green-400">✓ 50 crédits offerts à l'inscription</span>
           </div>
           <h1 className="text-2xl font-bold mb-2">Lancez votre business 🚀</h1>
           <p className="text-sm text-gray-400 mb-8">Aucune carte bancaire requise</p>
@@ -102,14 +116,34 @@ function RegisterForm() {
                   id="register-password"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-transparent flex-1 outline-none text-sm"
                   autoComplete="new-password"
+                  placeholder="Minimum 8 caractères"
                 />
               </div>
             </div>
+
+            {referredBy && (
+              <div>
+                <label htmlFor="register-ref" className="text-xs font-semibold text-gray-400 mb-1.5 block flex items-center gap-1">
+                  <Gift className="w-3 h-3 text-emerald-400" aria-hidden="true" />
+                  CODE DE PARRAINAGE
+                </label>
+                <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 border border-emerald-500/30 bg-emerald-500/5">
+                  <input
+                    id="register-ref"
+                    type="text"
+                    value={referredBy}
+                    onChange={(e) => setReferredBy(e.target.value)}
+                    className="bg-transparent flex-1 outline-none text-sm font-mono text-emerald-300"
+                  />
+                  <span className="text-xs text-emerald-400 font-semibold">+50 crédits</span>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -117,15 +151,9 @@ function RegisterForm() {
               className="w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  Création...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Création...</>
               ) : (
-                <>
-                  Créer mon compte gratuit
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </>
+                <>Créer mon compte gratuit <ArrowRight className="w-4 h-4" aria-hidden="true" /></>
               )}
             </button>
           </form>
@@ -147,8 +175,6 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
-  // useSearchParams() must be inside a Suspense boundary per Next.js 16 requirements
-  // for static rendering.
   return (
     <Suspense fallback={null}>
       <RegisterForm />

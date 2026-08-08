@@ -1,0 +1,3 @@
+{
+  "/api/checkout/flutterwave-webhook/route": "app/api/checkout/flutterwave-webhook/route.js"
+}

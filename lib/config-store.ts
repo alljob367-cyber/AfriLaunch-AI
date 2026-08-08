@@ -103,6 +103,33 @@ export interface AppConfig {
     defaultAgent: string; // agent id used when no /command is specified
     allowedUserIds: number[]; // empty = allow everyone
   };
+  // Marketplace (premium agents created by community/partners)
+  marketplace: {
+    enabled: boolean;
+    revenueSharePercent: number; // percentage the platform takes (default 30)
+    agents: Array<{
+      id: string;
+      name: string;
+      author: string;
+      description: string;
+      category: string;
+      priceMonthly: number;
+      systemPrompt: string;
+      command: string;
+      icon: string; // emoji or lucide icon name
+      color: string;
+      rating: number;
+      installs: number;
+      featured: boolean;
+    }>;
+  };
+  // Referral program
+  referral: {
+    enabled: boolean;
+    rewardCreditsReferrer: number; // credits given to referrer
+    rewardCreditsReferee: number; // credits given to new user
+    minPayoutAmount: number; // USD
+  };
   // Feature flags
   features: {
     agents: boolean;
@@ -209,6 +236,108 @@ export function getDefaultConfig(): AppConfig {
       welcomeMessage: '👋 Bienvenue sur AfriLaunch AI Bot !\n\nJe dispose de 13 agents IA spécialisés pour votre business africain. Utilisez les commandes ci-dessous pour interagir avec un agent spécifique :\n\n/branding — Identité de marque\n/content — Création de contenu\n/seo — Optimisation SEO\n/ads — Publicités\n/support — Service client\n/analytics — Analytics\n/ecommerce — E-commerce\n/email — Email marketing\n/video — Scripts vidéo\n/translate — Traduction\n/dev — Code & intégrations\n/legal — Contrats & conformité\n/growth — Stratégie de croissance\n\n/agents — Liste tous les agents\n/help — Aide\n\nOu envoyez simplement un message et l\'agent par défaut vous répondra.',
       defaultAgent: 'growth',
       allowedUserIds: [],
+    },
+    marketplace: {
+      enabled: true,
+      revenueSharePercent: 30,
+      agents: [
+        {
+          id: 'agent-immobilier-senegal',
+          name: 'Agent Immobilier Sénégal',
+          author: 'Aïssatou D.',
+          description: 'Expert en immobilier à Dakar, Saly, Thiès. Estimation biens, conseils investissement locatif, lois Alur Sénégal, taxes foncières.',
+          category: 'Immobilier',
+          priceMonthly: 9.99,
+          systemPrompt: 'Tu es l\'Agent Immobilier Sénégal, expert du marché immobilier dakarois et sénégalais. Tu connais les prix au m² par quartier, les lois Alur, les taxes foncières, et les opportunités d\'investissement locatif. Réponds en français avec des chiffres précis et des conseils actionnables.',
+          command: 'immobilier',
+          icon: '🏠',
+          color: 'from-amber-500 to-yellow-600',
+          rating: 4.8,
+          installs: 1240,
+          featured: true,
+        },
+        {
+          id: 'agent-restaurant-abidjan',
+          name: 'Agent Restaurant Abidjan',
+          author: 'Kwame M.',
+          description: 'Spécialiste restauration à Abidjan : menu, pricing, livraison, hygiène, gestion staff, marketing food.',
+          category: 'Restauration',
+          priceMonthly: 7.99,
+          systemPrompt: 'Tu es l\'Agent Restaurant Abidjan, expert en gestion de restaurant à Abidjan et en Côte d\'Ivoire. Tu aides avec les menus, pricing, normes hygiène, recrutement staff, marketing food delivery (Glovo, Deliveroo). Réponds en français.',
+          command: 'resto',
+          icon: '🍽️',
+          color: 'from-orange-500 to-red-600',
+          rating: 4.6,
+          installs: 890,
+          featured: false,
+        },
+        {
+          id: 'agent-import-export-maroc',
+          name: 'Agent Import-Export Maroc',
+          author: 'Mehdi B.',
+          description: 'Import-export Maroc-Afrique: douane, codes HS, certificats origine, logistique Tanger Med, paiement international.',
+          category: 'Commerce',
+          priceMonthly: 14.99,
+          systemPrompt: 'Tu es l\'Agent Import-Export Maroc, expert en commerce international depuis/vers le Maroc. Tu connais les codes douaniers HS, les certificats d\'origine, la logistique portuaire (Tanger Med, Casablanca), et les moyens de paiement internationaux (L/C, remise documentaire). Réponds en français.',
+          command: 'import',
+          icon: '📦',
+          color: 'from-emerald-500 to-teal-600',
+          rating: 4.9,
+          installs: 567,
+          featured: true,
+        },
+        {
+          id: 'agent-agritech-kenya',
+          name: 'Agent AgriTech Kenya',
+          author: 'Grace W.',
+          description: 'Agriculture moderne Kenya: cultures, irrigation, M-Pesa payments, agritech, export légumes UE.',
+          category: 'Agriculture',
+          priceMonthly: 11.99,
+          systemPrompt: 'Tu es the AgriTech Kenya Agent, expert in modern Kenyan agriculture. You advise on crops (tea, coffee, flowers, vegetables), irrigation, M-Pesa integration, agritech solutions, and EU export regulations. Reply in English or Swahili as appropriate.',
+          command: 'agri',
+          icon: '🌱',
+          color: 'from-green-500 to-emerald-600',
+          rating: 4.7,
+          installs: 423,
+          featured: false,
+        },
+        {
+          id: 'agent-fintech-nigeria',
+          name: 'Agent FinTech Nigeria',
+          author: 'Chidi O.',
+          description: 'FinTech Nigeria: CBN regulations, Paystack/Flutterwave integration, mobile money, lending, KYC/AML.',
+          category: 'Finance',
+          priceMonthly: 19.99,
+          systemPrompt: 'Tu es l\'Agent FinTech Nigeria, expert en services financiers digitaux au Nigeria. Tu connais les régulations CBN, l\'intégration Paystack/Flutterwave, mobile money, prêt digital, KYC/AML. Réponds en anglais avec précision technique.',
+          command: 'fintech',
+          icon: '💳',
+          color: 'from-indigo-500 to-violet-600',
+          rating: 4.8,
+          installs: 1102,
+          featured: true,
+        },
+        {
+          id: 'agent-fashion-lagos',
+          name: 'Agent Fashion Lagos',
+          author: 'Zainab A.',
+          description: 'Mode & fashion Lagos: design, production, sourcing ankara, e-commerce, Instagram marketing, pop-up stores.',
+          category: 'Mode',
+          priceMonthly: 8.99,
+          systemPrompt: 'Tu es l\'Agent Fashion Lagos, expert en industrie de la mode nigériane. Tu aides avec le design, la production, le sourcing de tissus (ankara, aso-oke), e-commerce, marketing Instagram, et pop-up stores. Réponds en anglais.',
+          command: 'fashion',
+          icon: '👗',
+          color: 'from-pink-500 to-rose-600',
+          rating: 4.5,
+          installs: 678,
+          featured: false,
+        },
+      ],
+    },
+    referral: {
+      enabled: true,
+      rewardCreditsReferrer: 100,
+      rewardCreditsReferee: 50,
+      minPayoutAmount: 50,
     },
     features: {
       agents: true,

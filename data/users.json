@@ -1,0 +1,46 @@
+{
+  "users": [
+    {
+      "id": "usr_0afe7f03eb40504f71b014f0",
+      "email": "test@example.com",
+      "firstName": "Test",
+      "passwordHash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "createdAt": "2026-08-08T15:43:48.110Z",
+      "plan": "free",
+      "planStatus": "active",
+      "planStartedAt": "2026-08-08T15:43:48.110Z",
+      "planEndsAt": null,
+      "credits": 149,
+      "creditsUsedThisMonth": 1,
+      "creditsResetAt": "2026-09-08T15:43:48.110Z",
+      "referralCode": "test2733b1",
+      "referredBy": null,
+      "referralCount": 1,
+      "referralCreditsEarned": 100,
+      "installedAgents": [],
+      "lastLoginAt": "2026-08-08T15:43:48.226Z",
+      "updatedAt": "2026-08-08T15:43:58.645Z"
+    },
+    {
+      "id": "usr_9cf18a0d854cab0cdfa4019d",
+      "email": "ami@example.com",
+      "firstName": "Ami",
+      "passwordHash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "createdAt": "2026-08-08T15:43:58.645Z",
+      "plan": "free",
+      "planStatus": "active",
+      "planStartedAt": "2026-08-08T15:43:58.645Z",
+      "planEndsAt": null,
+      "credits": 50,
+      "creditsUsedThisMonth": 0,
+      "creditsResetAt": "2026-09-08T15:43:58.645Z",
+      "referralCode": "amic74472",
+      "referredBy": "test2733b1",
+      "referralCount": 0,
+      "referralCreditsEarned": 0,
+      "installedAgents": [],
+      "lastLoginAt": null,
+      "updatedAt": "2026-08-08T15:43:58.645Z"
+    }
+  ]
+}

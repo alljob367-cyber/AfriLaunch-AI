@@ -117,3 +117,37 @@ Stage Summary:
 - Mock data fully removed
 - Organization page now has a create form for first-time users
 - Onboarding page shows 0% progress
+---
+Task ID: monetization-api
+Agent: general-purpose
+Task: Create 15 API routes for monetization (auth, credits, plans, checkout, marketplace, referral)
+
+Work Log:
+- Created lib/auth-helpers.ts
+- Created api/auth/register, login, logout, me
+- Created api/users/credits, plan, telegram-link
+- Created api/checkout/session, stripe-webhook, flutterwave-webhook, flutterwave-redirect, flutterwave-confirm
+- Created api/marketplace/agents, install
+- Created api/referral/stats
+
+Stage Summary:
+- 16 files created (15 API routes + 1 helper)
+- Full monetization backend: user auth, credits, plans, checkout (Stripe + Flutterwave), marketplace, referral
+- All routes use cookie-based sessions, proper error handling
+
+---
+Task ID: monetization-pages
+Agent: general-purpose
+Task: Create 4 dashboard pages (subscription, marketplace, referral, billing) + update sidebar nav
+
+Work Log:
+- Created subscription/page.tsx (plan, credits, packs, checkout)
+- Created marketplace/page.tsx (agent listing + install)
+- Created referral/page.tsx (code, stats, share)
+- Created billing/page.tsx (invoices + payment methods)
+- Updated (dashboard)/layout.tsx (added 3 nav items)
+
+Stage Summary:
+- 4 new pages + 1 layout update
+- Full monetization UI: subscription management, marketplace browsing, referral program, billing history
+- All pages use useAuth, useToast, fetch with credentials

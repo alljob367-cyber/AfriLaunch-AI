@@ -162,6 +162,78 @@
       "namedRegex": "^/api/admin/test(?:/)?$"
     },
     {
+      "page": "/api/auth/login",
+      "regex": "^/api/auth/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/login(?:/)?$"
+    },
+    {
+      "page": "/api/auth/logout",
+      "regex": "^/api/auth/logout(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/logout(?:/)?$"
+    },
+    {
+      "page": "/api/auth/me",
+      "regex": "^/api/auth/me(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/me(?:/)?$"
+    },
+    {
+      "page": "/api/auth/register",
+      "regex": "^/api/auth/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/auth/register(?:/)?$"
+    },
+    {
+      "page": "/api/checkout/flutterwave-confirm",
+      "regex": "^/api/checkout/flutterwave\\-confirm(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/checkout/flutterwave\\-confirm(?:/)?$"
+    },
+    {
+      "page": "/api/checkout/flutterwave-redirect",
+      "regex": "^/api/checkout/flutterwave\\-redirect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/checkout/flutterwave\\-redirect(?:/)?$"
+    },
+    {
+      "page": "/api/checkout/flutterwave-webhook",
+      "regex": "^/api/checkout/flutterwave\\-webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/checkout/flutterwave\\-webhook(?:/)?$"
+    },
+    {
+      "page": "/api/checkout/session",
+      "regex": "^/api/checkout/session(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/checkout/session(?:/)?$"
+    },
+    {
+      "page": "/api/checkout/stripe-webhook",
+      "regex": "^/api/checkout/stripe\\-webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/checkout/stripe\\-webhook(?:/)?$"
+    },
+    {
+      "page": "/api/marketplace/agents",
+      "regex": "^/api/marketplace/agents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/marketplace/agents(?:/)?$"
+    },
+    {
+      "page": "/api/marketplace/install",
+      "regex": "^/api/marketplace/install(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/marketplace/install(?:/)?$"
+    },
+    {
+      "page": "/api/referral/stats",
+      "regex": "^/api/referral/stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/referral/stats(?:/)?$"
+    },
+    {
       "page": "/api/telegram/setup",
       "regex": "^/api/telegram/setup(?:/)?$",
       "routeKeys": {},
@@ -178,6 +250,24 @@
       "regex": "^/api/telegram/webhook(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/telegram/webhook(?:/)?$"
+    },
+    {
+      "page": "/api/users/credits",
+      "regex": "^/api/users/credits(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users/credits(?:/)?$"
+    },
+    {
+      "page": "/api/users/plan",
+      "regex": "^/api/users/plan(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users/plan(?:/)?$"
+    },
+    {
+      "page": "/api/users/telegram-link",
+      "regex": "^/api/users/telegram\\-link(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users/telegram\\-link(?:/)?$"
     },
     {
       "page": "/dashboard",
@@ -198,6 +288,12 @@
       "namedRegex": "^/dashboard/analytics(?:/)?$"
     },
     {
+      "page": "/dashboard/billing",
+      "regex": "^/dashboard/billing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/billing(?:/)?$"
+    },
+    {
       "page": "/dashboard/campaigns",
       "regex": "^/dashboard/campaigns(?:/)?$",
       "routeKeys": {},
@@ -214,6 +310,12 @@
       "regex": "^/dashboard/identity(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/identity(?:/)?$"
+    },
+    {
+      "page": "/dashboard/marketplace",
+      "regex": "^/dashboard/marketplace(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/marketplace(?:/)?$"
     },
     {
       "page": "/dashboard/onboarding",
@@ -234,16 +336,34 @@
       "namedRegex": "^/dashboard/payments(?:/)?$"
     },
     {
+      "page": "/dashboard/referral",
+      "regex": "^/dashboard/referral(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/referral(?:/)?$"
+    },
+    {
       "page": "/dashboard/social",
       "regex": "^/dashboard/social(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/social(?:/)?$"
     },
     {
+      "page": "/dashboard/subscription",
+      "regex": "^/dashboard/subscription(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/subscription(?:/)?$"
+    },
+    {
       "page": "/dashboard/team",
       "regex": "^/dashboard/team(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/team(?:/)?$"
+    },
+    {
+      "page": "/dashboard/telegram-link",
+      "regex": "^/dashboard/telegram\\-link(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/telegram\\-link(?:/)?$"
     },
     {
       "page": "/dashboard/website",

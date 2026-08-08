@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
 import { AGENTS, getAgentByCommand, routeMessage, getAgentsListText } from '@/lib/agents';
 import { runAI } from '@/lib/ai-runner';
+import { getUserByTelegramId, consumeCredits, PLANS } from '@/lib/user-store';
 
 interface TelegramMessage {
   message_id: number;
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true });
       }
       // Process with this specific agent
-      await processWithAgent(agent.id, rest, chatId, userName, config);
+      await processWithAgent(agent.id, rest, chatId, userName, config, msg.from?.id);
       return NextResponse.json({ ok: true });
     }
 
@@ -115,7 +116,7 @@ export async function POST(req: NextRequest) {
   const agentId = routedAgent.id !== config.telegram.defaultAgent
     ? routedAgent.id
     : config.telegram.defaultAgent;
-  await processWithAgent(agentId, text, chatId, userName, config);
+  await processWithAgent(agentId, text, chatId, userName, config, msg.from?.id);
   return NextResponse.json({ ok: true });
 }
 
@@ -125,11 +126,54 @@ async function processWithAgent(
   chatId: number,
   userName: string,
   config: Awaited<ReturnType<typeof getConfig>>,
+  telegramUserId?: number,
 ) {
   const agent = AGENTS.find((a) => a.id === agentId);
   if (!agent) {
     await sendTelegramMessage(config.telegram.botToken, chatId, '❌ Agent introuvable.');
     return;
+  }
+
+  // ─── Authentication & credits check ─────────────────────────────────
+  // Every user must have an AfriLaunch account linked to their Telegram ID.
+  // If not linked → instruct them to register on the website.
+  // If linked but no credits → instruct them to upgrade/recharge.
+  if (telegramUserId) {
+    const user = await getUserByTelegramId(telegramUserId);
+    if (!user) {
+      await sendTelegramMessage(
+        config.telegram.botToken,
+        chatId,
+        `🔒 *Compte requis*\n\nBonjour ${userName} ! Pour utiliser les agents IA, vous devez créer un compte gratuit sur AfriLaunch AI.\n\n👉 Inscrivez-vous ici : ${config.appUrl}/register\n\nVous recevrez *50 crédits offerts* à l'inscription, puis pourrez lier votre compte Telegram dans votre dashboard.`,
+        true,
+      );
+      return;
+    }
+
+    // Check plan status
+    if (user.planStatus !== 'active') {
+      await sendTelegramMessage(
+        config.telegram.botToken,
+        chatId,
+        `⚠️ *Abonnement inactif*\n\nVotre abonnement ${PLANS[user.plan].name} n'est plus actif.\n\n👉 Réactivez-le : ${config.appUrl}/dashboard/subscription`,
+        true,
+      );
+      return;
+    }
+
+    // Consume 1 credit per message (Enterprise is unlimited)
+    if (PLANS[user.plan].creditsPerMonth !== -1) {
+      const consumed = await consumeCredits(user.id, 1);
+      if (!consumed.ok) {
+        await sendTelegramMessage(
+          config.telegram.botToken,
+          chatId,
+          `💎 *Crédits insuffisants*\n\nIl vous reste *${user.credits} crédit(s)*. Pour continuer à utiliser les agents IA :\n\n• Rechargez vos crédits : ${config.appUrl}/dashboard/subscription\n• Passez à un plan supérieur : ${config.appUrl}/dashboard/subscription\n\n💡 Astuce : Parrainez vos amis et gagnez 100 crédits par filleul ! ${config.appUrl}/dashboard/referral`,
+          true,
+        );
+        return;
+      }
+    }
   }
 
   // Send "typing" indicator
@@ -155,8 +199,15 @@ async function processWithAgent(
     return;
   }
 
-  // Send the reply
-  await sendTelegramMessage(config.telegram.botToken, chatId, result.reply, true);
+  // Send the reply (append credit info footer for non-enterprise users)
+  let footer = '';
+  if (telegramUserId) {
+    const updatedUser = await getUserByTelegramId(telegramUserId);
+    if (updatedUser && PLANS[updatedUser.plan].creditsPerMonth !== -1) {
+      footer = `\n\n---\n💎 ${updatedUser.credits} crédits restants · /help`;
+    }
+  }
+  await sendTelegramMessage(config.telegram.botToken, chatId, result.reply + footer, true);
 
   // Update conversation history
   const newHistory = [

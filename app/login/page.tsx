@@ -3,13 +3,11 @@
 
 import Link from 'next/link';
 import { Rocket, ArrowRight, Mail, Lock, Loader2 } from 'lucide-react';
-import { useAuth } from '@/components/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/components/providers/toast-provider';
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -21,20 +19,28 @@ export default function LoginPage() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      await login(email, password);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        toast({ title: 'Échec de connexion', description: data.error || 'Erreur', variant: 'error' });
+        setSubmitting(false);
+        return;
+      }
       toast({ title: 'Connexion réussie', description: 'Redirection vers le dashboard...', variant: 'success' });
-      // Brief delay so the user can see the success toast before navigation.
       setTimeout(() => router.push('/dashboard'), 600);
     } catch (err) {
-      console.error('[login]', err);
-      toast({ title: 'Erreur de connexion', description: 'Vérifiez vos identifiants.', variant: 'error' });
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
       setSubmitting(false);
     }
   }
 
   return (
     <div className="min-h-screen bg-[#050508] text-white flex items-center justify-center px-6 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-indigo-500/20 to-violet-500/20 blur-3xl animate-aurora" />
       <div className="absolute inset-0 dot-pattern opacity-20" />
 
@@ -91,15 +97,9 @@ export default function LoginPage() {
               className="w-full py-3.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  Connexion...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Connexion...</>
               ) : (
-                <>
-                  Se connecter
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </>
+                <>Se connecter <ArrowRight className="w-4 h-4" aria-hidden="true" /></>
               )}
             </button>
           </form>
