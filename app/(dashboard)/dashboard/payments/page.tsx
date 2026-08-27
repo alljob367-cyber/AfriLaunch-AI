@@ -31,7 +31,7 @@ export default function PaymentsPage() {
             icon={CreditCard}
             title="Aucun paiement configuré"
             description="Activez Mobile Money, cartes bancaires et PayPal pour recevoir vos premiers paiements. Configuration en quelques minutes depuis l'admin."
-            action={{ label: 'Configurer les paiements', href: '/admin/payments' }}
+            action={{ label: 'Voir les offres', href: '/dashboard/subscription' }}
             gradient="from-teal-500 to-green-600"
           />
         </motion.div>

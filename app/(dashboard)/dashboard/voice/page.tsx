@@ -145,7 +145,7 @@ export default function VoicePage() {
                   </a>.
                 </p>
                 <Link
-                  href="/admin/ai"
+                  onClick={() => toast({ title: "Configuration requise", description: "Contactez votre administrateur pour activer ElevenLabs.", variant: "warning" })}
                   className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-xs font-semibold hover:scale-105 transition-transform"
                 >
                   <Settings2 className="w-3.5 h-3.5" aria-hidden="true" /> Configurer dans Admin → IA
@@ -257,7 +257,7 @@ export default function VoicePage() {
               </h2>
               <p className="text-[11px] text-gray-500 mb-4">
                 Configurés par l'administrateur dans{' '}
-                <Link href="/admin/ai" className="text-purple-400 underline">Admin → IA</Link>.
+                <button type="button" className="text-purple-400 underline">Admin → IA</button>.
                 Affichés après une génération réussie.
               </p>
               <dl className="space-y-3 text-sm">

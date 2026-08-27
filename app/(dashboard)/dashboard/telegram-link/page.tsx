@@ -154,7 +154,7 @@ export default function TelegramLinkPage() {
             <h2 className="font-bold text-base mb-4">Comment ça marche ?</h2>
             <ol className="space-y-3">
               {[
-                { step: '1', title: 'Configurez le bot', desc: 'L\'admin configure le bot Telegram une seule fois dans /admin/telegram' },
+                { step: '1', title: 'Configurez le bot', desc: 'Le bot Telegram sera configuré automatiquement' },
                 { step: '2', title: 'Lie votre compte', desc: 'Entrez votre username Telegram ci-dessus' },
                 { step: '3', title: 'Discutez avec les agents', desc: 'Ouvrez le bot sur Telegram et envoyez /start pour commencer' },
                 { step: '4', title: '1 message = 1 crédit', desc: 'Chaque message consomme 1 crédit de votre abonnement' },

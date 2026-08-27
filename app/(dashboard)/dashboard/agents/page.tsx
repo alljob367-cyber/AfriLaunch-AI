@@ -31,7 +31,7 @@ export default function AgentsPage() {
             icon={Bot}
             title="Aucun agent configuré"
             description="Activez vos 13 agents IA spécialisés depuis la configuration. Chaque agent est un expert métier prêt à automatiser vos tâches."
-            action={{ label: 'Configurer les agents', href: '/admin/ai' }}
+            action={{ label: 'Découvrir les agents', onClick: () => {} }}
             gradient="from-indigo-500 to-violet-600"
           />
         </motion.div>

@@ -38,7 +38,7 @@ export function AIRecommendations({ recommendations }: AIRecommendationsProps) {
         icon={Sparkles}
         title="Aucune recommandation IA"
         description="Configurez un provider IA dans l'admin et lancez vos premiers agents pour recevoir des recommandations personnalisées."
-        action={{ label: 'Configurer l\'IA', href: '/admin/ai' }}
+        action={{ label: 'Explorer les agents', href: '/dashboard/agents' }}
         gradient="from-violet-500 to-purple-600"
       />
     );
