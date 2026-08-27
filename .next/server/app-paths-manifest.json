@@ -87,6 +87,7 @@
   "/api/users/plan/route": "app/api/users/plan/route.js",
   "/api/users/telegram-link/route": "app/api/users/telegram-link/route.js",
   "/api/whatsapp-agent/agents/route": "app/api/whatsapp-agent/agents/route.js",
+  "/api/whatsapp-agent/status/route": "app/api/whatsapp-agent/status/route.js",
   "/api/whatsapp-agent/test/route": "app/api/whatsapp-agent/test/route.js",
   "/api/whatsapp-agent/webhook/route": "app/api/whatsapp-agent/webhook/route.js",
   "/login/page": "app/login/page.js",

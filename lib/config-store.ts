@@ -118,9 +118,11 @@ export interface AppConfig {
   twilio: {
     accountSid: string;
     authToken: string;
-    whatsappNumber: string; // Twilio WhatsApp number (e.g. +1234567890)
+    whatsappNumber: string;
     enabled: boolean;
-    elevenLabsAgentId: string; // ID of the ElevenLabs conversational agent
+    elevenLabsAgentId: string;
+    freeForAll: boolean; // if true, WhatsApp usage is free for everyone (no credits needed)
+    welcomeMessage: string; // sent to new users on first message
   };
   // Marketplace (premium agents created by community/partners)
   marketplace: {
@@ -317,6 +319,8 @@ export function getDefaultConfig(): AppConfig {
       whatsappNumber: '',
       enabled: false,
       elevenLabsAgentId: '',
+      freeForAll: true,
+      welcomeMessage: '👋 Bienvenue sur AfriLaunch AI !\n\nJe suis votre assistant IA disponible 24/7 sur WhatsApp. Je peux vous aider avec:\n\n📈 Marketing & stratégie\n🎨 Identité de marque\n✍️ Création de contenu\n🤖 Agents IA spécialisés\n💰 Paiements & business\n\nEnvoyez-moi simplement votre question !',
     },
     marketplace: {
       enabled: true,

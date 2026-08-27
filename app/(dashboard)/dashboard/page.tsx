@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import {
   Globe, Zap, ChevronRight, Sparkles, Bell, Activity, Target, Calendar as CalendarIcon,
   Rocket, Palette, PenSquare, Share2, Bot, Megaphone, CreditCard, BarChart3,
-  TrendingUp, type LucideIcon,
+  TrendingUp, MessageCircle, type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -157,6 +157,9 @@ export default function DashboardPage() {
                 </motion.div>
               ))}
             </div>
+
+            {/* WhatsApp Agent banner */}
+            <WhatsAppBanner />
           </motion.div>
         )}
 
@@ -266,5 +269,53 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// WhatsApp Agent banner — shows the WhatsApp number to contact
+function WhatsAppBanner() {
+  const [waStatus, setWaStatus] = useState<{ enabled: boolean; whatsappLink?: string; whatsappNumber?: string; freeForAll?: boolean; userCount?: number } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/whatsapp-agent/status')
+      .then((r) => r.json())
+      .then((data) => { if (data.enabled) setWaStatus(data); })
+      .catch(() => {});
+  }, []);
+
+  if (!waStatus?.enabled) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="mt-6 glass rounded-2xl p-5 border border-green-500/20 bg-green-500/5"
+    >
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg flex-shrink-0">
+          <MessageCircle className="w-6 h-6 text-white" aria-hidden="true" />
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <p className="font-bold text-sm">WhatsApp Agent IA disponible ! 🤖</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {waStatus.freeForAll
+              ? 'Gratuit pour tous — envoyez un message et l\'IA vous répond instantanément.'
+              : 'Discutez avec l\'IA directement sur WhatsApp.'
+            }
+            {waStatus.userCount ? ` · ${waStatus.userCount} utilisateurs actifs` : ''}
+          </p>
+        </div>
+        <a
+          href={waStatus.whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:scale-105 transition-transform shadow-lg"
+        >
+          <MessageCircle className="w-4 h-4" aria-hidden="true" />
+          Discuter sur WhatsApp
+        </a>
+      </div>
+    </motion.div>
   );
 }

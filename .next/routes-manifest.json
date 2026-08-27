@@ -444,6 +444,12 @@
       "namedRegex": "^/api/whatsapp\\-agent/agents(?:/)?$"
     },
     {
+      "page": "/api/whatsapp-agent/status",
+      "regex": "^/api/whatsapp\\-agent/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp\\-agent/status(?:/)?$"
+    },
+    {
       "page": "/api/whatsapp-agent/test",
       "regex": "^/api/whatsapp\\-agent/test(?:/)?$",
       "routeKeys": {},

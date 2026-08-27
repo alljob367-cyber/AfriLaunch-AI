@@ -1,53 +1,111 @@
 // AfriLaunch AI — Twilio WhatsApp webhook
 // POST /api/whatsapp-agent/webhook — receives WhatsApp messages from Twilio
-// Forwards to ElevenLabs agent, sends response back via Twilio
+// Forwards to AI, sends response back via Twilio
+// NO CONFIGURATION NEEDED BY USERS — they just send a WhatsApp message
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
 import { processWhatsAppWithElevenLabs, sendWhatsAppMessage } from '@/lib/elevenlabs-agent';
+import { promises as fs } from 'fs';
+import path from 'path';
+
+const WHATSAPP_USERS_PATH = path.join('/home/z/my-project/data', 'whatsapp-users.json');
+
+interface WhatsAppUser {
+  phoneNumber: string;
+  name: string;
+  firstMessageAt: string;
+  lastMessageAt: string;
+  messageCount: number;
+}
+
+async function readWhatsAppUsers(): Promise<WhatsAppUser[]> {
+  try {
+    const raw = await fs.readFile(WHATSAPP_USERS_PATH, 'utf-8');
+    return JSON.parse(raw) as WhatsAppUser[];
+  } catch {
+    return [];
+  }
+}
+
+async function writeWhatsAppUsers(users: WhatsAppUser[]) {
+  await fs.mkdir(path.dirname(WHATSAPP_USERS_PATH), { recursive: true });
+  await fs.writeFile(WHATSAPP_USERS_PATH, JSON.stringify(users, null, 2), 'utf-8');
+}
 
 export async function POST(req: NextRequest) {
   const config = await getConfig();
 
   if (!config.twilio.enabled) {
-    return NextResponse.json({ error: 'WhatsApp agent disabled' }, { status: 403 });
-  }
-
-  // Twilio sends form-encoded data
-  const formData = await req.formData();
-  const from = formData.get('From') as string; // whatsapp:+1234567890
-  const body = formData.get('Body') as string;
-  const mediaUrl = formData.get('MediaUrl0') as string | null; // voice message audio
-  const profileName = formData.get('ProfileName') as string;
-
-  if (!body && !mediaUrl) {
     return new NextResponse('<Response></Response>', {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     });
   }
 
-  const userMessage = body || '[Message vocal reçu — transcription requise]';
-  const senderName = profileName || from;
+  const formData = await req.formData();
+  const from = formData.get('From') as string; // whatsapp:+1234567890
+  const body = (formData.get('Body') as string) || '';
+  const profileName = (formData.get('ProfileName') as string) || 'Utilisateur';
 
-  // Process the message with ElevenLabs agent / AI
-  const result = await processWhatsAppWithElevenLabs(userMessage, senderName);
+  if (!body.trim()) {
+    return new NextResponse('<Response></Response>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/xml' },
+    });
+  }
 
-  if (!result.ok || !result.response) {
-    // Send error message
+  // Track WhatsApp users (for welcome message + analytics)
+  const waUsers = await readWhatsAppUsers();
+  let waUser = waUsers.find((u) => u.phoneNumber === from);
+  const isNewUser = !waUser;
+
+  if (isNewUser) {
+    waUser = {
+      phoneNumber: from,
+      name: profileName,
+      firstMessageAt: new Date().toISOString(),
+      lastMessageAt: new Date().toISOString(),
+      messageCount: 0,
+    };
+    waUsers.push(waUser);
+  }
+
+  if (waUser) {
+    waUser.lastMessageAt = new Date().toISOString();
+    waUser.messageCount++;
+  }
+  await writeWhatsAppUsers(waUsers);
+
+  // If freeForAll is enabled, skip credit checks entirely
+  // If not, we would check if the user has an AfriLaunch account + credits
+  // For now, we default to freeForAll = true so EVERYONE can use it
+
+  // Send welcome message to new users
+  if (isNewUser && config.twilio.welcomeMessage) {
     await sendWhatsAppMessage({
       to: from,
-      body: `⚠️ Désolé, je n'ai pas pu traiter votre message. Erreur: ${result.error || 'inconnue'}`,
+      body: config.twilio.welcomeMessage,
+    });
+    // Small delay before processing the actual message
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  // Process the message with AI
+  const result = await processWhatsAppWithElevenLabs(body, profileName);
+
+  if (!result.ok || !result.response) {
+    await sendWhatsAppMessage({
+      to: from,
+      body: `⚠️ Désolé, je n'ai pas pu traiter votre message. Réessayez dans un instant.`,
     });
   } else {
-    // Send the AI response via Twilio WhatsApp
     await sendWhatsAppMessage({
       to: from,
       body: result.response,
     });
   }
 
-  // Return empty TwiML (we already sent the message via API)
   return new NextResponse('<Response></Response>', {
     status: 200,
     headers: { 'Content-Type': 'text/xml' },

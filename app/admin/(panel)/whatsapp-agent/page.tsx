@@ -202,6 +202,19 @@ export default function AdminWhatsAppAgentPage() {
                   <p className="text-[11px] text-gray-600 mt-1">Configurez cette URL dans Twilio Console → Messaging → Webhooks → "A MESSAGE COMES IN"</p>
                 </div>
               )}
+              <AdminToggle
+                label=" Gratuit pour tous les utilisateurs"
+                description="Si activé, tout le monde peut utiliser le WhatsApp sans compte ni crédits. Si désactivé, seuls les utilisateurs avec un compte AfriLaunch actif peuvent l'utiliser."
+                checked={draft.twilio.freeForAll}
+                onChange={(v) => update({ freeForAll: v })}
+              />
+              <AdminTextarea
+                label="Message de bienvenue (nouveaux utilisateurs)"
+                value={draft.twilio.welcomeMessage}
+                onChange={(v) => update({ welcomeMessage: v })}
+                rows={4}
+                hint="Envoyé automatiquement à la première message de chaque nouvel utilisateur WhatsApp"
+              />
             </div>
           </AdminCard>
 
