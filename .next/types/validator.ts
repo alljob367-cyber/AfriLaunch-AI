@@ -695,6 +695,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/social/accounts/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/accounts">> = Specific
+  const handler = {} as typeof import("../../app/api/social/accounts/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/social/connect/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/connect">> = Specific
+  const handler = {} as typeof import("../../app/api/social/connect/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/social/disconnect/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/disconnect">> = Specific
+  const handler = {} as typeof import("../../app/api/social/disconnect/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/telegram/setup/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/telegram/setup">> = Specific

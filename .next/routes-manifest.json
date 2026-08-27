@@ -354,6 +354,24 @@
       "namedRegex": "^/api/referral/stats(?:/)?$"
     },
     {
+      "page": "/api/social/accounts",
+      "regex": "^/api/social/accounts(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/social/accounts(?:/)?$"
+    },
+    {
+      "page": "/api/social/connect",
+      "regex": "^/api/social/connect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/social/connect(?:/)?$"
+    },
+    {
+      "page": "/api/social/disconnect",
+      "regex": "^/api/social/disconnect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/social/disconnect(?:/)?$"
+    },
+    {
       "page": "/api/telegram/setup",
       "regex": "^/api/telegram/setup(?:/)?$",
       "routeKeys": {},

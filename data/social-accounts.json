@@ -1,0 +1,28 @@
+{
+  "accounts": [
+    {
+      "id": "soc_f702037b7bfe1b53",
+      "userId": "usr_0afe7f03eb40504f71b014f0",
+      "platform": "instagram",
+      "handle": "hotel_albermon",
+      "displayName": "hotel_albermon",
+      "followers": 0,
+      "connected": true,
+      "connectedAt": "2026-08-27T15:29:31.412Z",
+      "updatedAt": "2026-08-27T15:29:31.412Z",
+      "accessToken": "a3bb16c2f4d28de879bbf4749633b4cb"
+    },
+    {
+      "id": "soc_b3d153301a7921f9",
+      "userId": "usr_0afe7f03eb40504f71b014f0",
+      "platform": "whatsapp",
+      "handle": "+237 699 123 456",
+      "displayName": "+237 699 123 456",
+      "followers": 0,
+      "connected": true,
+      "connectedAt": "2026-08-27T15:29:31.436Z",
+      "updatedAt": "2026-08-27T15:29:31.436Z",
+      "accessToken": "d53271d721413748cae26c68db49f8d2"
+    }
+  ]
+}

@@ -18,7 +18,7 @@
       "referralCount": 1,
       "referralCreditsEarned": 100,
       "installedAgents": [],
-      "lastLoginAt": "2026-08-27T14:53:03.196Z",
+      "lastLoginAt": "2026-08-27T15:29:36.451Z",
       "updatedAt": "2026-08-27T14:53:03.293Z",
       "creditsUsedToday": 96,
       "dailyResetAt": "2026-08-27T12:16:19.694Z"
@@ -54,17 +54,17 @@
       "planStatus": "active",
       "planStartedAt": "2026-08-27T05:26:08.318Z",
       "planEndsAt": null,
-      "credits": 2,
-      "creditsUsedThisMonth": 48,
+      "credits": 0,
+      "creditsUsedThisMonth": 50,
       "creditsResetAt": "2026-09-27T05:26:08.318Z",
       "referralCode": "alljob1c0501",
       "referredBy": null,
       "referralCount": 0,
       "referralCreditsEarned": 0,
       "installedAgents": [],
-      "lastLoginAt": "2026-08-27T13:40:22.914Z",
-      "updatedAt": "2026-08-27T13:44:44.303Z",
-      "creditsUsedToday": 48,
+      "lastLoginAt": "2026-08-27T15:00:49.203Z",
+      "updatedAt": "2026-08-27T15:01:21.181Z",
+      "creditsUsedToday": 50,
       "dailyResetAt": "2026-08-27T12:34:10.293Z"
     }
   ]
