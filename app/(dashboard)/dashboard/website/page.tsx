@@ -84,9 +84,41 @@ export default function WebsitePage() {
       }
       // Strip markdown code fences if present
       let html = data.content.replace(/^```html?\s*/i, '').replace(/```\s*$/, '').trim();
+
+      // Sanitize: force all content visible (fixes slide-in opacity:0 + other hidden elements)
+      // Many AI-generated sites use opacity:0 or transform animations that need JS to reveal.
+      // In the sandboxed iframe, scripts may not run reliably, so we force-visible everything.
+      html = html.replace(/\.slide-in\s*\{[^}]*opacity:\s*0[^}]*\}/gi, (match: string) => {
+        return match.replace(/opacity:\s*0[^;]*;?/gi, 'opacity: 1;');
+      });
+      html = html.replace(/\.slide-in\s*\{[^}]*transform:\s*translateY\([^)]*\)[^}]*\}/gi, (match: string) => {
+        return match.replace(/transform:\s*translateY\([^)]*\)[^;]*;?/gi, 'transform: none;');
+      });
+      // Also inject a forced-visible style right before </head> as a safety net
+      const forceVisibleCSS = `<style>
+        .slide-in, .fade-in, .fade-up, .reveal { opacity: 1 !important; transform: none !important; }
+        [style*="opacity: 0"], [style*="opacity:0"] { opacity: 1 !important; }
+        [style*="display: none"], [style*="display:none"] { display: block !important; }
+      </style>`;
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', forceVisibleCSS + '\n</head>');
+      } else if (html.includes('<body')) {
+        html = html.replace('<body', forceVisibleCSS + '\n<body');
+      } else {
+        html = forceVisibleCSS + html;
+      }
+
+      // Auto-close HTML if truncated (missing </body></html>)
+      if (!html.includes('</body>')) {
+        html += '\n</body>';
+      }
+      if (!html.includes('</html>')) {
+        html += '\n</html>';
+      }
+
       setGeneratedHtml(html);
       if (typeof data.creditsRemaining === 'number') setCreditsRemaining(data.creditsRemaining);
-      toast({ title: 'Site généré ! 🌐', description: '30 crédits débités', variant: 'success' });
+      toast({ title: 'Site généré ! 🌐', description: '10 crédits débités', variant: 'success' });
     } catch (err) {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
     } finally {

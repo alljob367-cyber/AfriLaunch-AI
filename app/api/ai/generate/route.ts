@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   const result = await runAIForPlan({
     systemPrompt,
     userMessage: userPrompt,
-    maxTokens: body.type === 'website' ? 4000 : 3000,
+    maxTokens: body.type === 'website' ? 6000 : 3000,
   }, user.plan);
 
   if (!result.ok || !result.reply) {
@@ -167,24 +167,37 @@ function buildWebsitePrompt(body: GenerateRequest) {
     business: 'site vitrine business avec services, à propos, contact',
   };
 
-  const systemPrompt = `Tu es un expert développeur web qui génère des sites web complets pour le marché africain.
-Génère une page HTML unique, moderne et responsive.
+  const systemPrompt = `Tu es un expert développeur web qui génère des sites web pour le marché africain.
+Génère une page HTML unique, moderne, responsive et RICHE EN CONTENU.
 
 RÈGLES:
-1. Code HTML5 complet avec <html>, <head>, <body>
-2. CSS inline dans <style> (pas de fichiers externes sauf Google Fonts et Tailwind CDN)
-3. Utilise Tailwind CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>
-4. Design moderne: glassmorphism, gradients, animations CSS, dark theme par défaut
-5. Responsive mobile-first
-6. Inclus du JavaScript vanilla pour interactions (smooth scroll, menu mobile, etc.)
-7. Images: utilise des placeholders avec des emojis ou des gradients colorés
-8. Tout le texte en français
-9. Sections avec IDs pour navigation ancres
-10. Inclus les meta tags SEO (description, og:title, etc.)
+1. HTML5 complet: <html><head><body>...<body></html>
+2. Tailwind CSS via CDN: <script src="https://cdn.tailwindcss.com"></script>
+3. CSS minimal dans <style> (max 30 lignes — privilégie les classes Tailwind)
+4. Dark theme, design moderne avec gradients
+5. Tout en français
+6. JavaScript MINIMAL (smooth scroll + menu mobile seulement, 10 lignes max)
 
-Template demandé: ${templates[template] || templates.landing}
+⚠️ VISIBILITÉ:
+- TOUT visible immédiatement (opacity:1 par défaut)
+- PAS de opacity:0, slide-in, fade-in, reveal
+- Le site doit s'afficher sans JavaScript
 
-Réponds UNIQUEMENT avec le code HTML complet. Pas de markdown, pas de backticks, pas d'explications.`;
+📋 CONTENU (OBLIGATOIRE — 6 sections minimum):
+1. <nav> — Navigation avec logo + liens + CTA
+2. <section id="hero"> — Titre h1 accrocheur + sous-titre + 2 boutons + stats
+3. <section id="services"> — 3-6 cartes de services avec emojis + titres h3 + descriptions
+4. <section id="about"> — À propos avec texte + image placeholder (emoji géant)
+5. <section id="pricing"> ou <section id="testimonials"> — Tarifs ou témoignages
+6. <section id="contact"> — Formulaire + coordonnées + footer
+
+Utilise des <h1>, <h2>, <h3> pour la structure.
+Utilise des emojis 🏨🛏️🍽️🚿📶🅿️ comme images.
+Chaque section doit avoir du VRAI texte pertinent pour le business.
+
+Template: ${templates[template] || templates.landing}
+
+Réponds UNIQUEMENT avec le HTML. Pas de markdown, pas de backticks.`;
 
   const userPrompt = `Crée un ${templates[template] || templates.landing} pour:
 - Business: ${body.businessName || 'Mon Business'}

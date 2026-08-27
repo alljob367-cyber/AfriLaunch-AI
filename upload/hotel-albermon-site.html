@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOTEL ALBERMON - Votre séjour de luxe en Afrique</title>
+    <meta name="description" content="Découvrez l'Hôtel Albermon, un havre de paix au cœur de l'Afrique. Chambres luxueuses, service impeccable et expériences inoubliables.">
+    <meta property="og:title" content="HOTEL ALBERMON - Expérience Africaine de Luxe">
+    <meta property="og:description" content="Réservez votre séjour à l'Hôtel Albermon et vivez une expérience unique mêlant tradition africaine et confort moderne.">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        'primary-dark': '#4f46e5',
+                        'primary-light': '#818cf8',
+                        dark: '#0f0f1a',
+                        'dark-light': '#1a1a2e',
+                    },
+                    fontFamily: {
+                        display: ['Playfair Display', 'serif'],
+                        body: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f0f1a;
+            color: #ffffff;
+        }
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-light {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .gradient-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-bg {
+            background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.3) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
+                        linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
+        }
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+        }
+        .slide-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+        .slide-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .pricing-popular {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+            border: 2px solid #6366f1;
+        }
+        .testimonial-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+        }
+        .african-pattern {
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.1) 2px, transparent 2px);
+            background-size: 40px 40px;
+        }
+        .nav-blur {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+        }
+        .mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-dark/80 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
+                        <span class="text-xl font-bold">A</span>
+                    </div>
+                    <span class="font-display text-xl md:text-2xl font-bold">HOTEL ALBERMON</span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#accueil" class="text-sm font-medium hover:text-primary transition-colors">Accueil</a>
+                    <a href="#services" class="text-sm font-medium hover:text-primary transition-colors">Services</a>
+                    <a href="#temoignages" class="text-sm font-medium hover:text-primary transition-colors">Témoignages</a>
+                    <a href="#tarifs" class="text-sm font-medium hover:text-primary transition-colors">Tarifs</a>
+                    <a href="#contact" class="text-sm font-medium hover:text-primary transition-colors">Contact</a>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="#contact" class="btn-primary px-5 py-2.5 rounded-full text-sm font-semibold">Réserver</a>
+                </div>
+
+                <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-white/10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed top-0 right-0 h-full w-72 z-50 bg-dark-light border-l border-white/10 p-6">
+        <button id="closeMobileMenu" class="absolute top-6 right-6 p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <div class="flex flex-col space-y-6 mt-16">
+            <a href="#accueil" class="text-lg font-medium hover:text-primary transition-colors mobile-link">Accueil</a>
+            <a href="#services" class="text-lg font-medium hover:text-primary transition-colors mobile-link">Services</a>
+            <a href="#temoignages" class="text-lg font-medium hover:text-primary transition-colors mobile-link">Témoignages</a>
+            <a href="#tarifs" class="text-lg font-medium hover:text-primary transition-colors mobile-link">Tarifs</a>
+            <a href="#contact" class="text-lg font-medium hover:text-primary transition-colors mobile-link">Contact</a>
+            <a href="#contact" class="btn-primary px-5 py-3 rounded-full text-center font-semibold mt-4">Réserver</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="accueil" class="hero-bg min-h-screen flex items-center relative overflow-hidden pt-20">
+        <div class="absolute inset-0 african-pattern opacity-30"></div>
+        <div class="absolute top-20 right-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl float-animation"></div>
+        <div class="absolute bottom-20 left-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl float-animation" style="animation-delay: 2s;"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-20">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="slide-in">
+                    <div class="inline-flex items-center space-x-2 glass-light px-4 py-2 rounded-full mb-6">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        <span class="text-sm text-gray-300">Disponible 24/7 pour vous accueillir</span>
+                    </div>
+                    
+                    <h1 class="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
+                        Bienvenue à <span class="gradient-text">l'Hôtel Albermon</span>
+                    </h1>
+                    
+                    <p class="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed">
+                        Découvrez un havre de paix où le luxe rencontre l'authenticité africaine. Une expérience unique, des services d'exception et des souvenirs inoubliables.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                        <a href="#contact" class="btn-primary px-8 py-4 rounded-full text-base font-semibold text-center pulse-glow">
+                            Réserver maintenant →
+                        </a>
+                        <a href="#services" class="glass-light px-8 py-4 rounded-full text-base font-semibold text-center hover:bg-white/10 transition-colors">
+                            Découvrir nos services
+                        </a>
+                    </div>
+                    
+                    <div class="flex items-center space-x-6 text-sm text-gray-400">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-yellow-400">★★★★★</span>
+                            <span>4.9/5</span>
+                        </div>
+                        <div>+2000 clients satisfaits</div>
+                    </div>
+                </div>
+                
+                <div class="relative slide-in" style="transition-delay: 0.2s;">
+                    <div class="relative aspect-square max-w-md mx-auto">
+                        <div class="absolute inset-0 gradient-primary rounded-3xl rotate-6 opacity-30 blur-2xl"></div>
+                        <div class="relative glass-light rounded-3xl p-8 h-full flex flex-col items-center justify-center">
+                            <div class="text-9xl mb-4 float-animation">🏨</div>
+                            <div class="text-center">
+                                <p class="font-display text-2xl font-semibold mb-2">Luxe Africain</p>
+                                <p class="text-gray-400">Depuis 2010</p>
+                            </div>
+                            <div class="absolute -top-4 -right-4 glass w-20 h-20 rounded-2xl flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold gradient-text">15</div>
+                                    <div class="text-xs text-gray-400">Ans</div>
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-4 -left-4 glass w-24 h-24 rounded-2xl flex items-center justify-center">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold gradient-text">50+</div>
+                                    <div class="text-xs text-gray-400">Chambres</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-16 border-y border-white/10 bg-dark-light/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="slide-in">
+                    <div class="text-3xl md:text-5xl font-bold gradient-text mb-2">2000+</div>
+                    <div class="text-sm text-gray-400">Clients satisfaits</div>
+                </div>
+                <div class="slide-in" style="transition-delay: 0.1s;">
+                    <div class="text-3xl md:text-5xl font-bold gradient-text mb-2">50+</div>
+                    <div class="text-sm text-gray-400">Chambres luxueuses</div>
+                </div>
+                <div class="slide-in" style="transition-delay: 0.2s;">
+                    <div class="text-3xl md:text-5xl font-bold gradient-text mb-2">15</div>
+                    <div class="text-sm text-gray-400">Années d'expérience</div>
+                </div>
+                <div class="slide-in" style="transition-delay: 0.3s;">
+                    <div class="text-3xl md:text-5xl font-bold gradient-text mb-2">24/7</div>
+                    <div class="text-sm text-gray-400">Service disponible</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 md:py-32 relative">
+        <div class="absolute top-1/2 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16 slide-in">
+                <span class="inline-block px-4 py-1.5 glass-light rounded-full text-sm text-primary mb-4">Nos Services</span>
+                <h2 class="font-display text-3xl md:text-5xl font-bold mb-4">Une expérience <span class="gradient-text">incomparable</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Des services pensés pour votre confort et votre bien-être, alliant modernité et tradition africaine.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-light rounded-2xl p-8 card-hover slide-in">
+                    <div class="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center mb-6">
+                        <span class="text-2xl">🛏️</span>
+                    </div>
+                    <h3 class="font-display text-xl font-semibold mb-3">Chambres Premium</h3>
+                    <p class="text-gray-400
