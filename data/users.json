@@ -10,16 +10,18 @@
       "planStatus": "active",
       "planStartedAt": "2026-08-27T12:07:17.587Z",
       "planEndsAt": null,
-      "credits": 5000,
-      "creditsUsedThisMonth": 0,
+      "credits": 4999,
+      "creditsUsedThisMonth": 1,
       "creditsResetAt": "2026-09-26T12:07:17.587Z",
       "referralCode": "test2733b1",
       "referredBy": null,
       "referralCount": 1,
       "referralCreditsEarned": 100,
       "installedAgents": [],
-      "lastLoginAt": "2026-08-27T12:06:52.923Z",
-      "updatedAt": "2026-08-27T12:07:17.587Z"
+      "lastLoginAt": "2026-08-27T12:16:19.674Z",
+      "updatedAt": "2026-08-27T12:16:19.694Z",
+      "creditsUsedToday": 1,
+      "dailyResetAt": "2026-08-27T12:16:19.694Z"
     },
     {
       "id": "usr_9cf18a0d854cab0cdfa4019d",

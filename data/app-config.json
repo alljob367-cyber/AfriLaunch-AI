@@ -32,7 +32,7 @@
     }
   },
   "ai": {
-    "primary": "mistral",
+    "primary": "openrouter",
     "providers": {
       "openai": {
         "apiKey": "",
@@ -74,7 +74,7 @@
       },
       "openrouter": {
         "enabled": true,
-        "model": "anthropic/claude-3.5-sonnet",
+        "model": "minimax/minimax-m3:free",
         "endpoint": "https://openrouter.ai/api/v1",
         "appName": "AfriLaunch AI",
         "siteUrl": "https://afrilaunch.ai",
@@ -361,7 +361,7 @@
     "retention": 30
   },
   "createdAt": "2026-07-09T05:10:48.465Z",
-  "updatedAt": "2026-08-27T11:49:15.437Z",
-  "version": 14,
+  "updatedAt": "2026-08-27T12:15:24.316Z",
+  "version": 15,
   "mode": "real"
 }

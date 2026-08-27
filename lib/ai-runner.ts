@@ -22,11 +22,12 @@ export interface RunResult {
 }
 
 // Plan-based model routing on OpenRouter (cost optimization)
+// Uses free models where possible to minimize costs
 const PLAN_MODELS: Record<PlanId, string> = {
-  starter: 'openai/gpt-4o-mini',            // ~0.0005$/msg — économique
-  pro: 'anthropic/claude-3.5-sonnet',       // ~0.012$/msg — qualité pro
-  business: 'anthropic/claude-3.5-sonnet',  // ~0.012$/msg — qualité pro
-  enterprise: 'openai/gpt-4o',              // ~0.009$/msg — polyvalent
+  starter: 'minimax/minimax-m3:free',              // Gratuit — qualité correcte
+  pro: 'nvidia/nemotron-3-ultra-550b-a55b:free',   // Gratuit — haute qualité
+  business: 'nvidia/nemotron-3-ultra-550b-a55b:free', // Gratuit — haute qualité
+  enterprise: 'nvidia/nemotron-3-ultra-550b-a55b:free', // Gratuit — haute qualité
 };
 
 // Backward-compatible: runAI without plan uses the configured primary provider
