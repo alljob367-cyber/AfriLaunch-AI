@@ -3,8 +3,8 @@
   "appUrl": "https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai",
   "locale": "fr-FR",
   "timezone": "Africa/Dakar",
-  "adminPasswordHash": null,
-  "adminEmail": "admin@afrilaunch.ai",
+  "adminPasswordHash": "8f3b5fad66ce25fba00296259c059aa108974728be14b8deecffa87948fe8384",
+  "adminEmail": "admin@albermon.com",
   "database": {
     "provider": "postgresql",
     "url": "file:/home/z/my-project/db/custom.db",
@@ -361,7 +361,7 @@
     "retention": 30
   },
   "createdAt": "2026-07-09T05:10:48.465Z",
-  "updatedAt": "2026-08-27T12:15:24.316Z",
-  "version": 15,
+  "updatedAt": "2026-08-27T13:38:19.812Z",
+  "version": 17,
   "mode": "real"
 }
