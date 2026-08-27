@@ -1,7 +1,8 @@
 // AfriLaunch AI — Site web module (génération IA réelle)
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Globe, Sparkles, Loader2, Download, Copy, RefreshCw, Maximize2,
@@ -41,6 +42,21 @@ export default function WebsitePage() {
   const [generating, setGenerating] = useState(false);
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const [orgLoaded, setOrgLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/organization', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.organization) {
+          const org = data.organization;
+          if (org.name) setBusinessName(prev => prev || org.name);
+          if (org.industry) setIndustry(prev => prev || org.industry);
+        }
+        setOrgLoaded(true);
+      })
+      .catch(() => setOrgLoaded(true));
+  }, []);
 
   async function handleGenerate() {
     if (!user) {
@@ -134,6 +150,11 @@ export default function WebsitePage() {
               </h2>
 
               <div className="space-y-5">
+                {orgLoaded && (
+                  <p className="text-[11px] text-gray-500">
+                    💡 Pré-rempli depuis votre <Link href="/dashboard/organization" className="text-slate-400 hover:text-white underline">organisation</Link>
+                  </p>
+                )}
                 {/* Template selector */}
                 <div>
                   <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wide">

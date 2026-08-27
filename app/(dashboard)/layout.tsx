@@ -55,7 +55,7 @@ const navSections = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { organization } = useOrganization();
+  const { organization, isLoading: orgLoading } = useOrganization();
 
   const orgName = organization?.name ?? 'Mon organisation';
   const initials = (orgName || 'MO')
@@ -84,21 +84,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Org switcher */}
         <div className="p-4 border-b border-white/5">
-          <button
-            type="button"
+          <Link
+            href="/dashboard/organization"
             className="w-full flex items-center gap-3 p-2.5 rounded-xl glass hover:bg-white/10 transition-colors text-left"
-            aria-label="Changer d'organisation"
+            aria-label="Gérer l'organisation"
           >
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate">{orgName}</p>
-              <p className="text-[10px] text-gray-500">Plan Pro · 5/10 sites</p>
+              <p className="text-[10px] text-gray-500">
+                {organization ? `${organization.industry || 'Business'} · ${organization.country}` : 'Non configurée'}
+              </p>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-500" aria-hidden="true" />
-          </button>
+          </Link>
         </div>
+
+        {/* No org banner */}
+        {!organization && !orgLoading && (
+          <div className="p-3 border-b border-white/5">
+            <Link href="/dashboard/organization" className="block p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 hover:bg-amber-500/15 transition-colors">
+              <div className="flex items-start gap-2">
+                <Rocket className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                <span><strong>Créez votre organisation</strong> pour débloquer tous les outils.</span>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-3 custom-scrollbar">

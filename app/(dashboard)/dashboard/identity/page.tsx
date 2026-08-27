@@ -1,7 +1,8 @@
 // AfriLaunch AI — Identité de marque (génération IA réelle)
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Palette, Sparkles, Loader2, Download, Check, RefreshCw, Copy,
@@ -38,6 +39,22 @@ export default function IdentityPage() {
   const [style, setStyle] = useState('Moderne et professionnel');
   const [generating, setGenerating] = useState(false);
   const [kit, setKit] = useState<BrandKit | null>(null);
+  const [orgLoaded, setOrgLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/organization', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.organization) {
+          const org = data.organization;
+          if (org.name) setBusinessName(prev => prev || org.name);
+          if (org.industry) setIndustry(prev => prev || org.industry);
+          if (org.country) setCountry(prev => prev || org.country);
+        }
+        setOrgLoaded(true);
+      })
+      .catch(() => setOrgLoaded(true));
+  }, []);
 
   async function handleGenerate() {
     if (!user) {
@@ -149,6 +166,11 @@ export default function IdentityPage() {
                 Configuration
               </h2>
               <div className="space-y-4">
+                {orgLoaded && (
+                  <p className="text-[11px] text-gray-500 mb-1">
+                    💡 Pré-rempli depuis votre <Link href="/dashboard/organization" className="text-slate-400 hover:text-white underline">organisation</Link>
+                  </p>
+                )}
                 <div>
                   <label htmlFor="business-name" className="text-xs font-semibold text-gray-400 mb-1.5 block uppercase tracking-wide">Nom du business</label>
                   <input id="business-name" type="text" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Ex: Teranga Mode" className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-violet-500/40 outline-none text-sm" />

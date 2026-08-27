@@ -1,0 +1,19 @@
+{
+  "organizations": [
+    {
+      "userId": "usr_0afe7f03eb40504f71b014f0",
+      "name": "Hotel Albermon",
+      "description": "Hôtel de luxe au Cameroun",
+      "country": "Cameroun",
+      "industry": "Hôtellerie",
+      "website": "",
+      "email": "contact@albermon.com",
+      "phone": "+237 6XX",
+      "address": "",
+      "logo": null,
+      "id": "org_33886301f9c87fa01d770d8d",
+      "createdAt": "2026-08-27T12:50:19.869Z",
+      "updatedAt": "2026-08-27T12:50:19.869Z"
+    }
+  ]
+}

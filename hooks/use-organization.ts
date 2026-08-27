@@ -1,36 +1,54 @@
 'use client';
 
-// Returns the current user's organization.
-// In production, this would fetch from the API. Without a backend, returns null
-// and the dashboard shows an onboarding/empty state.
+import { useEffect, useState, useCallback } from 'react';
 
 export interface Organization {
   id: string;
+  userId: string;
   name: string;
-  slug: string;
-  plan: string;
+  description: string;
+  country: string;
+  industry: string;
+  website: string;
+  email: string;
+  phone: string;
+  address: string;
+  logo: string | null;
   createdAt: string;
-  members: Array<{
-    id: string;
-    role: string;
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      avatarUrl: string | null;
-    };
-  }>;
+  updatedAt: string;
 }
 
-export function useOrganization(): {
-  organization: Organization | null;
-  isLoading: boolean;
-  error: Error | null;
-} {
+export function useOrganization() {
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/organization', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setOrganization(data.organization || null);
+      } else {
+        setOrganization(null);
+      }
+    } catch (err) {
+      setError(err as Error);
+      setOrganization(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
   return {
-    organization: null,
-    isLoading: false,
-    error: null,
+    organization,
+    isLoading,
+    error,
+    refresh,
   };
 }

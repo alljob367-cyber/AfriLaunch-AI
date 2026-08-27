@@ -63,6 +63,7 @@
   "/api/download/kit/route": "/api/download/kit",
   "/api/marketplace/agents/route": "/api/marketplace/agents",
   "/api/marketplace/install/route": "/api/marketplace/install",
+  "/api/organization/route": "/api/organization",
   "/api/payment-manual/admin-action/route": "/api/payment-manual/admin-action",
   "/api/payment-manual/admin-list/route": "/api/payment-manual/admin-list",
   "/api/payment-manual/create/route": "/api/payment-manual/create",

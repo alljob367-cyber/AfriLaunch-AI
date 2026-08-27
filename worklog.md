@@ -200,3 +200,17 @@ Stage Summary:
 - Free plan removed, all prices in FCFA
 - Manual payment: Cameroon (MTN MoMo, Orange Money, Virement) with proof upload
 - Admin can approve/reject → auto-activates plan or credits
+
+---
+Task ID: sync-org-modules
+Agent: general-purpose
+Task: Pre-fill identity/website/content modules with organization data
+
+Work Log:
+- Updated identity/page.tsx (pre-fill name, industry, country from org)
+- Updated website/page.tsx (pre-fill name, industry from org)
+- Updated content/page.tsx (pre-fill name, industry, audience from org)
+
+Stage Summary:
+- All 3 modules now fetch org data on mount and pre-fill fields
+- "Pré-rempli depuis votre organisation" note added to each form

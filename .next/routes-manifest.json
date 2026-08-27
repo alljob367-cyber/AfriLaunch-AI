@@ -306,6 +306,12 @@
       "namedRegex": "^/api/marketplace/install(?:/)?$"
     },
     {
+      "page": "/api/organization",
+      "regex": "^/api/organization(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/organization(?:/)?$"
+    },
+    {
       "page": "/api/payment-manual/admin-action",
       "regex": "^/api/payment\\-manual/admin\\-action(?:/)?$",
       "routeKeys": {},

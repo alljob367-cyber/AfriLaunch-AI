@@ -1,7 +1,8 @@
 // AfriLaunch AI — Création de contenu (génération IA réelle)
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PenSquare, Sparkles, Loader2, Copy, RefreshCw,
@@ -57,6 +58,26 @@ export default function ContentPage() {
   const [generating, setGenerating] = useState(false);
   const [results, setResults] = useState<string[] | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
+  const [orgLoaded, setOrgLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/organization', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.organization) {
+          const org = data.organization;
+          if (org.name) setBusinessName(prev => prev || org.name);
+          if (org.industry) setIndustry(prev => prev || org.industry);
+          if (org.country) {
+            const feminine = ['Côte d\'Ivoire', 'Guinée', 'Tunisie', 'Algérie', 'France'];
+            const prep = org.country === 'Madagascar' ? 'à' : (feminine.includes(org.country) ? 'en' : 'au');
+            setAudience(prev => prev || `entrepreneurs ${prep} ${org.country}`);
+          }
+        }
+        setOrgLoaded(true);
+      })
+      .catch(() => setOrgLoaded(true));
+  }, []);
 
   const creditCost = batch ? 25 : 5;
 
@@ -148,6 +169,11 @@ export default function ContentPage() {
               </h2>
 
               <div className="space-y-4">
+                {orgLoaded && (
+                  <p className="text-[11px] text-gray-500">
+                    💡 Pré-rempli depuis votre <Link href="/dashboard/organization" className="text-slate-400 hover:text-white underline">organisation</Link>
+                  </p>
+                )}
                 {/* Format selector */}
                 <div>
                   <label htmlFor="content-format" className="text-xs font-semibold text-gray-400 mb-1.5 block uppercase tracking-wide">

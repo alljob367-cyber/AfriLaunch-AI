@@ -63,6 +63,7 @@
   "/api/download/kit/route": "app/api/download/kit/route.js",
   "/api/marketplace/agents/route": "app/api/marketplace/agents/route.js",
   "/api/marketplace/install/route": "app/api/marketplace/install/route.js",
+  "/api/organization/route": "app/api/organization/route.js",
   "/api/payment-manual/admin-action/route": "app/api/payment-manual/admin-action/route.js",
   "/api/payment-manual/admin-list/route": "app/api/payment-manual/admin-list/route.js",
   "/api/payment-manual/create/route": "app/api/payment-manual/create/route.js",
