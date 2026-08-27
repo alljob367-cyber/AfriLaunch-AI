@@ -81,7 +81,7 @@ async function callProvider(
           max_tokens: maxTokens,
           temperature: 0.7,
         }),
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(180000), // 3 minutes — Mistral can be slow from Asia servers
       });
 
       if (!res.ok) {

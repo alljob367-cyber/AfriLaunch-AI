@@ -10,16 +10,16 @@
       "planStatus": "active",
       "planStartedAt": "2026-08-08T15:43:48.110Z",
       "planEndsAt": null,
-      "credits": 149,
-      "creditsUsedThisMonth": 1,
+      "credits": 94,
+      "creditsUsedThisMonth": 56,
       "creditsResetAt": "2026-09-08T15:43:48.110Z",
       "referralCode": "test2733b1",
       "referredBy": null,
       "referralCount": 1,
       "referralCreditsEarned": 100,
       "installedAgents": [],
-      "lastLoginAt": "2026-08-27T04:05:11.519Z",
-      "updatedAt": "2026-08-08T15:43:58.645Z"
+      "lastLoginAt": "2026-08-27T05:52:01.491Z",
+      "updatedAt": "2026-08-27T05:52:01.516Z"
     },
     {
       "id": "usr_9cf18a0d854cab0cdfa4019d",
@@ -41,6 +41,27 @@
       "installedAgents": [],
       "lastLoginAt": null,
       "updatedAt": "2026-08-08T15:43:58.645Z"
+    },
+    {
+      "id": "usr_c12c9a9f512008809f76278f",
+      "email": "alljob367@gmail.com",
+      "firstName": "ALLJOB",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "createdAt": "2026-08-27T05:26:08.318Z",
+      "plan": "free",
+      "planStatus": "active",
+      "planStartedAt": "2026-08-27T05:26:08.318Z",
+      "planEndsAt": null,
+      "credits": 50,
+      "creditsUsedThisMonth": 0,
+      "creditsResetAt": "2026-09-27T05:26:08.318Z",
+      "referralCode": "alljob1c0501",
+      "referredBy": null,
+      "referralCount": 0,
+      "referralCreditsEarned": 0,
+      "installedAgents": [],
+      "lastLoginAt": null,
+      "updatedAt": "2026-08-27T05:26:08.318Z"
     }
   ]
 }

@@ -210,6 +210,12 @@
       "namedRegex": "^/api/ads/youtube/webhook(?:/)?$"
     },
     {
+      "page": "/api/ai/generate",
+      "regex": "^/api/ai/generate(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ai/generate(?:/)?$"
+    },
+    {
       "page": "/api/auth/login",
       "regex": "^/api/auth/login(?:/)?$",
       "routeKeys": {},
@@ -262,6 +268,12 @@
       "regex": "^/api/checkout/stripe\\-webhook(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/checkout/stripe\\-webhook(?:/)?$"
+    },
+    {
+      "page": "/api/download/kit",
+      "regex": "^/api/download/kit(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/download/kit(?:/)?$"
     },
     {
       "page": "/api/marketplace/agents",

@@ -165,3 +165,17 @@ Stage Summary:
 - 2 pages created
 - Admin page: full config for 3 ad platforms with webhook URLs
 - Inbox page: real-time unified inbox with stats, filters, detail panel, AI response display
+
+---
+Task ID: functional-modules
+Agent: general-purpose
+Task: Create functional website + content generation modules with AI
+
+Work Log:
+- Rewrote website/page.tsx (template selector + AI HTML generation + iframe preview + download)
+- Rewrote content/page.tsx (16 formats + AI generation + batch mode + copy)
+
+Stage Summary:
+- 2 modules fully functional with AI
+- Website: generates complete HTML/CSS site, preview in iframe, download
+- Content: 16 formats, single + batch (3 variants), character count, copy

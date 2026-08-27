@@ -470,6 +470,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/ai/generate/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ai/generate">> = Specific
+  const handler = {} as typeof import("../../app/api/ai/generate/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/auth/login/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/login">> = Specific
@@ -546,6 +555,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/checkout/stripe-webhook">> = Specific
   const handler = {} as typeof import("../../app/api/checkout/stripe-webhook/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/download/kit/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/download/kit">> = Specific
+  const handler = {} as typeof import("../../app/api/download/kit/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
