@@ -38,7 +38,7 @@ export interface AppConfig {
   };
   // AI Providers
   ai: {
-    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'custom';
+    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'openrouter' | 'custom';
     providers: {
       openai: { apiKey: string; model: string; enabled: boolean };
       anthropic: { apiKey: string; model: string; enabled: boolean };
@@ -46,6 +46,7 @@ export interface AppConfig {
       zai: { apiKey: string; model: string; enabled: boolean };
       mistral: { apiKey: string; model: string; endpoint: string; enabled: boolean };
       groq: { apiKey: string; model: string; endpoint: string; enabled: boolean };
+      openrouter: { apiKey: string; model: string; endpoint: string; enabled: boolean; appName: string; siteUrl: string };
       custom: { baseUrl: string; apiKey: string; model: string; enabled: boolean };
     };
     fallback: boolean; // if primary fails, try others
@@ -224,6 +225,14 @@ export function getDefaultConfig(): AppConfig {
         zai: { apiKey: '', model: 'glm-4.6', enabled: false },
         mistral: { apiKey: '', model: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1', enabled: false },
         groq: { apiKey: '', model: 'llama-3.3-70b-versatile', endpoint: 'https://api.groq.com/openai/v1', enabled: false },
+        openrouter: {
+          apiKey: '',
+          model: 'anthropic/claude-3.5-sonnet',
+          endpoint: 'https://openrouter.ai/api/v1',
+          enabled: false,
+          appName: 'AfriLaunch AI',
+          siteUrl: 'https://afrilaunch.ai',
+        },
         custom: { baseUrl: '', apiKey: '', model: '', enabled: false },
       },
       fallback: true,
@@ -675,6 +684,54 @@ export async function testAiProvider(config: AppConfig, provider: string): Promi
       };
     } catch (err) {
       return { ok: false, message: `Groq: erreur réseau — ${(err as Error).message}` };
+    }
+  }
+
+  // Real API call for OpenRouter (multi-provider gateway)
+  if (provider === 'openrouter') {
+    try {
+      const endpoint = p.endpoint || 'https://openrouter.ai/api/v1';
+      const res = await fetch(`${endpoint}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${p.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': p.siteUrl || 'https://afrilaunch.ai',
+          'X-Title': p.appName || 'AfriLaunch AI',
+        },
+        body: JSON.stringify({
+          model: p.model || 'anthropic/claude-3.5-sonnet',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+          ],
+          max_tokens: 50,
+          temperature: 0.1,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errJson = JSON.parse(errBody);
+          errMsg = errJson.message || errJson.error?.message || errMsg;
+        } catch { /* not JSON */ }
+        if (res.status === 401) return { ok: false, message: `OpenRouter: clé API invalide (401). ${errMsg}` };
+        if (res.status === 402) return { ok: false, message: `OpenRouter: crédits insuffisants (402). ${errMsg}` };
+        return { ok: false, message: `OpenRouter: erreur ${res.status}. ${errMsg}` };
+      }
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+      return {
+        ok: true,
+        message: `OpenRouter connecté ✓ — modèle: ${data.model || p.model}`,
+        details: { reply: reply.slice(0, 120), usage: data.usage },
+      };
+    } catch (err) {
+      return { ok: false, message: `OpenRouter: erreur réseau — ${(err as Error).message}` };
     }
   }
 

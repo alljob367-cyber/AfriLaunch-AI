@@ -110,6 +110,67 @@ async function callProvider(
     }
   }
 
+  // OpenRouter — multi-provider gateway (access GPT-4, Claude, Gemini, Llama, etc. via one API)
+  if (provider === 'openrouter') {
+    const endpoint = providerConfig.endpoint || 'https://openrouter.ai/api/v1';
+    const model = providerConfig.model || 'anthropic/claude-3.5-sonnet';
+    const appName = providerConfig.appName || 'AfriLaunch AI';
+    const siteUrl = providerConfig.siteUrl || 'https://afrilaunch.ai';
+
+    const messages = [
+      { role: 'system', content: opts.systemPrompt },
+      ...(opts.history ?? []),
+      { role: 'user', content: opts.userMessage },
+    ];
+
+    try {
+      const res = await fetch(`${endpoint}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${providerConfig.apiKey}`,
+          'Content-Type': 'application/json',
+          // OpenRouter recommends these headers for attribution/ranking
+          'HTTP-Referer': siteUrl,
+          'X-Title': appName,
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          max_tokens: maxTokens,
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(180000),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errJson = JSON.parse(errBody);
+          errMsg = errJson.message || errJson.error?.message || errMsg;
+        } catch { /* not JSON */ }
+        if (res.status === 401) return { ok: false, error: `OpenRouter: clé API invalide (401). ${errMsg}`, provider, model };
+        if (res.status === 402) return { ok: false, error: `OpenRouter: crédits insuffisants (402). ${errMsg}`, provider, model };
+        if (res.status === 429) return { ok: false, error: `OpenRouter: rate limit atteint (429). ${errMsg}`, provider, model };
+        return { ok: false, error: `OpenRouter erreur: ${errMsg}`, provider, model };
+      }
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content?.trim();
+      if (!reply) return { ok: false, error: 'Réponse vide d\'OpenRouter', provider, model };
+
+      return {
+        ok: true,
+        reply,
+        provider,
+        model: data.model || model,
+        usage: data.usage,
+      };
+    } catch (err) {
+      return { ok: false, error: `OpenRouter erreur réseau: ${(err as Error).message}`, provider, model: providerConfig.model };
+    }
+  }
+
   // For other providers (OpenAI, Anthropic, Gemini, Z.ai, custom) — simulated
   // Real implementation would use their respective SDKs
   return {
