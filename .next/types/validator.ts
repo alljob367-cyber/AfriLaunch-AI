@@ -506,6 +506,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/ai/generate-async/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ai/generate-async">> = Specific
+  const handler = {} as typeof import("../../app/api/ai/generate-async/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/ai/generate/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/ai/generate">> = Specific
@@ -672,15 +681,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/payment-manual/proof">> = Specific
   const handler = {} as typeof import("../../app/api/payment-manual/proof/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../app/api/payment-manual/upload/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/payment-manual/upload">> = Specific
-  const handler = {} as typeof import("../../app/api/payment-manual/upload/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

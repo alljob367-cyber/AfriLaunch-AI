@@ -31,6 +31,26 @@ const TEMPLATES: TemplateOption[] = [
   { id: 'business', name: 'Business', description: 'Site vitrine pro', icon: Building2 },
 ];
 
+async function pollJob(jobId: string, onStatus?: (status: string, elapsed: number) => void): Promise<{ ok: boolean; content?: string; error?: string; provider?: string; model?: string }> {
+  const maxAttempts = 100; // 100 × 3s = 5 min max
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`/api/ai/generate-async?jobId=${jobId}`, { credentials: 'include' });
+      const data = await res.json();
+      if (onStatus) onStatus(data.status, data.elapsed || 0);
+      if (data.status === 'done' && data.result) {
+        return { ok: true, content: data.result.content, provider: data.result.provider, model: data.result.model };
+      }
+      if (data.status === 'failed') {
+        return { ok: false, error: data.error || 'Génération échouée' };
+      }
+      // Still pending or running → continue polling
+    } catch { /* retry */ }
+  }
+  return { ok: false, error: 'Timeout: la génération prend trop de temps' };
+}
+
 export default function WebsitePage() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -40,6 +60,7 @@ export default function WebsitePage() {
   const [industry, setIndustry] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
   const [generating, setGenerating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [orgLoaded, setOrgLoaded] = useState(false);
@@ -65,8 +86,9 @@ export default function WebsitePage() {
     }
     setGenerating(true);
     setGeneratedHtml(null);
+    setStatusMsg('Démarrage de la génération...');
     try {
-      const res = await fetch('/api/ai/generate', {
+      const res = await fetch('/api/ai/generate-async', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -80,10 +102,25 @@ export default function WebsitePage() {
           toast({ title: 'Échec', description: data.error, variant: 'error' });
         }
         setGenerating(false);
+        setStatusMsg('');
         return;
       }
+      const creditsRemaining = data.creditsRemaining;
+      // Poll the async job until done or failed
+      const startTime = Date.now();
+      const result = await pollJob(data.jobId, (_status, _elapsed) => {
+        const seconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+        setStatusMsg(`Génération en cours... (${seconds}s)`);
+      });
+      if (!result.ok) {
+        toast({ title: 'Échec', description: result.error, variant: 'error' });
+        setGenerating(false);
+        setStatusMsg('');
+        return;
+      }
+      const content = result.content || '';
       // Strip markdown code fences if present
-      let html = data.content.replace(/^```html?\s*/i, '').replace(/```\s*$/, '').trim();
+      let html = content.replace(/^```html?\s*/i, '').replace(/```\s*$/, '').trim();
 
       // Sanitize: force all content visible (fixes slide-in opacity:0 + other hidden elements)
       // Many AI-generated sites use opacity:0 or transform animations that need JS to reveal.
@@ -117,12 +154,13 @@ export default function WebsitePage() {
       }
 
       setGeneratedHtml(html);
-      if (typeof data.creditsRemaining === 'number') setCreditsRemaining(data.creditsRemaining);
+      if (typeof creditsRemaining === 'number') setCreditsRemaining(creditsRemaining);
       toast({ title: 'Site généré ! 🌐', description: '10 crédits débités', variant: 'success' });
     } catch (err) {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
     } finally {
       setGenerating(false);
+      setStatusMsg('');
     }
   }
 
@@ -316,7 +354,7 @@ export default function WebsitePage() {
                   className="card-premium flex flex-col items-center justify-center py-20"
                 >
                   <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" aria-hidden="true" />
-                  <p className="text-sm text-gray-400">L'IA génère votre site web...</p>
+                  <p className="text-sm text-gray-400">{statusMsg || "L'IA génère votre site web..."}</p>
                   <p className="text-xs text-gray-600 mt-2">HTML, CSS, sections, contenu — en 15-30s</p>
                 </motion.div>
               )}

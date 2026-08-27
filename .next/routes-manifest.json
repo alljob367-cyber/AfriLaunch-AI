@@ -234,6 +234,12 @@
       "namedRegex": "^/api/ai/generate(?:/)?$"
     },
     {
+      "page": "/api/ai/generate-async",
+      "regex": "^/api/ai/generate\\-async(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ai/generate\\-async(?:/)?$"
+    },
+    {
       "page": "/api/auth/login",
       "regex": "^/api/auth/login(?:/)?$",
       "routeKeys": {},
@@ -340,12 +346,6 @@
       "regex": "^/api/payment\\-manual/proof(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/payment\\-manual/proof(?:/)?$"
-    },
-    {
-      "page": "/api/payment-manual/upload",
-      "regex": "^/api/payment\\-manual/upload(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/api/payment\\-manual/upload(?:/)?$"
     },
     {
       "page": "/api/referral/stats",

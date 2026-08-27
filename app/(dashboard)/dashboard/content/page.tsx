@@ -43,6 +43,26 @@ function formatCharCount(n: number): string {
   return `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} caractères`;
 }
 
+async function pollJob(jobId: string, onStatus?: (status: string, elapsed: number) => void): Promise<{ ok: boolean; content?: string; error?: string; provider?: string; model?: string }> {
+  const maxAttempts = 100; // 100 × 3s = 5 min max
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`/api/ai/generate-async?jobId=${jobId}`, { credentials: 'include' });
+      const data = await res.json();
+      if (onStatus) onStatus(data.status, data.elapsed || 0);
+      if (data.status === 'done' && data.result) {
+        return { ok: true, content: data.result.content, provider: data.result.provider, model: data.result.model };
+      }
+      if (data.status === 'failed') {
+        return { ok: false, error: data.error || 'Génération échouée' };
+      }
+      // Still pending or running → continue polling
+    } catch { /* retry */ }
+  }
+  return { ok: false, error: 'Timeout: la génération prend trop de temps' };
+}
+
 export default function ContentPage() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -55,6 +75,7 @@ export default function ContentPage() {
   const [tone, setTone] = useState<string>('Amical');
   const [batch, setBatch] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
   const [results, setResults] = useState<string[] | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [orgLoaded, setOrgLoaded] = useState(false);
@@ -94,8 +115,9 @@ export default function ContentPage() {
     setGenerating(true);
     setResults(null);
     setGeneratedImageUrl(null);
+    setStatusMsg('Démarrage de la génération...');
     try {
-      const res = await fetch('/api/ai/generate', {
+      const res = await fetch('/api/ai/generate-async', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -111,13 +133,28 @@ export default function ContentPage() {
           toast({ title: 'Échec', description: data.error, variant: 'error' });
         }
         setGenerating(false);
+        setStatusMsg('');
         return;
       }
+      const creditsRemaining = data.creditsRemaining;
+      // Poll the async job until done or failed
+      const startTime = Date.now();
+      const result = await pollJob(data.jobId, (_status, _elapsed) => {
+        const seconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+        setStatusMsg(`Génération en cours... (${seconds}s)`);
+      });
+      if (!result.ok) {
+        toast({ title: 'Échec', description: result.error, variant: 'error' });
+        setGenerating(false);
+        setStatusMsg('');
+        return;
+      }
+      const content = result.content || '';
       const pieces = batch
-        ? data.content.split('---VARIANTE---').map((s: string) => s.trim()).filter(Boolean)
-        : [data.content.trim()];
+        ? content.split('---VARIANTE---').map((s: string) => s.trim()).filter(Boolean)
+        : [content.trim()];
       setResults(pieces);
-      if (typeof data.creditsRemaining === 'number') setCreditsRemaining(data.creditsRemaining);
+      if (typeof creditsRemaining === 'number') setCreditsRemaining(creditsRemaining);
       toast({ title: `${pieces.length} contenu(s) généré(s) ! ✍️`, description: `${creditCost} crédits débités`, variant: 'success' });
 
       // Generate image if applicable
@@ -128,6 +165,7 @@ export default function ContentPage() {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
     } finally {
       setGenerating(false);
+      setStatusMsg('');
     }
   }
 
@@ -303,7 +341,7 @@ export default function ContentPage() {
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="card-premium flex flex-col items-center justify-center py-20">
                   <Loader2 className="w-12 h-12 animate-spin text-pink-500 mb-4" aria-hidden="true" />
-                  <p className="text-sm text-gray-400">L'IA crée votre contenu...</p>
+                  <p className="text-sm text-gray-400">{statusMsg || "L'IA crée votre contenu..."}</p>
                   <p className="text-xs text-gray-600 mt-2">{batch ? '3 variantes en cours' : `Format: ${FORMATS.find((f) => f.id === format)?.label}`}</p>
                 </motion.div>
               )}

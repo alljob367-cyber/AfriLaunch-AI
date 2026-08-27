@@ -214,3 +214,18 @@ Work Log:
 Stage Summary:
 - All 3 modules now fetch org data on mount and pre-fill fields
 - "Pré-rempli depuis votre organisation" note added to each form
+
+---
+Task ID: async-generation
+Agent: general-purpose
+Task: Update identity/website/content to use async generation API with polling
+
+Work Log:
+- Updated identity/page.tsx (async + pollJob)
+- Updated website/page.tsx (async + pollJob + keep sanitization)
+- Updated content/page.tsx (async + pollJob + keep image gen)
+
+Stage Summary:
+- All 3 modules now use /api/ai/generate-async + polling
+- Avoids gateway 502 timeout (POST returns immediately, client polls every 3s)
+- Status updates shown during generation

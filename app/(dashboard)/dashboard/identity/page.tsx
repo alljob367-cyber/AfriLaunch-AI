@@ -30,6 +30,26 @@ interface BrandKit {
   brandGuidelines: { do: string[]; dont: string[] };
 }
 
+async function pollJob(jobId: string, onStatus?: (status: string, elapsed: number) => void): Promise<{ ok: boolean; content?: string; error?: string; provider?: string; model?: string }> {
+  const maxAttempts = 100; // 100 × 3s = 5 min max
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    try {
+      const res = await fetch(`/api/ai/generate-async?jobId=${jobId}`, { credentials: 'include' });
+      const data = await res.json();
+      if (onStatus) onStatus(data.status, data.elapsed || 0);
+      if (data.status === 'done' && data.result) {
+        return { ok: true, content: data.result.content, provider: data.result.provider, model: data.result.model };
+      }
+      if (data.status === 'failed') {
+        return { ok: false, error: data.error || 'Génération échouée' };
+      }
+      // Still pending or running → continue polling
+    } catch { /* retry */ }
+  }
+  return { ok: false, error: 'Timeout: la génération prend trop de temps' };
+}
+
 export default function IdentityPage() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -38,6 +58,7 @@ export default function IdentityPage() {
   const [country, setCountry] = useState('Sénégal');
   const [style, setStyle] = useState('Moderne et professionnel');
   const [generating, setGenerating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
   const [kit, setKit] = useState<BrandKit | null>(null);
   const [orgLoaded, setOrgLoaded] = useState(false);
 
@@ -63,8 +84,9 @@ export default function IdentityPage() {
     }
     setGenerating(true);
     setKit(null);
+    setStatusMsg('Démarrage de la génération...');
     try {
-      const res = await fetch('/api/ai/generate', {
+      const res = await fetch('/api/ai/generate-async', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -78,16 +100,30 @@ export default function IdentityPage() {
           toast({ title: 'Échec', description: data.error, variant: 'error' });
         }
         setGenerating(false);
+        setStatusMsg('');
+        return;
+      }
+      const creditsRemaining = data.creditsRemaining;
+      // Poll the async job until done or failed
+      const startTime = Date.now();
+      const result = await pollJob(data.jobId, (_status, _elapsed) => {
+        const seconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+        setStatusMsg(`Génération en cours... (${seconds}s)`);
+      });
+      if (!result.ok) {
+        toast({ title: 'Échec', description: result.error, variant: 'error' });
+        setGenerating(false);
+        setStatusMsg('');
         return;
       }
       // Parse JSON from the AI reply
       try {
-        const jsonStr = data.content.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+        const jsonStr = (result.content || '').replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
         const parsed = JSON.parse(jsonStr);
         setKit(parsed);
         toast({
           title: 'Identité générée ! 🎨',
-          description: `20 crédits débités. ${data.creditsRemaining} restants.`,
+          description: `20 crédits débités. ${creditsRemaining} restants.`,
           variant: 'success',
         });
       } catch (parseErr) {
@@ -97,6 +133,7 @@ export default function IdentityPage() {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
     } finally {
       setGenerating(false);
+      setStatusMsg('');
     }
   }
 
@@ -205,7 +242,7 @@ export default function IdentityPage() {
               {generating && (
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="card-premium flex flex-col items-center justify-center py-20">
                   <Loader2 className="w-12 h-12 animate-spin text-violet-500 mb-4" aria-hidden="true" />
-                  <p className="text-sm text-gray-400">L'IA crée votre identité de marque...</p>
+                  <p className="text-sm text-gray-400">{statusMsg || "L'IA crée votre identité de marque..."}</p>
                   <p className="text-xs text-gray-600 mt-2">Logo, palette, typographie, bios, guidelines</p>
                 </motion.div>
               )}
