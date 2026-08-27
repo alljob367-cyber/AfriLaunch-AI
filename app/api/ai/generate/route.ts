@@ -3,15 +3,15 @@
 // Body: { type: 'identity'|'website'|'content', ...params }
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runAI } from '@/lib/ai-runner';
+import { runAI, runAIForPlan } from '@/lib/ai-runner';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 
 const CREDIT_COSTS: Record<string, number> = {
-  identity: 20,    // branding kit is complex
-  website: 30,     // full HTML/CSS generation
-  content: 5,      // single piece of content
-  content_batch: 25, // batch of multiple formats
+  identity: 5,       // JSON branding kit (~3000 tokens)
+  website: 10,       // full HTML/CSS generation (~6000 tokens)
+  content: 1,        // single piece of content (~800 tokens)
+  content_batch: 3,  // 3 variants (~2400 tokens)
 };
 
 interface GenerateRequest {
@@ -43,10 +43,16 @@ export async function POST(req: NextRequest) {
 
   const creditCost = body.batch ? CREDIT_COSTS.content_batch : (CREDIT_COSTS[body.type] || 5);
 
-  // Consume credits first
+  // Consume credits first (handles both monthly + daily limits)
   const consumed = await consumeCredits(user.id, creditCost);
   if (!consumed.ok) {
-    return NextResponse.json({ ok: false, error: consumed.error, insufficientCredits: true }, { status: 402 });
+    return NextResponse.json({
+      ok: false,
+      error: consumed.error,
+      insufficientCredits: !consumed.dailyLimit,
+      dailyLimitReached: !!consumed.dailyLimit,
+      dailyLimit: consumed.dailyLimit,
+    }, { status: 402 });
   }
 
   let systemPrompt = '';
@@ -68,11 +74,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Type invalide' }, { status: 400 });
   }
 
-  const result = await runAI({
+  const result = await runAIForPlan({
     systemPrompt,
     userMessage: userPrompt,
     maxTokens: body.type === 'website' ? 4000 : 3000,
-  });
+  }, user.plan);
 
   if (!result.ok || !result.reply) {
     // Refund credits on failure

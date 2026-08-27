@@ -1,7 +1,9 @@
 // AfriLaunch AI — AI runner: calls the configured LLM provider
-// Supports Mistral, Groq (OpenAI-compatible), and others via their APIs
+// Supports Mistral, Groq, OpenRouter (OpenAI-compatible), and others via their APIs
+// Includes per-plan model routing for cost optimization
 
 import { getConfig, type AppConfig } from './config-store';
+import type { PlanId } from './user-types';
 
 export interface RunOptions {
   systemPrompt: string;
@@ -19,6 +21,17 @@ export interface RunResult {
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 }
 
+// Plan-based model routing on OpenRouter (cost optimization)
+// Maps a user's plan to the best model for that tier
+const PLAN_MODELS: Record<PlanId, string> = {
+  free: 'google/gemini-flash-1.5',         // ~0.0002$/msg — quasi gratuit
+  starter: 'openai/gpt-4o-mini',            // ~0.0005$/msg — économique
+  pro: 'anthropic/claude-3.5-sonnet',       // ~0.012$/msg — qualité pro
+  business: 'anthropic/claude-3.5-sonnet',  // ~0.012$/msg — qualité pro
+  enterprise: 'openai/gpt-4o',              // ~0.009$/msg — polyvalent
+};
+
+// Backward-compatible: runAI without plan uses the configured primary provider
 export async function runAI(opts: RunOptions): Promise<RunResult> {
   const config = await getConfig();
 
@@ -38,6 +51,24 @@ export async function runAI(opts: RunOptions): Promise<RunResult> {
   }
 
   return callProvider(provider, providerConfig, opts, config);
+}
+
+// Plan-aware runner: routes to the best model based on the user's plan
+// Uses OpenRouter if available (so we can switch models per plan), else falls back to the primary provider
+export async function runAIForPlan(opts: RunOptions, plan: PlanId): Promise<RunResult> {
+  const config = await getConfig();
+
+  // If OpenRouter is enabled and has a key, use plan-based model routing
+  const openrouter = config.ai.providers.openrouter;
+  if (openrouter?.enabled && openrouter.apiKey) {
+    const targetModel = PLAN_MODELS[plan] || PLAN_MODELS.free;
+    // Override the model on a clone of the provider config (don't mutate the stored config)
+    const providerConfig = { ...openrouter, model: targetModel };
+    return callProvider('openrouter', providerConfig, opts, config);
+  }
+
+  // Fallback to the configured primary provider
+  return runAI(opts);
 }
 
 function findEnabledProvider(config: AppConfig): { provider: string; providerConfig: any } | null {

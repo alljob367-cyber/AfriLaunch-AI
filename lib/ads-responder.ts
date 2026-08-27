@@ -1,7 +1,7 @@
 // AfriLaunch AI — AI auto-responder for ads comments/messages
 // Generates a context-aware response using the configured AI provider.
 
-import { runAI } from './ai-runner';
+import { runAIForPlan } from './ai-runner';
 import { getConfig } from './config-store';
 import { markAdsItemResponded, type AdsItem } from './ads-store';
 
@@ -55,11 +55,14 @@ Message original de ${item.authorName}:
 
 Génère UNIQUEMENT la réponse (pas de préfixe, pas de guillemets):`;
 
-  const result = await runAI({
+  // Use plan-based routing — ads items may belong to a user or be unattributed (free tier)
+  const plan = item.userId ? 'pro' : 'free'; // unattributed ad comments use free tier (cheapest model)
+
+  const result = await runAIForPlan({
     systemPrompt,
     userMessage: item.message,
     maxTokens: 300,
-  });
+  }, plan);
 
   if (!result.ok || !result.reply) {
     // Mark as failed (not responded) so user can retry

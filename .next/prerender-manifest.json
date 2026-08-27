@@ -702,6 +702,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/admin/metrics": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin/metrics",
+      "dataRoute": "/admin/metrics.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/admin/payments": {
       "experimentalBypassFor": [
         {
@@ -956,8 +981,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "52a21be0a680b0968101f1bbebb4e9e9",
-    "previewModeSigningKey": "f1b251612a63463046b4376040b1c65f19ad15f2810542419fd166a292a71588",
-    "previewModeEncryptionKey": "5a918c6438f023173c6ec20c57b8d86ae23ad8a897d8e630b3f04b7e27e49b49"
+    "previewModeId": "64f3a1b6f772d807df7eab65be69ee07",
+    "previewModeSigningKey": "176096bbf37c0117c35752bba8a66b6e7d04af889c3e0443cf88a241eec7c823",
+    "previewModeEncryptionKey": "56f79f1706db713b0d148ca1c01377bd6019cddcc8225f77588d27cf9d0099a9"
   }
 }

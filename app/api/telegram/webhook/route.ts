@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
 import { AGENTS, getAgentByCommand, routeMessage, getAgentsListText } from '@/lib/agents';
-import { runAI } from '@/lib/ai-runner';
+import { runAIForPlan } from '@/lib/ai-runner';
 import { getUserByTelegramId, consumeCredits, PLANS } from '@/lib/user-store';
 
 interface TelegramMessage {
@@ -183,12 +183,16 @@ async function processWithAgent(
   const history = conversationHistory.get(chatId) ?? [];
 
   // Call AI
-  const result = await runAI({
+  // Get the user's plan (we have `user` from the auth check above)
+  const linkedUser = telegramUserId ? await getUserByTelegramId(telegramUserId) : null;
+  const userPlan = linkedUser?.plan || 'free';
+
+  const result = await runAIForPlan({
     systemPrompt: `${agent.systemPrompt}\n\nContexte: Tu discutes avec ${userName} via Telegram. Sois concis (max 4000 caractères car limite Telegram). Utilise le formatage Markdown quand pertinent (gras, listes).`,
     userMessage,
     history,
     maxTokens: 2000,
-  });
+  }, userPlan);
 
   if (!result.ok || !result.reply) {
     await sendTelegramMessage(

@@ -108,6 +108,12 @@
       "namedRegex": "^/admin/logs(?:/)?$"
     },
     {
+      "page": "/admin/metrics",
+      "regex": "^/admin/metrics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/metrics(?:/)?$"
+    },
+    {
       "page": "/admin/payments",
       "regex": "^/admin/payments(?:/)?$",
       "routeKeys": {},
@@ -154,6 +160,12 @@
       "regex": "^/api/admin/config(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/admin/config(?:/)?$"
+    },
+    {
+      "page": "/api/admin/metrics",
+      "regex": "^/api/admin/metrics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/admin/metrics(?:/)?$"
     },
     {
       "page": "/api/admin/password",
@@ -316,6 +328,12 @@
       "regex": "^/api/users/credits(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/users/credits(?:/)?$"
+    },
+    {
+      "page": "/api/users/daily-usage",
+      "regex": "^/api/users/daily\\-usage(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/users/daily\\-usage(?:/)?$"
     },
     {
       "page": "/api/users/plan",

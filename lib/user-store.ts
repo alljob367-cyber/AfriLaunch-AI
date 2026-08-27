@@ -166,7 +166,20 @@ export async function addCredits(id: string, amount: number): Promise<User | nul
   return user;
 }
 
-export async function consumeCredits(id: string, amount: number): Promise<{ ok: boolean; user: User | null; error?: string }> {
+// Daily limit per plan (in credits). 0 = no daily limit.
+const DAILY_LIMITS: Record<PlanId, number> = {
+  free: 10,        // 10 messages/jour
+  starter: 0,      // pas de plafond quotidien (plafond mensuel seulement)
+  pro: 0,
+  business: 0,
+  enterprise: 0,
+};
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+export async function consumeCredits(id: string, amount: number): Promise<{ ok: boolean; user: User | null; error?: string; dailyLimit?: { limit: number; usedToday: number } }> {
   const store = await readStore();
   const user = store.users.find((u) => u.id === id);
   if (!user) return { ok: false, user: null, error: 'Utilisateur introuvable' };
@@ -179,15 +192,52 @@ export async function consumeCredits(id: string, amount: number): Promise<{ ok: 
     user.creditsResetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   }
 
+  // Check daily limit (for Free plan mainly)
+  const dailyLimit = DAILY_LIMITS[user.plan] || 0;
+  const today = new Date();
+  const lastResetDate = (user as any).dailyResetAt ? new Date((user as any).dailyResetAt) : null;
+  if (!lastResetDate || !isSameDay(lastResetDate, today)) {
+    (user as any).creditsUsedToday = 0;
+    (user as any).dailyResetAt = today.toISOString();
+  }
+  const usedToday = (user as any).creditsUsedToday || 0;
+
+  // Allow negative amount = refund (skip daily limit check)
+  if (amount > 0 && dailyLimit > 0 && usedToday + amount > dailyLimit) {
+    return {
+      ok: false,
+      user,
+      error: `Limite quotidienne atteinte (${dailyLimit} messages/jour pour le plan ${PLANS[user.plan].name}). Passez à un plan supérieur pour des usages illimités.`,
+      dailyLimit: { limit: dailyLimit, usedToday },
+    };
+  }
+
   if (user.credits < amount) {
     return { ok: false, user, error: 'Crédits insuffisants. Rechargez votre compte.' };
   }
 
   user.credits -= amount;
   user.creditsUsedThisMonth += amount;
+  if (amount > 0) {
+    (user as any).creditsUsedToday = usedToday + amount;
+  }
   user.updatedAt = new Date().toISOString();
   await writeStore(store);
   return { ok: true, user };
+}
+
+// Returns the user's daily usage info (for UI display)
+export async function getDailyUsage(id: string): Promise<{ limit: number; usedToday: number; remaining: number }> {
+  const user = await getUserById(id);
+  if (!user) return { limit: 0, usedToday: 0, remaining: 0 };
+  const dailyLimit = DAILY_LIMITS[user.plan] || 0;
+  const today = new Date();
+  const lastResetDate = (user as any).dailyResetAt ? new Date((user as any).dailyResetAt) : null;
+  if (!lastResetDate || !isSameDay(lastResetDate, today)) {
+    return { limit: dailyLimit, usedToday: 0, remaining: dailyLimit };
+  }
+  const usedToday = (user as any).creditsUsedToday || 0;
+  return { limit: dailyLimit, usedToday, remaining: Math.max(0, dailyLimit - usedToday) };
 }
 
 export async function linkTelegramAccount(userId: string, telegramUserId: number, telegramUsername: string): Promise<User | null> {
