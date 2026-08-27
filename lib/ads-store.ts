@@ -1,11 +1,8 @@
-// AfriLaunch AI — Ads store (server-side, persisted to JSON)
+// AfriLaunch AI — Ads store (server-side, persisted via Supabase KV)
 // Stores incoming comments, DMs, and lead form submissions from Facebook Ads,
 // Google Ads, and YouTube Ads — plus the AI-generated responses.
 
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const ADS_PATH = path.join('/home/z/my-project/data', 'ads-inbox.json');
+import { kvGet, kvSet } from './db';
 
 // ─── Types ────────────────────────────────────────────────────────────
 export type AdsPlatform = 'facebook' | 'google' | 'youtube';
@@ -51,17 +48,12 @@ interface AdsStore {
 
 // ─── File I/O ─────────────────────────────────────────────────────────
 async function readStore(): Promise<AdsStore> {
-  try {
-    const raw = await fs.readFile(ADS_PATH, 'utf-8');
-    return JSON.parse(raw) as AdsStore;
-  } catch {
-    return { items: [] };
-  }
+  const store = await kvGet<AdsStore>('ads-inbox');
+  return store ?? { items: [] };
 }
 
 async function writeStore(store: AdsStore): Promise<void> {
-  await fs.mkdir(path.dirname(ADS_PATH), { recursive: true });
-  await fs.writeFile(ADS_PATH, JSON.stringify(store, null, 2), 'utf-8');
+  await kvSet('ads-inbox', store);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────

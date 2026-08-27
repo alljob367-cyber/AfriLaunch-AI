@@ -1,14 +1,11 @@
-// AfriLaunch AI — Configuration store (server-side, persisted to JSON file)
+// AfriLaunch AI — Configuration store (server-side, persisted via Supabase KV)
 // This module manages the app's runtime configuration: mode (demo/real),
 // API keys, database connection, AI providers, payment providers, etc.
-// Config is stored at /home/z/my-project/data/app-config.json
+// Config is stored in Supabase `kv_store` (key = 'app-config'), with a local
+// JSON file fallback in dev.
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
-
-const CONFIG_PATH = path.join('/home/z/my-project/data', 'app-config.json');
-const SESSIONS_PATH = path.join('/home/z/my-project/data', 'admin-sessions.json');
+import { kvGet, kvSet } from './db';
 
 // ─── Types ────────────────────────────────────────────────────────────
 export interface AppConfig {
@@ -480,25 +477,22 @@ export function getDefaultConfig(): AppConfig {
 
 // ─── File I/O ─────────────────────────────────────────────────────────
 async function readConfig(): Promise<AppConfig> {
-  try {
-    const raw = await fs.readFile(CONFIG_PATH, 'utf-8');
-    const parsed = JSON.parse(raw) as Partial<AppConfig>;
-    // Merge with defaults to handle schema evolution
-    const defaults = getDefaultConfig();
-    return { ...defaults, ...parsed } as AppConfig;
-  } catch (err: unknown) {
-    // File doesn't exist yet — create with defaults
+  const parsed = await kvGet<Partial<AppConfig>>('app-config');
+  if (!parsed) {
+    // Not initialized yet — create with defaults
     const defaults = getDefaultConfig();
     await writeConfig(defaults);
     return defaults;
   }
+  // Merge with defaults to handle schema evolution
+  const defaults = getDefaultConfig();
+  return { ...defaults, ...parsed } as AppConfig;
 }
 
 async function writeConfig(config: AppConfig): Promise<void> {
   config.updatedAt = new Date().toISOString();
   config.version += 1;
-  await fs.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
-  await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+  await kvSet('app-config', config);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────
@@ -556,17 +550,12 @@ interface AdminSession {
 }
 
 async function readSessions(): Promise<AdminSession[]> {
-  try {
-    const raw = await fs.readFile(SESSIONS_PATH, 'utf-8');
-    return JSON.parse(raw) as AdminSession[];
-  } catch {
-    return [];
-  }
+  const data = await kvGet<AdminSession[]>('admin-sessions');
+  return data ?? [];
 }
 
 async function writeSessions(sessions: AdminSession[]): Promise<void> {
-  await fs.mkdir(path.dirname(SESSIONS_PATH), { recursive: true });
-  await fs.writeFile(SESSIONS_PATH, JSON.stringify(sessions, null, 2), 'utf-8');
+  await kvSet('admin-sessions', sessions);
 }
 
 export async function createSession(expiryHours: number): Promise<string> {
@@ -610,11 +599,19 @@ export interface TestResult {
 export async function testDatabase(config: AppConfig): Promise<TestResult> {
   try {
     if (config.database.provider === 'sqlite') {
-      // Just check the path is writable
-      const dir = path.dirname(config.database.url.replace('file:', ''));
-      await fs.mkdir(dir, { recursive: true });
-      await fs.access(dir, fs.constants.W_OK);
-      return { ok: true, message: 'SQLite: dossier accessible en écriture' };
+      // SQLite is only used in local dev; verify the path is writable.
+      // We use dynamic imports here so the module doesn't depend on `fs`/`path`
+      // at the top level (which would break Vercel serverless).
+      try {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const dir = path.dirname(config.database.url.replace('file:', ''));
+        await fs.mkdir(dir, { recursive: true });
+        await fs.access(dir, fs.constants.W_OK);
+        return { ok: true, message: 'SQLite: dossier accessible en écriture' };
+      } catch (err) {
+        return { ok: false, message: `SQLite: ${(err as Error).message}` };
+      }
     }
     // For other providers, just validate URL format
     if (!config.database.url) {

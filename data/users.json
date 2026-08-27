@@ -91,6 +91,27 @@
       "isAdmin": true,
       "creditsUsedToday": 1,
       "dailyResetAt": "2026-08-27T16:33:20.947Z"
+    },
+    {
+      "id": "usr_c3c71cb157c063002f44d2a2",
+      "email": "test@supabase.com",
+      "firstName": "Test",
+      "passwordHash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "createdAt": "2026-08-27T19:57:10.171Z",
+      "plan": "starter",
+      "planStatus": "active",
+      "planStartedAt": "2026-08-27T19:57:10.171Z",
+      "planEndsAt": "2026-09-27T19:57:10.171Z",
+      "credits": 500,
+      "creditsUsedThisMonth": 0,
+      "creditsResetAt": "2026-09-27T19:57:10.171Z",
+      "referralCode": "test623950",
+      "referredBy": null,
+      "referralCount": 0,
+      "referralCreditsEarned": 0,
+      "installedAgents": [],
+      "lastLoginAt": null,
+      "updatedAt": "2026-08-27T19:57:10.171Z"
     }
   ]
 }

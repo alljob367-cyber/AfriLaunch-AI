@@ -1,11 +1,8 @@
-// AfriLaunch AI — Organization store (server-side, persisted to JSON)
+// AfriLaunch AI — Organization store (server-side, persisted via Supabase KV)
 // Each user has ONE organization. Creating it unlocks the full dashboard.
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
-
-const ORGS_PATH = path.join('/home/z/my-project/data', 'organizations.json');
+import { kvGet, kvSet } from './db';
 
 export interface Organization {
   id: string;
@@ -28,17 +25,12 @@ interface OrgStore {
 }
 
 async function readStore(): Promise<OrgStore> {
-  try {
-    const raw = await fs.readFile(ORGS_PATH, 'utf-8');
-    return JSON.parse(raw) as OrgStore;
-  } catch {
-    return { organizations: [] };
-  }
+  const store = await kvGet<OrgStore>('organizations');
+  return store ?? { organizations: [] };
 }
 
 async function writeStore(store: OrgStore): Promise<void> {
-  await fs.mkdir(path.dirname(ORGS_PATH), { recursive: true });
-  await fs.writeFile(ORGS_PATH, JSON.stringify(store, null, 2), 'utf-8');
+  await kvSet('organizations', store);
 }
 
 export async function createOrganization(data: Omit<Organization, 'id' | 'createdAt' | 'updatedAt'>): Promise<Organization> {

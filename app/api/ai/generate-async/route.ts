@@ -7,6 +7,7 @@ import { runAIForPlan } from '@/lib/ai-runner';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 import type { PlanId } from '@/lib/user-types';
+import { kvGet, kvSet } from '@/lib/db';
 
 interface GenJob {
   id: string;
@@ -19,15 +20,43 @@ interface GenJob {
   completedAt?: number;
 }
 
-const jobs = new Map<string, GenJob>();
+// Jobs are persisted in the Supabase kv_store under 'ai-jobs' so they survive
+// across serverless invocations (the in-memory Map approach does NOT work on
+// Vercel). Jobs auto-expire after 10 minutes — we filter them out on read.
+const AI_JOBS_KEY = 'ai-jobs';
+const JOB_TTL_MS = 10 * 60 * 1000;
 
-// Cleanup old jobs every 5 min
-setInterval(() => {
-  const tenMinAgo = Date.now() - 10 * 60 * 1000;
-  for (const [id, job] of jobs) {
-    if (job.createdAt < tenMinAgo) jobs.delete(id);
+interface AiJobsStore {
+  jobs: GenJob[];
+}
+
+async function readJobs(): Promise<GenJob[]> {
+  const store = await kvGet<AiJobsStore>(AI_JOBS_KEY);
+  const all = store?.jobs ?? [];
+  // Drop expired jobs on read (replaces the old setInterval cleanup).
+  const cutoff = Date.now() - JOB_TTL_MS;
+  const active = all.filter((j) => j.createdAt >= cutoff);
+  if (active.length !== all.length) {
+    await kvSet(AI_JOBS_KEY, { jobs: active });
   }
-}, 5 * 60 * 1000);
+  return active;
+}
+
+async function getJob(jobId: string): Promise<GenJob | null> {
+  const jobs = await readJobs();
+  return jobs.find((j) => j.id === jobId) ?? null;
+}
+
+async function saveJob(job: GenJob): Promise<void> {
+  const jobs = await readJobs();
+  const idx = jobs.findIndex((j) => j.id === job.id);
+  if (idx >= 0) {
+    jobs[idx] = job;
+  } else {
+    jobs.push(job);
+  }
+  await kvSet(AI_JOBS_KEY, { jobs });
+}
 
 const CREDIT_COSTS: Record<string, number> = {
   identity: 5, website: 10, content: 1, content_batch: 3,
@@ -53,7 +82,7 @@ export async function POST(req: NextRequest) {
   }
 
   const jobId = 'job_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  jobs.set(jobId, { id: jobId, userId: user.id, status: 'pending', type: body.type, createdAt: Date.now() });
+  await saveJob({ id: jobId, userId: user.id, status: 'pending', type: body.type, createdAt: Date.now() });
 
   // Run in background (non-blocking)
   generateInBackground(jobId, body, user.plan, user.id, creditCost);
@@ -66,9 +95,10 @@ export async function POST(req: NextRequest) {
 }
 
 async function generateInBackground(jobId: string, body: any, plan: string, userId: string, creditCost: number) {
-  const job = jobs.get(jobId);
+  const job = await getJob(jobId);
   if (!job) return;
   job.status = 'running';
+  await saveJob(job);
 
   try {
     let systemPrompt = '';
@@ -138,17 +168,20 @@ Réponds UNIQUEMENT avec le HTML. Pas de markdown.`;
       job.status = 'failed';
       job.error = result.error || 'Réponse vide';
       job.completedAt = Date.now();
+      await saveJob(job);
       return;
     }
 
     job.status = 'done';
     job.result = { content: result.reply, provider: result.provider, model: result.model, usage: result.usage };
     job.completedAt = Date.now();
+    await saveJob(job);
   } catch (err) {
     await consumeCredits(userId, -creditCost);
     job.status = 'failed';
     job.error = (err as Error).message;
     job.completedAt = Date.now();
+    await saveJob(job);
   }
 }
 
@@ -160,7 +193,7 @@ export async function GET(req: NextRequest) {
   const jobId = url.searchParams.get('jobId');
   if (!jobId) return NextResponse.json({ error: 'jobId requis' }, { status: 400 });
 
-  const job = jobs.get(jobId);
+  const job = await getJob(jobId);
   if (!job) return NextResponse.json({ error: 'Job introuvable' }, { status: 404 });
   if (job.userId !== user.id) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
 

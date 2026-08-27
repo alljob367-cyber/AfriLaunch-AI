@@ -245,3 +245,31 @@ Stage Summary:
 - Content module: publish to 5 platforms + schedule
 - Admin: ElevenLabs config card with test button
 - Voice page: text-to-speech with audio player + download
+---
+Task ID: supabase-migration
+Agent: general-purpose
+Task: Migrate all JSON file stores to Supabase DB abstraction layer
+
+Work Log:
+- Updated lib/config-store.ts (kvGet/kvSet for app-config, admin-sessions)
+- Updated lib/user-store.ts (kvGet/kvSet for users, user-sessions)
+- Updated lib/org-store.ts (kvGet/kvSet for organizations)
+- Updated lib/social-store.ts (kvGet/kvSet for social-accounts)
+- Updated lib/ads-store.ts (kvGet/kvSet for ads-inbox)
+- Updated lib/payment-manual.ts (kvGet/kvSet for manual-payments, storeFile/getFile for proofs)
+- Updated app/api/ai/generate-async/route.ts (kvGet/kvSet for ai-jobs, removed in-memory Map + setInterval)
+- Updated app/api/whatsapp-agent/webhook/route.ts (kvGet/kvSet for whatsapp-users)
+- Updated app/api/payment-manual/proof/route.ts (getFile() for proof download, removed fs.readFile)
+- Updated app/api/whatsapp-agent/status/route.ts (kvGet 'whatsapp-users' — shares store with webhook)
+- Updated app/api/admin/metrics/route.ts (kvGet 'users' — shares store with user-store)
+- Updated app/api/social/publish/route.ts (kvGet/kvSet for publications)
+- Updated app/api/social/schedule/route.ts (kvGet/kvSet for publications)
+- Verified tsc --noEmit passes with 0 errors
+
+Stage Summary:
+- All 12 stores migrated from fs to Supabase kvGet/kvSet (8 originally listed + 4 additional that share stores with the listed ones — whatsapp status, admin metrics, social publish/schedule)
+- Works on Vercel (serverless) with Supabase, falls back to JSON files in local dev
+- No business logic changes — only I/O layer swapped
+- AI async jobs now persist across serverless invocations (was broken on Vercel before)
+- SQLite testDatabase check uses dynamic fs/path imports so the module stays serverless-safe
+

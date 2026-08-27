@@ -1,11 +1,8 @@
-// AfriLaunch AI — Social accounts store (server-side, persisted to JSON)
+// AfriLaunch AI — Social accounts store (server-side, persisted via Supabase KV)
 // Stores connected social media accounts per user.
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
-
-const SOCIAL_PATH = path.join('/home/z/my-project/data', 'social-accounts.json');
+import { kvGet, kvSet } from './db';
 
 export type SocialPlatform = 'instagram' | 'tiktok' | 'facebook' | 'whatsapp' | 'linkedin' | 'twitter';
 
@@ -32,17 +29,12 @@ interface SocialStore {
 }
 
 async function readStore(): Promise<SocialStore> {
-  try {
-    const raw = await fs.readFile(SOCIAL_PATH, 'utf-8');
-    return JSON.parse(raw) as SocialStore;
-  } catch {
-    return { accounts: [] };
-  }
+  const store = await kvGet<SocialStore>('social-accounts');
+  return store ?? { accounts: [] };
 }
 
 async function writeStore(store: SocialStore): Promise<void> {
-  await fs.mkdir(path.dirname(SOCIAL_PATH), { recursive: true });
-  await fs.writeFile(SOCIAL_PATH, JSON.stringify(store, null, 2), 'utf-8');
+  await kvSet('social-accounts', store);
 }
 
 export async function getSocialAccounts(userId: string): Promise<SocialAccount[]> {

@@ -3,21 +3,10 @@
 // Admins can view uploaded proofs; users can view their own proofs.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { validateSession } from '@/lib/config-store';
 import { requireUser } from '@/lib/auth-helpers';
 import { getManualPaymentOrderById } from '@/lib/payment-manual';
-
-const PROOFS_DIR = path.join('/home/z/my-project/data', 'payment-proofs');
-
-const MIME_BY_EXT: Record<string, string> = {
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-  pdf: 'application/pdf',
-};
+import { getFile } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,16 +38,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
 
-    const filePath = path.join(PROOFS_DIR, order.proofFileName);
-    let buffer: Buffer;
-    try {
-      buffer = await fs.readFile(filePath);
-    } catch {
+    const stored = await getFile(order.proofFileName);
+    if (!stored) {
       return NextResponse.json({ error: 'Fichier introuvable sur le serveur' }, { status: 404 });
     }
-
-    const ext = (order.proofFileName.split('.').pop() || '').toLowerCase();
-    const mime = MIME_BY_EXT[ext] || 'application/octet-stream';
+    const buffer = stored.data;
+    const mime = stored.mimeType;
 
     // Wrap the Buffer in a Blob (BodyInit-compatible) for NextResponse.
     // Cast through unknown to bypass the SharedArrayBuffer mismatch in TS lib types.

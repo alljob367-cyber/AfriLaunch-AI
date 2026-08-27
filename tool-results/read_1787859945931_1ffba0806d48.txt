@@ -1,0 +1,795 @@
+     1→     1→// AfriLaunch AI — Configuration store (server-side, persisted to JSON file)
+     2→     2→// This module manages the app's runtime configuration: mode (demo/real),
+     3→     3→// API keys, database connection, AI providers, payment providers, etc.
+     4→     4→// Config is stored at /home/z/my-project/data/app-config.json
+     5→     5→
+     6→     6→import { promises as fs } from 'fs';
+     7→     7→import path from 'path';
+     8→     8→import crypto from 'crypto';
+     9→     9→
+    10→    10→const CONFIG_PATH = path.join('/home/z/my-project/data', 'app-config.json');
+    11→    11→const SESSIONS_PATH = path.join('/home/z/my-project/data', 'admin-sessions.json');
+    12→    12→
+    13→    13→// ─── Types ────────────────────────────────────────────────────────────
+    14→    14→export interface AppConfig {
+    15→    15→  // App-wide
+    16→    16→  appName: string;
+    17→    17→  appUrl: string;
+    18→    18→  locale: string;
+    19→    19→  timezone: string;
+    20→    20→  // Admin
+    21→    21→  adminPasswordHash: string | null; // sha256 of password; null = not set
+    22→    22→  adminEmail: string;
+    23→    23→  // Database
+    24→    24→  database: {
+    25→    25→    provider: 'sqlite' | 'postgresql' | 'mysql' | 'mongodb';
+    26→    26→    url: string;
+    27→    27→    ssl: boolean;
+    28→    28→  };
+    29→    29→  // Auth
+    30→    30→  auth: {
+    31→    31→    jwtSecret: string;
+    32→    32→    sessionExpiryHours: number;
+    33→    33→    oauth: {
+    34→    34→      google: { clientId: string; clientSecret: string; enabled: boolean };
+    35→    35→      github: { clientId: string; clientSecret: string; enabled: boolean };
+    36→    36→      apple: { clientId: string; clientSecret: string; enabled: boolean };
+    37→    37→    };
+    38→    38→  };
+    39→    39→  // AI Providers
+    40→    40→  ai: {
+    41→    41→    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'openrouter' | 'custom';
+    42→    42→    providers: {
+    43→    43→      openai: { apiKey: string; model: string; enabled: boolean };
+    44→    44→      anthropic: { apiKey: string; model: string; enabled: boolean };
+    45→    45→      gemini: { apiKey: string; model: string; enabled: boolean };
+    46→    46→      zai: { apiKey: string; model: string; enabled: boolean };
+    47→    47→      mistral: { apiKey: string; model: string; endpoint: string; enabled: boolean };
+    48→    48→      groq: { apiKey: string; model: string; endpoint: string; enabled: boolean };
+    49→    49→      openrouter: { apiKey: string; model: string; endpoint: string; enabled: boolean; appName: string; siteUrl: string };
+    50→    50→      custom: { baseUrl: string; apiKey: string; model: string; enabled: boolean };
+    51→    51→    };
+    52→    52→    fallback: boolean; // if primary fails, try others
+    53→    53→    maxTokensPerRequest: number;
+    54→    54→  };
+    55→    55→  // Payments
+    56→    56→  payments: {
+    57→    57→    currency: string;
+    58→    58→    providers: {
+    59→    59→      stripe: { publishableKey: string; secretKey: string; webhookSecret: string; enabled: boolean };
+    60→    60→      flutterwave: { publicKey: string; secretKey: string; encryptionKey: string; enabled: boolean };
+    61→    61→      paypal: { clientId: string; clientSecret: string; mode: 'sandbox' | 'live'; enabled: boolean };
+    62→    62→      orangeMoney: { apiKey: string; merchantKey: string; enabled: boolean };
+    63→    63→      wave: { apiKey: string; enabled: boolean };
+    64→    64→      mobileMoney: { enabled: boolean };
+    65→    65→    };
+    66→    66→  };
+    67→    67→  // Social Media APIs
+    68→    68→  social: {
+    69→    69→    instagram: { accessToken: string; businessAccountId: string; enabled: boolean };
+    70→    70→    tiktok: { clientKey: string; clientSecret: string; accessToken: string; enabled: boolean };
+    71→    71→    facebook: { appId: string; appSecret: string; pageAccessToken: string; enabled: boolean };
+    72→    72→    whatsapp: { phoneNumberId: string; accessToken: string; businessId: string; enabled: boolean };
+    73→    73→    linkedin: { clientId: string; clientSecret: string; accessToken: string; enabled: boolean };
+    74→    74→    twitter: { apiKey: string; apiSecret: string; accessToken: string; accessSecret: string; enabled: boolean };
+    75→    75→  };
+    76→    76→  // Email
+    77→    77→  email: {
+    78→    78→    provider: 'resend' | 'sendgrid' | 'smtp' | 'none';
+    79→    79→    from: string;
+    80→    80→    replyTo: string;
+    81→    81→    resend: { apiKey: string };
+    82→    82→    sendgrid: { apiKey: string };
+    83→    83→    smtp: { host: string; port: number; user: string; password: string; secure: boolean };
+    84→    84→  };
+    85→    85→  // Storage
+    86→    86→  storage: {
+    87→    87→    provider: 'local' | 's3' | 'cloudinary';
+    88→    88→    local: { path: string };
+    89→    89→    s3: { bucket: string; region: string; accessKey: string; secretKey: string; endpoint: string };
+    90→    90→    cloudinary: { cloudName: string; apiKey: string; apiSecret: string };
+    91→    91→    maxFileSizeMb: number;
+    92→    92→  };
+    93→    93→  // Webhooks
+    94→    94→  webhooks: {
+    95→    95→    inboundUrl: string;
+    96→    96→    events: string[]; // e.g. ['payment.success', 'user.signup', 'agent.run']
+    97→    97→  };
+    98→    98→  // Telegram Bot
+    99→    99→  telegram: {
+   100→   100→    botToken: string;
+   101→   101→    webhookSecret: string;
+   102→   102→    enabled: boolean;
+   103→   103→    welcomeMessage: string;
+   104→   104→    defaultAgent: string;
+   105→   105→    allowedUserIds: number[];
+   106→   106→  };
+   107→   107→  // ElevenLabs — Voice AI + Conversational Agents for WhatsApp
+   108→   108→  elevenlabs: {
+   109→   109→    apiKey: string;
+   110→   110→    voiceId: string;
+   111→   111→    model: string;
+   112→   112→    enabled: boolean;
+   113→   113→    stability: number;
+   114→   114→    similarityBoost: number;
+   115→   115→    style: number;
+   116→   116→  };
+   117→   117→  // Twilio — bridges WhatsApp messages to ElevenLabs Conversational AI agents
+   118→   118→  twilio: {
+   119→   119→    accountSid: string;
+   120→   120→    authToken: string;
+   121→   121→    whatsappNumber: string;
+   122→   122→    enabled: boolean;
+   123→   123→    elevenLabsAgentId: string;
+   124→   124→    freeForAll: boolean; // if true, WhatsApp usage is free for everyone (no credits needed)
+   125→   125→    welcomeMessage: string; // sent to new users on first message
+   126→   126→  };
+   127→   127→  // Marketplace (premium agents created by community/partners)
+   128→   128→  marketplace: {
+   129→   129→    enabled: boolean;
+   130→   130→    revenueSharePercent: number; // percentage the platform takes (default 30)
+   131→   131→    agents: Array<{
+   132→   132→      id: string;
+   133→   133→      name: string;
+   134→   134→      author: string;
+   135→   135→      description: string;
+   136→   136→      category: string;
+   137→   137→      priceMonthly: number;
+   138→   138→      systemPrompt: string;
+   139→   139→      command: string;
+   140→   140→      icon: string; // emoji or lucide icon name
+   141→   141→      color: string;
+   142→   142→      rating: number;
+   143→   143→      installs: number;
+   144→   144→      featured: boolean;
+   145→   145→    }>;
+   146→   146→  };
+   147→   147→  // Referral program
+   148→   148→  referral: {
+   149→   149→    enabled: boolean;
+   150→   150→    rewardCreditsReferrer: number; // credits given to referrer
+   151→   151→    rewardCreditsReferee: number; // credits given to new user
+   152→   152→    minPayoutAmount: number; // USD
+   153→   153→  };
+   154→   154→  // Ads platforms (Facebook, Google, YouTube) — AI auto-responds to comments/messages
+   155→   155→  ads: {
+   156→   156→    // Master toggle for auto-responding
+   157→   157→    autoRespond: boolean;
+   158→   158→    autoRespondDelaySeconds: number; // simulate "human" delay before responding
+   159→   159→    autoRespondTone: 'professional' | 'friendly' | 'casual' | 'sales';
+   160→   160→    // Facebook Ads + Pages
+   161→   161→    facebook: {
+   162→   162→      enabled: boolean;
+   163→   163→      pageAccessToken: string;
+   164→   164→      pageId: string;
+   165→   165→      appId: string;
+   166→   166→      appSecret: string;
+   167→   167→      verifyToken: string; // for webhook verification
+   168→   168→      autoReplyPrivateMessage: boolean; // reply in Messenger DM
+   169→   169→      autoReplyComment: boolean; // reply as comment on the ad post
+   170→   170→    };
+   171→   171→    // Google Ads (lead form extensions)
+   172→   172→    google: {
+   173→   173→      enabled: boolean;
+   174→   174→      developerToken: string;
+   175→   175→      clientId: string;
+   176→   176→      clientSecret: string;
+   177→   177→      refreshToken: string;
+   178→   178→      customerId: string; // Google Ads account ID (XXX-XXX-XXXX)
+   179→   179→      leadFormWebhookSecret: string;
+   180→   180→      autoEmailLead: boolean; // auto-send email to leads
+   181→   181→    };
+   182→   182→    // YouTube Ads (video comments)
+   183→   183→    youtube: {
+   184→   184→      enabled: boolean;
+   185→   185→      apiKey: string;
+   186→   186→      channelId: string;
+   187→   187→      autoReplyComments: boolean;
+   188→   188→      pubsubhubbubCallbackUrl: string; // where YouTube sends new comment notifications
+   189→   189→      verifyToken: string;
+   190→   190→    };
+   191→   191→  };
+   192→   192→  // Feature flags
+   193→   193→  features: {
+   194→   194→    agents: boolean;
+   195→   195→    payments: boolean;
+   196→   196→    social: boolean;
+   197→   197→    analytics: boolean;
+   198→   198→    ecommerce: boolean;
+   199→   199→    ai: boolean;
+   200→   200→    multiTenant: boolean;
+   201→   201→    whiteLabel: boolean;
+   202→   202→    api: boolean;
+   203→   203→  };
+   204→   204→  // Logs
+   205→   205→  logging: {
+   206→   206→    level: 'debug' | 'info' | 'warn' | 'error';
+   207→   207→    retention: number; // days
+   208→   208→  };
+   209→   209→  // Metadata
+   210→   210→  createdAt: string;
+   211→   211→  updatedAt: string;
+   212→   212→  version: number;
+   213→   213→}
+   214→   214→
+   215→   215→// ─── Default config ───────────────────────────────────────────────────
+   216→   216→export function getDefaultConfig(): AppConfig {
+   217→   217→  const now = new Date().toISOString();
+   218→   218→  return {
+   219→   219→    appName: 'AfriLaunch AI',
+   220→   220→    appUrl: 'https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai',
+   221→   221→    locale: 'fr-FR',
+   222→   222→    timezone: 'Africa/Dakar',
+   223→   223→    adminPasswordHash: null,
+   224→   224→    adminEmail: 'admin@afrilaunch.ai',
+   225→   225→    database: {
+   226→   226→      provider: 'sqlite',
+   227→   227→      url: 'file:/home/z/my-project/db/custom.db',
+   228→   228→      ssl: false,
+   229→   229→    },
+   230→   230→    auth: {
+   231→   231→      jwtSecret: crypto.randomBytes(32).toString('hex'),
+   232→   232→      sessionExpiryHours: 24,
+   233→   233→      oauth: {
+   234→   234→        google: { clientId: '', clientSecret: '', enabled: false },
+   235→   235→        github: { clientId: '', clientSecret: '', enabled: false },
+   236→   236→        apple: { clientId: '', clientSecret: '', enabled: false },
+   237→   237→      },
+   238→   238→    },
+   239→   239→    ai: {
+   240→   240→      primary: 'zai',
+   241→   241→      providers: {
+   242→   242→        openai: { apiKey: '', model: 'gpt-4o', enabled: false },
+   243→   243→        anthropic: { apiKey: '', model: 'claude-3-5-sonnet-20241022', enabled: false },
+   244→   244→        gemini: { apiKey: '', model: 'gemini-1.5-pro', enabled: false },
+   245→   245→        zai: { apiKey: '', model: 'glm-4.6', enabled: false },
+   246→   246→        mistral: { apiKey: '', model: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1', enabled: false },
+   247→   247→        groq: { apiKey: '', model: 'llama-3.3-70b-versatile', endpoint: 'https://api.groq.com/openai/v1', enabled: false },
+   248→   248→        openrouter: {
+   249→   249→          apiKey: '',
+   250→   250→          model: 'anthropic/claude-3.5-sonnet',
+   251→   251→          endpoint: 'https://openrouter.ai/api/v1',
+   252→   252→          enabled: false,
+   253→   253→          appName: 'AfriLaunch AI',
+   254→   254→          siteUrl: 'https://afrilaunch.ai',
+   255→   255→        },
+   256→   256→        custom: { baseUrl: '', apiKey: '', model: '', enabled: false },
+   257→   257→      },
+   258→   258→      fallback: true,
+   259→   259→      maxTokensPerRequest: 4096,
+   260→   260→    },
+   261→   261→    payments: {
+   262→   262→      currency: 'USD',
+   263→   263→      providers: {
+   264→   264→        stripe: { publishableKey: '', secretKey: '', webhookSecret: '', enabled: false },
+   265→   265→        flutterwave: { publicKey: '', secretKey: '', encryptionKey: '', enabled: false },
+   266→   266→        paypal: { clientId: '', clientSecret: '', mode: 'sandbox', enabled: false },
+   267→   267→        orangeMoney: { apiKey: '', merchantKey: '', enabled: false },
+   268→   268→        wave: { apiKey: '', enabled: false },
+   269→   269→        mobileMoney: { enabled: false },
+   270→   270→      },
+   271→   271→    },
+   272→   272→    social: {
+   273→   273→      instagram: { accessToken: '', businessAccountId: '', enabled: false },
+   274→   274→      tiktok: { clientKey: '', clientSecret: '', accessToken: '', enabled: false },
+   275→   275→      facebook: { appId: '', appSecret: '', pageAccessToken: '', enabled: false },
+   276→   276→      whatsapp: { phoneNumberId: '', accessToken: '', businessId: '', enabled: false },
+   277→   277→      linkedin: { clientId: '', clientSecret: '', accessToken: '', enabled: false },
+   278→   278→      twitter: { apiKey: '', apiSecret: '', accessToken: '', accessSecret: '', enabled: false },
+   279→   279→    },
+   280→   280→    email: {
+   281→   281→      provider: 'none',
+   282→   282→      from: 'noreply@afrilaunch.ai',
+   283→   283→      replyTo: 'contact@afrilaunch.ai',
+   284→   284→      resend: { apiKey: '' },
+   285→   285→      sendgrid: { apiKey: '' },
+   286→   286→      smtp: { host: '', port: 587, user: '', password: '', secure: false },
+   287→   287→    },
+   288→   288→    storage: {
+   289→   289→      provider: 'local',
+   290→   290→      local: { path: '/home/z/my-project/uploads' },
+   291→   291→      s3: { bucket: '', region: '', accessKey: '', secretKey: '', endpoint: '' },
+   292→   292→      cloudinary: { cloudName: '', apiKey: '', apiSecret: '' },
+   293→   293→      maxFileSizeMb: 10,
+   294→   294→    },
+   295→   295→    webhooks: {
+   296→   296→      inboundUrl: '',
+   297→   297→      events: ['payment.success', 'user.signup', 'agent.run'],
+   298→   298→    },
+   299→   299→    telegram: {
+   300→   300→      botToken: '',
+   301→   301→      webhookSecret: crypto.randomBytes(16).toString('hex'),
+   302→   302→      enabled: false,
+   303→   303→      welcomeMessage: '👋 Bienvenue sur AfriLaunch AI Bot !\n\nJe dispose de 13 agents IA spécialisés pour votre business africain. Utilisez les commandes ci-dessous pour interagir avec un agent spécifique :\n\n/branding — Identité de marque\n/content — Création de contenu\n/seo — Optimisation SEO\n/ads — Publicités\n/support — Service client\n/analytics — Analytics\n/ecommerce — E-commerce\n/email — Email marketing\n/video — Scripts vidéo\n/translate — Traduction\n/dev — Code & intégrations\n/legal — Contrats & conformité\n/growth — Stratégie de croissance\n\n/agents — Liste tous les agents\n/help — Aide\n\nOu envoyez simplement un message et l\'agent par défaut vous répondra.',
+   304→   304→      defaultAgent: 'growth',
+   305→   305→      allowedUserIds: [],
+   306→   306→    },
+   307→   307→    elevenlabs: {
+   308→   308→      apiKey: '',
+   309→   309→      voiceId: '21m00Tcm4TlvDq8ikWAM',
+   310→   310→      model: 'eleven_multilingual_v2',
+   311→   311→      enabled: false,
+   312→   312→      stability: 0.5,
+   313→   313→      similarityBoost: 0.75,
+   314→   314→      style: 0.0,
+   315→   315→    },
+   316→   316→    twilio: {
+   317→   317→      accountSid: '',
+   318→   318→      authToken: '',
+   319→   319→      whatsappNumber: '',
+   320→   320→      enabled: false,
+   321→   321→      elevenLabsAgentId: '',
+   322→   322→      freeForAll: true,
+   323→   323→      welcomeMessage: '👋 Bienvenue sur AfriLaunch AI !\n\nJe suis votre assistant IA disponible 24/7 sur WhatsApp. Je peux vous aider avec:\n\n📈 Marketing & stratégie\n🎨 Identité de marque\n✍️ Création de contenu\n🤖 Agents IA spécialisés\n💰 Paiements & business\n\nEnvoyez-moi simplement votre question !',
+   324→   324→    },
+   325→   325→    marketplace: {
+   326→   326→      enabled: true,
+   327→   327→      revenueSharePercent: 30,
+   328→   328→      agents: [
+   329→   329→        {
+   330→   330→          id: 'agent-immobilier-senegal',
+   331→   331→          name: 'Agent Immobilier Sénégal',
+   332→   332→          author: 'Aïssatou D.',
+   333→   333→          description: 'Expert en immobilier à Dakar, Saly, Thiès. Estimation biens, conseils investissement locatif, lois Alur Sénégal, taxes foncières.',
+   334→   334→          category: 'Immobilier',
+   335→   335→          priceMonthly: 9.99,
+   336→   336→          systemPrompt: 'Tu es l\'Agent Immobilier Sénégal, expert du marché immobilier dakarois et sénégalais. Tu connais les prix au m² par quartier, les lois Alur, les taxes foncières, et les opportunités d\'investissement locatif. Réponds en français avec des chiffres précis et des conseils actionnables.',
+   337→   337→          command: 'immobilier',
+   338→   338→          icon: '🏠',
+   339→   339→          color: 'from-amber-500 to-yellow-600',
+   340→   340→          rating: 4.8,
+   341→   341→          installs: 1240,
+   342→   342→          featured: true,
+   343→   343→        },
+   344→   344→        {
+   345→   345→          id: 'agent-restaurant-abidjan',
+   346→   346→          name: 'Agent Restaurant Abidjan',
+   347→   347→          author: 'Kwame M.',
+   348→   348→          description: 'Spécialiste restauration à Abidjan : menu, pricing, livraison, hygiène, gestion staff, marketing food.',
+   349→   349→          category: 'Restauration',
+   350→   350→          priceMonthly: 7.99,
+   351→   351→          systemPrompt: 'Tu es l\'Agent Restaurant Abidjan, expert en gestion de restaurant à Abidjan et en Côte d\'Ivoire. Tu aides avec les menus, pricing, normes hygiène, recrutement staff, marketing food delivery (Glovo, Deliveroo). Réponds en français.',
+   352→   352→          command: 'resto',
+   353→   353→          icon: '🍽️',
+   354→   354→          color: 'from-orange-500 to-red-600',
+   355→   355→          rating: 4.6,
+   356→   356→          installs: 890,
+   357→   357→          featured: false,
+   358→   358→        },
+   359→   359→        {
+   360→   360→          id: 'agent-import-export-maroc',
+   361→   361→          name: 'Agent Import-Export Maroc',
+   362→   362→          author: 'Mehdi B.',
+   363→   363→          description: 'Import-export Maroc-Afrique: douane, codes HS, certificats origine, logistique Tanger Med, paiement international.',
+   364→   364→          category: 'Commerce',
+   365→   365→          priceMonthly: 14.99,
+   366→   366→          systemPrompt: 'Tu es l\'Agent Import-Export Maroc, expert en commerce international depuis/vers le Maroc. Tu connais les codes douaniers HS, les certificats d\'origine, la logistique portuaire (Tanger Med, Casablanca), et les moyens de paiement internationaux (L/C, remise documentaire). Réponds en français.',
+   367→   367→          command: 'import',
+   368→   368→          icon: '📦',
+   369→   369→          color: 'from-emerald-500 to-teal-600',
+   370→   370→          rating: 4.9,
+   371→   371→          installs: 567,
+   372→   372→          featured: true,
+   373→   373→        },
+   374→   374→        {
+   375→   375→          id: 'agent-agritech-kenya',
+   376→   376→          name: 'Agent AgriTech Kenya',
+   377→   377→          author: 'Grace W.',
+   378→   378→          description: 'Agriculture moderne Kenya: cultures, irrigation, M-Pesa payments, agritech, export légumes UE.',
+   379→   379→          category: 'Agriculture',
+   380→   380→          priceMonthly: 11.99,
+   381→   381→          systemPrompt: 'Tu es the AgriTech Kenya Agent, expert in modern Kenyan agriculture. You advise on crops (tea, coffee, flowers, vegetables), irrigation, M-Pesa integration, agritech solutions, and EU export regulations. Reply in English or Swahili as appropriate.',
+   382→   382→          command: 'agri',
+   383→   383→          icon: '🌱',
+   384→   384→          color: 'from-green-500 to-emerald-600',
+   385→   385→          rating: 4.7,
+   386→   386→          installs: 423,
+   387→   387→          featured: false,
+   388→   388→        },
+   389→   389→        {
+   390→   390→          id: 'agent-fintech-nigeria',
+   391→   391→          name: 'Agent FinTech Nigeria',
+   392→   392→          author: 'Chidi O.',
+   393→   393→          description: 'FinTech Nigeria: CBN regulations, Paystack/Flutterwave integration, mobile money, lending, KYC/AML.',
+   394→   394→          category: 'Finance',
+   395→   395→          priceMonthly: 19.99,
+   396→   396→          systemPrompt: 'Tu es l\'Agent FinTech Nigeria, expert en services financiers digitaux au Nigeria. Tu connais les régulations CBN, l\'intégration Paystack/Flutterwave, mobile money, prêt digital, KYC/AML. Réponds en anglais avec précision technique.',
+   397→   397→          command: 'fintech',
+   398→   398→          icon: '💳',
+   399→   399→          color: 'from-indigo-500 to-violet-600',
+   400→   400→          rating: 4.8,
+   401→   401→          installs: 1102,
+   402→   402→          featured: true,
+   403→   403→        },
+   404→   404→        {
+   405→   405→          id: 'agent-fashion-lagos',
+   406→   406→          name: 'Agent Fashion Lagos',
+   407→   407→          author: 'Zainab A.',
+   408→   408→          description: 'Mode & fashion Lagos: design, production, sourcing ankara, e-commerce, Instagram marketing, pop-up stores.',
+   409→   409→          category: 'Mode',
+   410→   410→          priceMonthly: 8.99,
+   411→   411→          systemPrompt: 'Tu es l\'Agent Fashion Lagos, expert en industrie de la mode nigériane. Tu aides avec le design, la production, le sourcing de tissus (ankara, aso-oke), e-commerce, marketing Instagram, et pop-up stores. Réponds en anglais.',
+   412→   412→          command: 'fashion',
+   413→   413→          icon: '👗',
+   414→   414→          color: 'from-pink-500 to-rose-600',
+   415→   415→          rating: 4.5,
+   416→   416→          installs: 678,
+   417→   417→          featured: false,
+   418→   418→        },
+   419→   419→      ],
+   420→   420→    },
+   421→   421→    referral: {
+   422→   422→      enabled: true,
+   423→   423→      rewardCreditsReferrer: 100,
+   424→   424→      rewardCreditsReferee: 50,
+   425→   425→      minPayoutAmount: 50,
+   426→   426→    },
+   427→   427→    ads: {
+   428→   428→      autoRespond: true,
+   429→   429→      autoRespondDelaySeconds: 15,
+   430→   430→      autoRespondTone: 'friendly',
+   431→   431→      facebook: {
+   432→   432→        enabled: false,
+   433→   433→        pageAccessToken: '',
+   434→   434→        pageId: '',
+   435→   435→        appId: '',
+   436→   436→        appSecret: '',
+   437→   437→        verifyToken: crypto.randomBytes(8).toString('hex'),
+   438→   438→        autoReplyPrivateMessage: true,
+   439→   439→        autoReplyComment: true,
+   440→   440→      },
+   441→   441→      google: {
+   442→   442→        enabled: false,
+   443→   443→        developerToken: '',
+   444→   444→        clientId: '',
+   445→   445→        clientSecret: '',
+   446→   446→        refreshToken: '',
+   447→   447→        customerId: '',
+   448→   448→        leadFormWebhookSecret: crypto.randomBytes(16).toString('hex'),
+   449→   449→        autoEmailLead: true,
+   450→   450→      },
+   451→   451→      youtube: {
+   452→   452→        enabled: false,
+   453→   453→        apiKey: '',
+   454→   454→        channelId: '',
+   455→   455→        autoReplyComments: true,
+   456→   456→        pubsubhubbubCallbackUrl: '',
+   457→   457→        verifyToken: crypto.randomBytes(8).toString('hex'),
+   458→   458→      },
+   459→   459→    },
+   460→   460→    features: {
+   461→   461→      agents: true,
+   462→   462→      payments: true,
+   463→   463→      social: true,
+   464→   464→      analytics: true,
+   465→   465→      ecommerce: false,
+   466→   466→      ai: true,
+   467→   467→      multiTenant: false,
+   468→   468→      whiteLabel: false,
+   469→   469→      api: false,
+   470→   470→    },
+   471→   471→    logging: {
+   472→   472→      level: 'info',
+   473→   473→      retention: 30,
+   474→   474→    },
+   475→   475→    createdAt: now,
+   476→   476→    updatedAt: now,
+   477→   477→    version: 1,
+   478→   478→  };
+   479→   479→}
+   480→   480→
+   481→   481→// ─── File I/O ─────────────────────────────────────────────────────────
+   482→   482→async function readConfig(): Promise<AppConfig> {
+   483→   483→  try {
+   484→   484→    const raw = await fs.readFile(CONFIG_PATH, 'utf-8');
+   485→   485→    const parsed = JSON.parse(raw) as Partial<AppConfig>;
+   486→   486→    // Merge with defaults to handle schema evolution
+   487→   487→    const defaults = getDefaultConfig();
+   488→   488→    return { ...defaults, ...parsed } as AppConfig;
+   489→   489→  } catch (err: unknown) {
+   490→   490→    // File doesn't exist yet — create with defaults
+   491→   491→    const defaults = getDefaultConfig();
+   492→   492→    await writeConfig(defaults);
+   493→   493→    return defaults;
+   494→   494→  }
+   495→   495→}
+   496→   496→
+   497→   497→async function writeConfig(config: AppConfig): Promise<void> {
+   498→   498→  config.updatedAt = new Date().toISOString();
+   499→   499→  config.version += 1;
+   500→   500→  await fs.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
+   501→   501→  await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+   502→   502→}
+   503→   503→
+   504→   504→// ─── Public API ───────────────────────────────────────────────────────
+   505→   505→let configCache: AppConfig | null = null;
+   506→   506→
+   507→   507→export async function getConfig(): Promise<AppConfig> {
+   508→   508→  if (configCache) return configCache;
+   509→   509→  configCache = await readConfig();
+   510→   510→  return configCache;
+   511→   511→}
+   512→   512→
+   513→   513→export async function updateConfig(updates: Partial<AppConfig>): Promise<AppConfig> {
+   514→   514→  const current = await getConfig();
+   515→   515→  const next = deepMerge(current, updates);
+   516→   516→  await writeConfig(next);
+   517→   517→  configCache = next;
+   518→   518→  return next;
+   519→   519→}
+   520→   520→
+   521→   521→// Deep merge for nested config objects
+   522→   522→function deepMerge<T>(target: T, source: Partial<T>): T {
+   523→   523→  if (typeof target !== 'object' || target === null) return (source ?? target) as T;
+   524→   524→  if (typeof source !== 'object' || source === null) return target;
+   525→   525→  const result: any = Array.isArray(target) ? [...(target as any)] : { ...target };
+   526→   526→  for (const key of Object.keys(source as any)) {
+   527→   527→    const srcVal = (source as any)[key];
+   528→   528→    const tgtVal = (target as any)[key];
+   529→   529→    if (srcVal && typeof srcVal === 'object' && !Array.isArray(srcVal) && tgtVal && typeof tgtVal === 'object') {
+   530→   530→      result[key] = deepMerge(tgtVal, srcVal);
+   531→   531→    } else if (srcVal !== undefined) {
+   532→   532→      result[key] = srcVal;
+   533→   533→    }
+   534→   534→  }
+   535→   535→  return result as T;
+   536→   536→}
+   537→   537→
+   538→   538→// ─── Password hashing ─────────────────────────────────────────────────
+   539→   539→export function hashPassword(password: string): string {
+   540→   540→  return crypto.createHash('sha256').update(password).digest('hex');
+   541→   541→}
+   542→   542→
+   543→   543→export function verifyPassword(password: string, hash: string | null): boolean {
+   544→   544→  if (!hash) {
+   545→   545→    // First-time setup: default password is "admin123"
+   546→   546→    return password === 'admin123';
+   547→   547→  }
+   548→   548→  return hashPassword(password) === hash;
+   549→   549→}
+   550→   550→
+   551→   551→// ─── Session management ───────────────────────────────────────────────
+   552→   552→interface AdminSession {
+   553→   553→  token: string;
+   554→   554→  createdAt: number;
+   555→   555→  expiresAt: number;
+   556→   556→}
+   557→   557→
+   558→   558→async function readSessions(): Promise<AdminSession[]> {
+   559→   559→  try {
+   560→   560→    const raw = await fs.readFile(SESSIONS_PATH, 'utf-8');
+   561→   561→    return JSON.parse(raw) as AdminSession[];
+   562→   562→  } catch {
+   563→   563→    return [];
+   564→   564→  }
+   565→   565→}
+   566→   566→
+   567→   567→async function writeSessions(sessions: AdminSession[]): Promise<void> {
+   568→   568→  await fs.mkdir(path.dirname(SESSIONS_PATH), { recursive: true });
+   569→   569→  await fs.writeFile(SESSIONS_PATH, JSON.stringify(sessions, null, 2), 'utf-8');
+   570→   570→}
+   571→   571→
+   572→   572→export async function createSession(expiryHours: number): Promise<string> {
+   573→   573→  const token = crypto.randomBytes(32).toString('hex');
+   574→   574→  const now = Date.now();
+   575→   575→  const session: AdminSession = {
+   576→   576→    token,
+   577→   577→    createdAt: now,
+   578→   578→    expiresAt: now + expiryHours * 60 * 60 * 1000,
+   579→   579→  };
+   580→   580→  const sessions = await readSessions();
+   581→   581→  sessions.push(session);
+   582→   582→  await writeSessions(sessions);
+   583→   583→  return token;
+   584→   584→}
+   585→   585→
+   586→   586→export async function validateSession(token: string): Promise<boolean> {
+   587→   587→  const sessions = await readSessions();
+   588→   588→  const now = Date.now();
+   589→   589→  const valid = sessions.find((s) => s.token === token && s.expiresAt > now);
+   590→   590→  if (!valid) return false;
+   591→   591→  // Cleanup expired sessions
+   592→   592→  const active = sessions.filter((s) => s.expiresAt > now);
+   593→   593→  if (active.length !== sessions.length) await writeSessions(active);
+   594→   594→  return true;
+   595→   595→}
+   596→   596→
+   597→   597→export async function destroySession(token: string): Promise<void> {
+   598→   598→  const sessions = await readSessions();
+   599→   599→  const remaining = sessions.filter((s) => s.token !== token);
+   600→   600→  await writeSessions(remaining);
+   601→   601→}
+   602→   602→
+   603→   603→// ─── Connection testing ───────────────────────────────────────────────
+   604→   604→export interface TestResult {
+   605→   605→  ok: boolean;
+   606→   606→  message: string;
+   607→   607→  details?: unknown;
+   608→   608→}
+   609→   609→
+   610→   610→export async function testDatabase(config: AppConfig): Promise<TestResult> {
+   611→   611→  try {
+   612→   612→    if (config.database.provider === 'sqlite') {
+   613→   613→      // Just check the path is writable
+   614→   614→      const dir = path.dirname(config.database.url.replace('file:', ''));
+   615→   615→      await fs.mkdir(dir, { recursive: true });
+   616→   616→      await fs.access(dir, fs.constants.W_OK);
+   617→   617→      return { ok: true, message: 'SQLite: dossier accessible en écriture' };
+   618→   618→    }
+   619→   619→    // For other providers, just validate URL format
+   620→   620→    if (!config.database.url) {
+   621→   621→      return { ok: false, message: 'URL de connexion manquante' };
+   622→   622→    }
+   623→   623→    return { ok: true, message: `Format ${config.database.provider} validé (test de connexion réel nécessite un serveur)` };
+   624→   624→  } catch (err) {
+   625→   625→    return { ok: false, message: `Erreur: ${(err as Error).message}` };
+   626→   626→  }
+   627→   627→}
+   628→   628→
+   629→   629→export async function testAiProvider(config: AppConfig, provider: string): Promise<TestResult> {
+   630→   630→  const p = (config.ai.providers as any)[provider];
+   631→   631→  if (!p) return { ok: false, message: 'Provider inconnu' };
+   632→   632→  if (!p.apiKey) return { ok: false, message: 'Clé API manquante' };
+   633→   633→
+   634→   634→  // Real API call for Mistral (OpenAI-compatible /chat/completions endpoint)
+   635→   635→  if (provider === 'mistral') {
+   636→   636→    try {
+   637→   637→      const endpoint = p.endpoint || 'https://api.mistral.ai/v1';
+   638→   638→      const res = await fetch(`${endpoint}/chat/completions`, {
+   639→   639→        method: 'POST',
+   640→   640→        headers: {
+   641→   641→          'Authorization': `Bearer ${p.apiKey}`,
+   642→   642→          'Content-Type': 'application/json',
+   643→   643→          'Accept': 'application/json',
+   644→   644→        },
+   645→   645→        body: JSON.stringify({
+   646→   646→          model: p.model || 'mistral-large-latest',
+   647→   647→          messages: [
+   648→   648→            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+   649→   649→            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+   650→   650→          ],
+   651→   651→          max_tokens: 50,
+   652→   652→          temperature: 0.1,
+   653→   653→        }),
+   654→   654→        signal: AbortSignal.timeout(15000),
+   655→   655→      });
+   656→   656→
+   657→   657→      if (!res.ok) {
+   658→   658→        const errBody = await res.text().catch(() => '');
+   659→   659→        let errMsg = `HTTP ${res.status}`;
+   660→   660→        try {
+   661→   661→          const errJson = JSON.parse(errBody);
+   662→   662→          errMsg = errJson.message || errJson.error?.message || errMsg;
+   663→   663→        } catch { /* not JSON */ }
+   664→   664→        if (res.status === 401) return { ok: false, message: `Mistral: clé API invalide (401). ${errMsg}` };
+   665→   665→        if (res.status === 404) return { ok: false, message: `Mistral: modèle "${p.model}" introuvable (404). ${errMsg}` };
+   666→   666→        return { ok: false, message: `Mistral: erreur ${res.status}. ${errMsg}` };
+   667→   667→      }
+   668→   668→
+   669→   669→      const data = await res.json();
+   670→   670→      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+   671→   671→      return {
+   672→   672→        ok: true,
+   673→   673→        message: `Mistral AI connecté ✓ — modèle: ${data.model || p.model}`,
+   674→   674→        details: { reply: reply.slice(0, 120), usage: data.usage },
+   675→   675→      };
+   676→   676→    } catch (err) {
+   677→   677→      return { ok: false, message: `Mistral: erreur réseau — ${(err as Error).message}` };
+   678→   678→    }
+   679→   679→  }
+   680→   680→
+   681→   681→  // Real API call for Groq (OpenAI-compatible /chat/completions endpoint)
+   682→   682→  if (provider === 'groq') {
+   683→   683→    try {
+   684→   684→      const endpoint = p.endpoint || 'https://api.groq.com/openai/v1';
+   685→   685→      const res = await fetch(`${endpoint}/chat/completions`, {
+   686→   686→        method: 'POST',
+   687→   687→        headers: {
+   688→   688→          'Authorization': `Bearer ${p.apiKey}`,
+   689→   689→          'Content-Type': 'application/json',
+   690→   690→          'Accept': 'application/json',
+   691→   691→        },
+   692→   692→        body: JSON.stringify({
+   693→   693→          model: p.model || 'llama-3.3-70b-versatile',
+   694→   694→          messages: [
+   695→   695→            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+   696→   696→            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+   697→   697→          ],
+   698→   698→          max_tokens: 50,
+   699→   699→          temperature: 0.1,
+   700→   700→        }),
+   701→   701→        signal: AbortSignal.timeout(15000),
+   702→   702→      });
+   703→   703→
+   704→   704→      if (!res.ok) {
+   705→   705→        const errBody = await res.text().catch(() => '');
+   706→   706→        let errMsg = `HTTP ${res.status}`;
+   707→   707→        try {
+   708→   708→          const errJson = JSON.parse(errBody);
+   709→   709→          errMsg = errJson.message || errJson.error?.message || errMsg;
+   710→   710→        } catch { /* not JSON */ }
+   711→   711→        if (res.status === 401) return { ok: false, message: `Groq: clé API invalide (401). ${errMsg}` };
+   712→   712→        if (res.status === 404) return { ok: false, message: `Groq: modèle "${p.model}" introuvable (404). ${errMsg}` };
+   713→   713→        return { ok: false, message: `Groq: erreur ${res.status}. ${errMsg}` };
+   714→   714→      }
+   715→   715→
+   716→   716→      const data = await res.json();
+   717→   717→      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+   718→   718→      return {
+   719→   719→        ok: true,
+   720→   720→        message: `Groq connecté ✓ — modèle: ${data.model || p.model}`,
+   721→   721→        details: { reply: reply.slice(0, 120), usage: data.usage },
+   722→   722→      };
+   723→   723→    } catch (err) {
+   724→   724→      return { ok: false, message: `Groq: erreur réseau — ${(err as Error).message}` };
+   725→   725→    }
+   726→   726→  }
+   727→   727→
+   728→   728→  // Real API call for OpenRouter (multi-provider gateway)
+   729→   729→  if (provider === 'openrouter') {
+   730→   730→    try {
+   731→   731→      const endpoint = p.endpoint || 'https://openrouter.ai/api/v1';
+   732→   732→      const res = await fetch(`${endpoint}/chat/completions`, {
+   733→   733→        method: 'POST',
+   734→   734→        headers: {
+   735→   735→          'Authorization': `Bearer ${p.apiKey}`,
+   736→   736→          'Content-Type': 'application/json',
+   737→   737→          'HTTP-Referer': p.siteUrl || 'https://afrilaunch.ai',
+   738→   738→          'X-Title': p.appName || 'AfriLaunch AI',
+   739→   739→        },
+   740→   740→        body: JSON.stringify({
+   741→   741→          model: p.model || 'anthropic/claude-3.5-sonnet',
+   742→   742→          messages: [
+   743→   743→            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+   744→   744→            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+   745→   745→          ],
+   746→   746→          max_tokens: 50,
+   747→   747→          temperature: 0.1,
+   748→   748→        }),
+   749→   749→        signal: AbortSignal.timeout(30000),
+   750→   750→      });
+   751→   751→
+   752→   752→      if (!res.ok) {
+   753→   753→        const errBody = await res.text().catch(() => '');
+   754→   754→        let errMsg = `HTTP ${res.status}`;
+   755→   755→        try {
+   756→   756→          const errJson = JSON.parse(errBody);
+   757→   757→          errMsg = errJson.message || errJson.error?.message || errMsg;
+   758→   758→        } catch { /* not JSON */ }
+   759→   759→        if (res.status === 401) return { ok: false, message: `OpenRouter: clé API invalide (401). ${errMsg}` };
+   760→   760→        if (res.status === 402) return { ok: false, message: `OpenRouter: crédits insuffisants (402). ${errMsg}` };
+   761→   761→        return { ok: false, message: `OpenRouter: erreur ${res.status}. ${errMsg}` };
+   762→   762→      }
+   763→   763→
+   764→   764→      const data = await res.json();
+   765→   765→      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+   766→   766→      return {
+   767→   767→        ok: true,
+   768→   768→        message: `OpenRouter connecté ✓ — modèle: ${data.model || p.model}`,
+   769→   769→        details: { reply: reply.slice(0, 120), usage: data.usage },
+   770→   770→      };
+   771→   771→    } catch (err) {
+   772→   772→      return { ok: false, message: `OpenRouter: erreur réseau — ${(err as Error).message}` };
+   773→   773→    }
+   774→   774→  }
+   775→   775→
+   776→   776→  // For other providers, do a simulated test (real calls require their SDKs)
+   777→   777→  await new Promise((r) => setTimeout(r, 500));
+   778→   778→  return { ok: true, message: `${provider}: clé API présente (test réel non implémenté pour ce provider)`, details: { model: p.model } };
+   779→   779→}
+   780→   780→
+   781→   781→export async function testPaymentProvider(config: AppConfig, provider: string): Promise<TestResult> {
+   782→   782→  const p = (config.payments.providers as any)[provider];
+   783→   783→  if (!p) return { ok: false, message: 'Provider inconnu' };
+   784→   784→  const hasKey = p.secretKey || p.clientSecret || p.apiKey || p.publicKey;
+   785→   785→  if (!hasKey) return { ok: false, message: 'Identifiants manquants' };
+   786→   786→  await new Promise((r) => setTimeout(r, 500));
+   787→   787→  return { ok: true, message: `${provider}: identifiants valides (test simulé)`, details: { mode: p.mode || 'live' } };
+   788→   788→}
+   789→   789→
+   790→   790→export async function testEmailProvider(config: AppConfig): Promise<TestResult> {
+   791→   791→  if (config.email.provider === 'none') return { ok: false, message: 'Aucun provider configuré' };
+   792→   792→  await new Promise((r) => setTimeout(r, 500));
+   793→   793→  return { ok: true, message: `${config.email.provider}: configuration valide (test simulé)` };
+   794→   794→}
+   795→   795→

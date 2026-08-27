@@ -1,16 +1,19 @@
-// AfriLaunch AI — Manual payment store (server-side, persisted to JSON)
+// AfriLaunch AI — Manual payment store (server-side, persisted via Supabase KV)
 // Stores payment orders (Mobile Money, bank transfer) submitted by users with
 // their proof file, and lets admins approve/reject them.
 // When an order is approved, the corresponding plan or credit pack is applied
 // to the user automatically.
 //
-// SERVER-ONLY: this module uses fs. Do not import from client components.
+// SERVER-ONLY: this module uses crypto. Do not import from client components.
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
+import { kvGet, kvSet, storeFile, getFile } from './db';
 import { PLANS, CREDIT_PACKS, type PlanId } from './user-types';
 import { changeUserPlan, addCredits } from './user-store';
+
+// Re-export file helpers so callers (proof upload/serve routes) can use the
+// same storage backend without importing db.ts directly.
+export { storeFile, getFile };
 
 // ─── Types ────────────────────────────────────────────────────────────
 export type ManualPaymentStatus = 'pending' | 'approved' | 'rejected' | 'expired';
@@ -113,24 +116,28 @@ export const COUNTRIES: Record<string, CountryInfo> = {
 };
 
 // ─── Persistence ──────────────────────────────────────────────────────
-const ORDERS_PATH = path.join('/home/z/my-project/data', 'manual-payments.json');
-
 interface ManualPaymentStore {
   orders: ManualPaymentOrder[];
 }
 
 async function readStore(): Promise<ManualPaymentStore> {
-  try {
-    const raw = await fs.readFile(ORDERS_PATH, 'utf-8');
-    return JSON.parse(raw) as ManualPaymentStore;
-  } catch {
-    return { orders: [] };
-  }
+  const store = await kvGet<ManualPaymentStore>('manual-payments');
+  return store ?? { orders: [] };
 }
 
 async function writeStore(store: ManualPaymentStore): Promise<void> {
-  await fs.mkdir(path.dirname(ORDERS_PATH), { recursive: true });
-  await fs.writeFile(ORDERS_PATH, JSON.stringify(store, null, 2), 'utf-8');
+  await kvSet('manual-payments', store);
+}
+
+// ─── Proof file storage ─────────────────────────────────────────────
+// Wraps db.storeFile / db.getFile so the rest of the codebase can keep
+// importing proof helpers from this module.
+export async function saveProofFile(key: string, fileBuffer: Buffer, mimeType: string): Promise<string> {
+  return storeFile(key, fileBuffer, mimeType);
+}
+
+export async function readProofFile(key: string): Promise<{ data: Buffer; mimeType: string } | null> {
+  return getFile(key);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────

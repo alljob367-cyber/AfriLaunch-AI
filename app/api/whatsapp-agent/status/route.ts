@@ -3,10 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const WHATSAPP_USERS_PATH = path.join('/home/z/my-project/data', 'whatsapp-users.json');
+import { kvGet } from '@/lib/db';
 
 export async function GET() {
   const config = await getConfig();
@@ -19,13 +16,9 @@ export async function GET() {
     });
   }
 
-  // Count active WhatsApp users
-  let userCount = 0;
-  try {
-    const raw = await fs.readFile(WHATSAPP_USERS_PATH, 'utf-8');
-    const users = JSON.parse(raw) as any[];
-    userCount = users.length;
-  } catch { /* no users yet */ }
+  // Count active WhatsApp users (stored in kv_store under 'whatsapp-users')
+  const users = (await kvGet<any[]>('whatsapp-users')) ?? [];
+  const userCount = users.length;
 
   return NextResponse.json({
     enabled: true,

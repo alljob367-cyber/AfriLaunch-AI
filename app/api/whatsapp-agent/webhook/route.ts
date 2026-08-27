@@ -6,10 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
 import { processWhatsAppWithElevenLabs, sendWhatsAppMessage } from '@/lib/elevenlabs-agent';
-import { promises as fs } from 'fs';
-import path from 'path';
-
-const WHATSAPP_USERS_PATH = path.join('/home/z/my-project/data', 'whatsapp-users.json');
+import { kvGet, kvSet } from '@/lib/db';
 
 interface WhatsAppUser {
   phoneNumber: string;
@@ -20,17 +17,12 @@ interface WhatsAppUser {
 }
 
 async function readWhatsAppUsers(): Promise<WhatsAppUser[]> {
-  try {
-    const raw = await fs.readFile(WHATSAPP_USERS_PATH, 'utf-8');
-    return JSON.parse(raw) as WhatsAppUser[];
-  } catch {
-    return [];
-  }
+  const users = await kvGet<WhatsAppUser[]>('whatsapp-users');
+  return users ?? [];
 }
 
 async function writeWhatsAppUsers(users: WhatsAppUser[]) {
-  await fs.mkdir(path.dirname(WHATSAPP_USERS_PATH), { recursive: true });
-  await fs.writeFile(WHATSAPP_USERS_PATH, JSON.stringify(users, null, 2), 'utf-8');
+  await kvSet('whatsapp-users', users);
 }
 
 export async function POST(req: NextRequest) {

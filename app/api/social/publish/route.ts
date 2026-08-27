@@ -4,11 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-helpers';
 import { getConfig } from '@/lib/config-store';
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
-
-const PUBLICATIONS_PATH = path.join('/home/z/my-project/data', 'publications.json');
+import { kvGet, kvSet } from '@/lib/db';
 
 export type PublicationStatus = 'pending' | 'publishing' | 'published' | 'failed' | 'scheduled';
 export type SocialPlatform = 'instagram' | 'tiktok' | 'facebook' | 'whatsapp' | 'linkedin' | 'twitter';
@@ -29,18 +26,17 @@ export interface Publication {
   updatedAt: string;
 }
 
-async function readPublications() {
-  try {
-    const raw = await fs.readFile(PUBLICATIONS_PATH, 'utf-8');
-    return JSON.parse(raw) as { publications: Publication[] };
-  } catch {
-    return { publications: [] };
-  }
+interface PublicationsStore {
+  publications: Publication[];
 }
 
-async function writePublications(data: { publications: Publication[] }) {
-  await fs.mkdir(path.dirname(PUBLICATIONS_PATH), { recursive: true });
-  await fs.writeFile(PUBLICATIONS_PATH, JSON.stringify(data, null, 2), 'utf-8');
+async function readPublications() {
+  const store = await kvGet<PublicationsStore>('publications');
+  return store ?? { publications: [] };
+}
+
+async function writePublications(data: PublicationsStore) {
+  await kvSet('publications', data);
 }
 
 export async function POST(req: NextRequest) {

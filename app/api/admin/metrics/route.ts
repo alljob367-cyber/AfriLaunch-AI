@@ -3,11 +3,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { validateSession } from '@/lib/config-store';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kvGet } from '@/lib/db';
 import { PLANS, type PlanId } from '@/lib/user-types';
-
-const USERS_PATH = path.join('/home/z/my-project/data', 'users.json');
 
 interface MetricsUser {
   id: string;
@@ -61,11 +58,10 @@ export async function GET(req: NextRequest) {
 
   let users: MetricsUser[] = [];
   try {
-    const raw = await fs.readFile(USERS_PATH, 'utf-8');
-    const data = JSON.parse(raw);
-    users = data.users || [];
+    const store = await kvGet<{ users: MetricsUser[] }>('users');
+    users = store?.users ?? [];
   } catch {
-    // No users file yet
+    // No users yet
   }
 
   // Count users per plan

@@ -1,18 +1,15 @@
-// AfriLaunch AI — User store (server-side, persisted to JSON file)
+// AfriLaunch AI — User store (server-side, persisted via Supabase KV)
 // Manages users, their subscription plan, credits, and referral data.
-// SERVER-ONLY: this module uses fs and crypto. Do not import from client components.
+// SERVER-ONLY: this module uses crypto. Do not import from client components.
 // For client-safe types and constants, import from '@/lib/user-types'.
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'crypto';
+import { kvGet, kvSet } from './db';
 import { PLANS, CREDIT_PACKS, type User, type PlanId, type Plan, type CreditPack } from './user-types';
 
 // Re-export client-safe constants and types
 export { PLANS, CREDIT_PACKS } from './user-types';
 export type { User, PlanId, Plan, CreditPack };
-
-const USERS_PATH = path.join('/home/z/my-project/data', 'users.json');
 
 interface UserStore {
   users: User[];
@@ -20,17 +17,12 @@ interface UserStore {
 
 // ─── File I/O ─────────────────────────────────────────────────────────
 async function readStore(): Promise<UserStore> {
-  try {
-    const raw = await fs.readFile(USERS_PATH, 'utf-8');
-    return JSON.parse(raw) as UserStore;
-  } catch {
-    return { users: [] };
-  }
+  const store = await kvGet<UserStore>('users');
+  return store ?? { users: [] };
 }
 
 async function writeStore(store: UserStore): Promise<void> {
-  await fs.mkdir(path.dirname(USERS_PATH), { recursive: true });
-  await fs.writeFile(USERS_PATH, JSON.stringify(store, null, 2), 'utf-8');
+  await kvSet('users', store);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────
@@ -275,8 +267,6 @@ export async function uninstallAgent(userId: string, agentId: string): Promise<U
 }
 
 // ─── Session tokens (simple JWT-like, server-side) ────────────────────
-const SESSIONS_PATH = path.join('/home/z/my-project/data', 'user-sessions.json');
-
 interface UserSession {
   token: string;
   userId: string;
@@ -285,17 +275,12 @@ interface UserSession {
 }
 
 async function readUserSessions(): Promise<UserSession[]> {
-  try {
-    const raw = await fs.readFile(SESSIONS_PATH, 'utf-8');
-    return JSON.parse(raw) as UserSession[];
-  } catch {
-    return [];
-  }
+  const sessions = await kvGet<UserSession[]>('user-sessions');
+  return sessions ?? [];
 }
 
 async function writeUserSessions(sessions: UserSession[]): Promise<void> {
-  await fs.mkdir(path.dirname(SESSIONS_PATH), { recursive: true });
-  await fs.writeFile(SESSIONS_PATH, JSON.stringify(sessions, null, 2), 'utf-8');
+  await kvSet('user-sessions', sessions);
 }
 
 export async function createUserSession(userId: string, expiryHours = 24 * 7): Promise<string> {
