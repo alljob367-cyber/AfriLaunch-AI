@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Mic, Loader2, Download, Send, AlertTriangle, Sparkles, Settings2,
@@ -144,12 +143,13 @@ export default function VoicePage() {
                     elevenlabs.io
                   </a>.
                 </p>
-                <Link
+                <button
+                  type="button"
                   onClick={() => toast({ title: "Configuration requise", description: "Contactez votre administrateur pour activer ElevenLabs.", variant: "warning" })}
                   className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 text-xs font-semibold hover:scale-105 transition-transform"
                 >
-                  <Settings2 className="w-3.5 h-3.5" aria-hidden="true" /> Configurer dans Admin → IA
-                </Link>
+                  <Settings2 className="w-3.5 h-3.5" aria-hidden="true" /> Configurer ElevenLabs
+                </button>
               </div>
             </div>
           </motion.div>
