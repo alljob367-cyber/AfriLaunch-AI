@@ -156,6 +156,12 @@
       "namedRegex": "^/admin/webhooks(?:/)?$"
     },
     {
+      "page": "/admin/whatsapp-agent",
+      "regex": "^/admin/whatsapp\\-agent(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/whatsapp\\-agent(?:/)?$"
+    },
+    {
       "page": "/api/admin/auth",
       "regex": "^/api/admin/auth(?:/)?$",
       "routeKeys": {},
@@ -430,6 +436,24 @@
       "regex": "^/api/users/telegram\\-link(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/users/telegram\\-link(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp-agent/agents",
+      "regex": "^/api/whatsapp\\-agent/agents(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp\\-agent/agents(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp-agent/test",
+      "regex": "^/api/whatsapp\\-agent/test(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp\\-agent/test(?:/)?$"
+    },
+    {
+      "page": "/api/whatsapp-agent/webhook",
+      "regex": "^/api/whatsapp\\-agent/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/whatsapp\\-agent/webhook(?:/)?$"
     },
     {
       "page": "/dashboard",

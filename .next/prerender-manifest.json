@@ -952,6 +952,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/admin/whatsapp-agent": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin/whatsapp-agent",
+      "dataRoute": "/admin/whatsapp-agent.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/admin/login": {
       "experimentalBypassFor": [
         {
@@ -1056,8 +1081,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "cf75d76a4c8455e184f6abdab6c009ec",
-    "previewModeSigningKey": "63681d2d27e8f4b1619ebe39d7442042a3ef0457e6ff8d5c5aca8e71ffa0f283",
-    "previewModeEncryptionKey": "158e8bca3bd4a42895f8166a84436ad79f61a6dba281190b242f6ce18c20649b"
+    "previewModeId": "8c45012da66920588e6c6d6278f6dbad",
+    "previewModeSigningKey": "f2c390bbbc90c8206d079c241af0814a0224e0319524b2a8da4da07a6b399ce5",
+    "previewModeEncryptionKey": "ae826ce45c854bf369a2d4cb6bd1a5d12f9927b955b9d792dbb019a8b1b93ba4"
   }
 }

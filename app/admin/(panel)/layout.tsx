@@ -7,7 +7,7 @@ import Link from 'next/link';
 import {
   Shield, Settings, Database, Bot, CreditCard, Share2, Mail,
   HardDrive, Webhook, ToggleLeft, FileText, Users, LogOut,
-  Loader2, Rocket, Send, Megaphone, Calculator, Wallet,
+  Loader2, Rocket, Send, Megaphone, Calculator, Wallet, MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/providers/toast-provider';
@@ -24,6 +24,7 @@ const navItems = [
   { href: '/admin/storage', label: 'Stockage', icon: HardDrive, color: 'text-cyan-400' },
   { href: '/admin/webhooks', label: 'Webhooks & API', icon: Webhook, color: 'text-pink-400' },
   { href: '/admin/telegram', label: 'Telegram Bot', icon: Send, color: 'text-sky-400' },
+  { href: '/admin/whatsapp-agent', label: 'WhatsApp Agent', icon: MessageCircle, color: 'text-green-400' },
   { href: '/admin/features', label: 'Feature flags', icon: ToggleLeft, color: 'text-amber-400' },
   { href: '/admin/users', label: 'Utilisateurs', icon: Users, color: 'text-indigo-400' },
   { href: '/admin/metrics', label: 'Métriques financières', icon: Calculator, color: 'text-green-400' },

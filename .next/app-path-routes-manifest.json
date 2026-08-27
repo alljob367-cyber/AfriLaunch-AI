@@ -37,6 +37,7 @@
   "/admin/(panel)/telegram/page": "/admin/telegram",
   "/admin/(panel)/users/page": "/admin/users",
   "/admin/(panel)/webhooks/page": "/admin/webhooks",
+  "/admin/(panel)/whatsapp-agent/page": "/admin/whatsapp-agent",
   "/admin/login/page": "/admin/login",
   "/admin/page": "/admin",
   "/api/admin/auth/route": "/api/admin/auth",
@@ -85,6 +86,9 @@
   "/api/users/daily-usage/route": "/api/users/daily-usage",
   "/api/users/plan/route": "/api/users/plan",
   "/api/users/telegram-link/route": "/api/users/telegram-link",
+  "/api/whatsapp-agent/agents/route": "/api/whatsapp-agent/agents",
+  "/api/whatsapp-agent/test/route": "/api/whatsapp-agent/test",
+  "/api/whatsapp-agent/webhook/route": "/api/whatsapp-agent/webhook",
   "/login/page": "/login",
   "/register/page": "/register"
 }

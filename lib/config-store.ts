@@ -104,7 +104,7 @@ export interface AppConfig {
     defaultAgent: string;
     allowedUserIds: number[];
   };
-  // ElevenLabs — Voice AI for WhatsApp & Telegram voice messages
+  // ElevenLabs — Voice AI + Conversational Agents for WhatsApp
   elevenlabs: {
     apiKey: string;
     voiceId: string;
@@ -113,6 +113,14 @@ export interface AppConfig {
     stability: number;
     similarityBoost: number;
     style: number;
+  };
+  // Twilio — bridges WhatsApp messages to ElevenLabs Conversational AI agents
+  twilio: {
+    accountSid: string;
+    authToken: string;
+    whatsappNumber: string; // Twilio WhatsApp number (e.g. +1234567890)
+    enabled: boolean;
+    elevenLabsAgentId: string; // ID of the ElevenLabs conversational agent
   };
   // Marketplace (premium agents created by community/partners)
   marketplace: {
@@ -296,12 +304,19 @@ export function getDefaultConfig(): AppConfig {
     },
     elevenlabs: {
       apiKey: '',
-      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel — default voice
+      voiceId: '21m00Tcm4TlvDq8ikWAM',
       model: 'eleven_multilingual_v2',
       enabled: false,
       stability: 0.5,
       similarityBoost: 0.75,
       style: 0.0,
+    },
+    twilio: {
+      accountSid: '',
+      authToken: '',
+      whatsappNumber: '',
+      enabled: false,
+      elevenLabsAgentId: '',
     },
     marketplace: {
       enabled: true,

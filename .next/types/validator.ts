@@ -371,6 +371,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/admin/(panel)/whatsapp-agent/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/whatsapp-agent">> = Specific
+  const handler = {} as typeof import("../../app/admin/(panel)/whatsapp-agent/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/admin/login/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/admin/login">> = Specific
@@ -816,6 +825,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/users/telegram-link">> = Specific
   const handler = {} as typeof import("../../app/api/users/telegram-link/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/whatsapp-agent/agents/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/whatsapp-agent/agents">> = Specific
+  const handler = {} as typeof import("../../app/api/whatsapp-agent/agents/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/whatsapp-agent/test/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/whatsapp-agent/test">> = Specific
+  const handler = {} as typeof import("../../app/api/whatsapp-agent/test/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/whatsapp-agent/webhook/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/whatsapp-agent/webhook">> = Specific
+  const handler = {} as typeof import("../../app/api/whatsapp-agent/webhook/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
