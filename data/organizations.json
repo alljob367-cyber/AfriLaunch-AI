@@ -14,6 +14,21 @@
       "id": "org_33886301f9c87fa01d770d8d",
       "createdAt": "2026-08-27T12:50:19.869Z",
       "updatedAt": "2026-08-27T12:50:19.869Z"
+    },
+    {
+      "userId": "usr_c12c9a9f512008809f76278f",
+      "name": "HOTEL ALBERMON",
+      "description": "Albermon redéfinit l'hôtellerie de luxe au Cameroun en alliant raffinement international et authenticité locale. Chaque séjour devient une expérience sensorielle où le service d'excellence rencontre la richesse culturelle africaine.",
+      "country": "Guinée",
+      "industry": "Hôtellerie",
+      "website": "",
+      "email": "alljob367@gmail.com",
+      "phone": "+240222760809",
+      "address": "VQ49+WWW",
+      "logo": null,
+      "id": "org_0ffaaefe777fefff1d1f257f",
+      "createdAt": "2026-08-27T13:17:52.566Z",
+      "updatedAt": "2026-08-27T13:17:52.566Z"
     }
   ]
 }
