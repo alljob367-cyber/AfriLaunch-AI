@@ -1,2 +1,46 @@
-skills/
+# Dependencies
 node_modules/
+
+# Build output
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Data (user-specific, not for git)
+data/*.json
+data/payment-proofs/
+
+# DB
+db/
+
+# Original zip archive
+afrilaunch/
+
+# Skills (platform-specific)
+skills/
+
+# Uploads
+upload/
+
+# Logs
+*.log
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+bun.lock
