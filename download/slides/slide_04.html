@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AfriLaunch AI — IA & Génération de Contenu</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+  html, body { background: #050508; }
+  .grid-bg {
+    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .code-chip {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #c7d2fe;
+  }
+  .preview-quote {
+    border-left: 3px solid #8b5cf6;
+  }
+  .pulse-dot {
+    width:8px; height:8px; border-radius:50%; background:#22c55e;
+    box-shadow:0 0 0 0 rgba(34,197,94,0.7);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+</style>
+</head>
+<body>
+<div class="slide slide-pad grid-bg relative flex flex-col">
+
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+
+  <!-- Header -->
+  <div class="relative z-10 flex items-end justify-between mb-6">
+    <div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">04 · KEY MESSAGE</span>
+      </div>
+      <h1 class="text-white font-bold tracking-tight" style="font-size:36px; line-height:1.05;">Génération <span class="gradient-text">IA</span> — OpenRouter</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25);">
+        <div class="pulse-dot"></div>
+        <span class="text-[11px] text-green-400 font-mono tracking-wider">LIVE</span>
+      </div>
+      <span class="badge badge-info"><span class="material-icons" style="font-size:13px;">bolt</span>OPENROUTER ACTIF</span>
+    </div>
+  </div>
+
+  <!-- Main 2-col body -->
+  <div class="relative z-10 grid grid-cols-[1.05fr_0.95fr] gap-5 flex-1">
+
+    <!-- LEFT: Big result encadré -->
+    <div class="card-accent relative overflow-hidden flex flex-col">
+      <div class="absolute -top-16 -right-16 w-40 h-40 rounded-full" style="background:radial-gradient(circle, rgba(139,92,246,0.25), transparent 70%);"></div>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+          <span class="material-icons text-white" style="font-size:20px;">auto_awesome</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-indigo-300">RÉSULTAT DU TEST</div>
+          <h3 class="text-white font-semibold text-base">Pipeline de génération</h3>
+        </div>
+      </div>
+
+      <!-- 5 check rows -->
+      <div class="grid grid-cols-1 gap-2.5">
+        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
+          <span class="text-sm text-gray-200">Job async créé</span>
+          <span class="ml-auto code-chip">jobId=job_mtbzmqvuab4004</span>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
+          <span class="text-sm text-gray-200">Génération réussie</span>
+          <span class="ml-auto code-chip">~10s</span>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
+          <span class="text-sm text-gray-200">1001 caractères générés</span>
+          <span class="ml-auto font-mono text-[13px] text-violet-300 font-semibold">1001</span>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
+          <span class="text-sm text-gray-200">Model</span>
+          <span class="ml-auto code-chip">minimax/minimax-m3:free</span>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
+          <span class="text-sm text-gray-200">Provider</span>
+          <span class="ml-auto code-chip">openrouter</span>
+        </div>
+      </div>
+
+      <!-- Coût -->
+      <div class="mt-auto pt-4 flex items-center justify-between rounded-xl px-4 py-3" style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25);">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-green-400" style="font-size:18px;">savings</span>
+          <span class="text-sm text-gray-200">Coût de génération</span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="font-mono font-bold text-2xl text-green-400">0$</span>
+          <span class="text-[11px] text-gray-400">modèle gratuit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Content preview -->
+    <div class="card relative overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-violet-400" style="font-size:18px;">format_quote</span>
+          <span class="text-[11px] font-mono tracking-widest text-violet-300">APERÇU DU CONTENU GÉNÉRÉ</span>
+        </div>
+        <span class="badge badge-info text-[9px]">1001 CHARS</span>
+      </div>
+
+      <div class="preview-quote pl-4 py-1 flex-1 flex flex-col justify-center">
+        <p class="text-gray-100 text-[15px] leading-relaxed font-light italic">
+          <span class="text-2xl">🎉</span> <span class="text-white font-medium">PROMO EXCEPTIONNELLE</span> <span class="text-2xl">🎉</span><br>
+          Salut la communauté AfriLaunch ! <span class="text-2xl">👋</span><br>
+          On a une offre qui va vous faire vibrer...
+        </p>
+      </div>
+
+      <!-- meta footer -->
+      <div class="mt-4 grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+        <div>
+          <div class="text-[10px] text-gray-500 uppercase tracking-wider">Status</div>
+          <div class="text-sm text-green-400 font-semibold mt-0.5">Completed</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-500 uppercase tracking-wider">Latence</div>
+          <div class="text-sm text-white font-mono mt-0.5">~10s</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-gray-500 uppercase tracking-wider">Provider</div>
+          <div class="text-sm text-indigo-300 font-mono mt-0.5">openrouter</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>

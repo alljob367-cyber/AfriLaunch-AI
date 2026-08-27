@@ -273,3 +273,18 @@ Stage Summary:
 - AI async jobs now persist across serverless invocations (was broken on Vercel before)
 - SQLite testDatabase check uses dynamic fs/path imports so the module stays serverless-safe
 
+---
+Task ID: slides-6-9
+Agent: general-purpose slide-renderer
+Task: Render slides 6-9 (Paiement, WhatsApp/Admin, Métriques, Conclusion) of AfriLaunch AI test report
+
+Work Log:
+- Rendered slide_06.html (Paiement & Monétisation) — comparison layout with manual payment card (Ordre créé Pro mensuel, 15 000 FCFA, MTN Mobile Money Cameroun, 3 méthodes MTN/Orange/Virement) on the left and 4 plan mini-cards (Starter 5 000 / Pro 15 000 ⭐ / Business 40 000 / Enterprise 150 000 FCFA) on the right, FCFA badge in header.
+- Rendered slide_07.html (WhatsApp Agent & Admin) — split layout: left WhatsApp column with Twilio webhook, public status API, WhatsApp→Twilio→IA→Réponse architecture flow, ⚠️ enabled=False warning, freeForAll=True; right Admin column with admin123 login, 14 pages, OpenRouter config, métriques 2 users / 10 000$ MRR / 100% marge, crédits bypass admin.
+- Rendered slide_08.html (Métriques & Rentabilité) — stats layout: 4-stat grid (2 users, 10 000$ MRR, 0.1$ coût IA, 100% marge), distribution table Starter=2/Pro=0/Business=0/Enterprise=0, projection note with 100 users → MRR 3 041$ / marge 84.5% / bénéfice net 2 569$/mois, RENTABLE badge.
+- Rendered slide_09.html (Conclusion & Prochaines Étapes) — closing layout: left bilan card with 3 green checkmarks (26/26 Vercel, Supabase persistant, OpenRouter 10s), right roadmap card with 4 numbered steps (Twilio+ElevenLabs, Stripe/Flutterwave, Telegram @BotFather, campagne marketing), bottom repo link https://github.com/alljob367-cyber/AfriLaunch-AI.
+
+Stage Summary:
+- 4 slides rendered (slide_06 → slide_09) as 1280x720 standalone HTML, each linking global.css, Tailwind CDN and Material Icons, dark tech palette #050508/#6366f1/#8b5cf6, all task_brief facts rendered verbatim, no speaker notes.
+---
+

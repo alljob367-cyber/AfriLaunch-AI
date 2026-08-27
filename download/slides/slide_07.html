@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AfriLaunch AI — WhatsApp Agent & Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+  html, body { background: #050508; }
+  .grid-bg {
+    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .check-row {
+    display:flex; align-items:flex-start; gap:10px;
+    font-size: 12.5px; color: #d1d5db; line-height:1.4;
+  }
+  .check-row .material-icons { font-size:17px; margin-top:1px; flex-shrink:0; }
+  .arch-step {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #e5e7eb;
+  }
+  .arch-arrow {
+    color: #8b5cf6;
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .metric-pill {
+    display:flex; flex-direction:column; align-items:center;
+    padding: 6px 4px; border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+</style>
+</head>
+<body>
+<div class="slide slide-pad grid-bg relative flex flex-col">
+
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+
+  <!-- Header -->
+  <div class="relative z-10 flex items-end justify-between mb-6">
+    <div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">07 · SPLIT</span>
+      </div>
+      <h1 class="text-white font-bold tracking-tight" style="font-size:36px; line-height:1.05;">WhatsApp Agent <span class="text-gray-500">&</span> <span class="gradient-text">Admin</span></h1>
+    </div>
+    <span class="badge badge-info"><span class="material-icons" style="font-size:13px;">hub</span>2 MODULES</span>
+  </div>
+
+  <!-- Split 2 cols -->
+  <div class="relative z-10 grid grid-cols-2 gap-5 flex-1">
+
+    <!-- LEFT: WHATSAPP AGENT -->
+    <div class="card relative overflow-hidden flex flex-col">
+      <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full" style="background:radial-gradient(circle, rgba(34,197,94,0.18), transparent 70%);"></div>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.3);">
+          <span class="material-icons text-green-400" style="font-size:20px;">chat</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-green-300">MODULE · WHATSAPP</div>
+          <h2 class="text-white font-bold text-lg leading-tight">WHATSAPP AGENT</h2>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <!-- item 1 -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <span class="text-white font-semibold text-[13px]">Webhook Twilio configuré</span>
+            <p class="text-[11px] text-gray-400 mt-0.5">Endpoint de réception SMS/WhatsApp prêt</p>
+          </div>
+        </div>
+        <!-- item 2 -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <span class="text-white font-semibold text-[13px]">API status publique</span>
+            <p class="text-[11px] text-gray-400 mt-0.5">Route <span class="font-mono text-green-300">/status</span> exposée</p>
+          </div>
+        </div>
+        <!-- item 3: architecture -->
+        <div class="rounded-xl p-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <div class="flex items-center gap-2 mb-2.5">
+            <span class="material-icons text-green-400" style="font-size:17px;">check_circle</span>
+            <span class="text-white font-semibold text-[13px]">Architecture</span>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap pl-6">
+            <span class="arch-step">WhatsApp</span>
+            <span class="arch-arrow">→</span>
+            <span class="arch-step">Twilio</span>
+            <span class="arch-arrow">→</span>
+            <span class="arch-step">IA</span>
+            <span class="arch-arrow">→</span>
+            <span class="arch-step">Réponse</span>
+          </div>
+        </div>
+        <!-- item 4: warning -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25);">
+          <span class="material-icons text-amber-400 mt-0.5" style="font-size:17px;">warning</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13px]">Twilio: <span class="font-mono text-amber-300">enabled=False</span></span>
+              <span class="badge badge-warning text-[9px]">À ACTIVER</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">À activer avec compte Twilio</p>
+          </div>
+        </div>
+        <!-- item 5 -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13px]"><span class="font-mono text-green-300">freeForAll=True</span></span>
+              <span class="badge badge-success text-[9px]">GRATUIT</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Gratuit pour tous</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-3 flex items-center gap-2 text-[11px] text-gray-500">
+        <span class="material-icons" style="font-size:13px;">route</span>
+        <span class="font-mono">Twilio webhook → IA → reply</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: PANNEAU ADMIN -->
+    <div class="card-accent relative overflow-hidden flex flex-col">
+      <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full" style="background:radial-gradient(circle, rgba(139,92,246,0.22), transparent 70%);"></div>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3);">
+          <span class="material-icons text-violet-400" style="font-size:20px;">admin_panel_settings</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-violet-300">MODULE · ADMIN</div>
+          <h2 class="text-white font-bold text-lg leading-tight">PANNEAU ADMIN</h2>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <!-- item 1: login -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13px]">Login admin</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Identifiants · <span class="font-mono text-violet-300">admin123</span></p>
+          </div>
+        </div>
+        <!-- item 2 -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13px]">14 pages admin accessibles</span>
+              <span class="font-mono text-[12px] text-cyan-300">14 / 14</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Dashboard complet opérationnel</p>
+          </div>
+        </div>
+        <!-- item 3 -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13px]">Config OpenRouter active</span>
+              <span class="badge badge-info text-[9px]">OPENROUTER</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Clé API intégrée au panneau</p>
+          </div>
+        </div>
+        <!-- item 4: métriques -->
+        <div class="rounded-xl p-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <div class="flex items-center gap-2 mb-2.5">
+            <span class="material-icons text-green-400" style="font-size:17px;">check_circle</span>
+            <span class="text-white font-semibold text-[13px]">Métriques</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 pl-6">
+            <div class="metric-pill">
+              <span class="font-mono text-[16px] text-white font-bold">2</span>
+              <span class="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5">users</span>
+            </div>
+            <div class="metric-pill">
+              <span class="font-mono text-[15px] text-cyan-300 font-bold">10 000$</span>
+              <span class="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5">MRR</span>
+            </div>
+            <div class="metric-pill">
+              <span class="font-mono text-[16px] text-green-400 font-bold">100%</span>
+              <span class="text-[9px] text-gray-400 uppercase tracking-wider mt-0.5">marge</span>
+            </div>
+          </div>
+        </div>
+        <!-- item 5 -->
+        <div class="rounded-xl p-3 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:17px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13px]">Système de crédits</span>
+              <span class="badge badge-success text-[9px]">BYPASS ADMIN</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Avec bypass admin</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-3 flex items-center gap-2 text-[11px] text-gray-500">
+        <span class="material-icons" style="font-size:13px;">dashboard</span>
+        <span class="font-mono">14 routes admin protégées</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>

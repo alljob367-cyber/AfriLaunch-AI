@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AfriLaunch AI — Résumé Exécutif</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+  html, body { background: #050508; }
+  .grid-bg {
+    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .stat-card { transition: transform .3s ease; }
+  .spark {
+    background-image: linear-gradient(90deg, rgba(99,102,241,0.35), rgba(34,211,238,0.15));
+  }
+</style>
+</head>
+<body>
+<div class="slide slide-pad grid-bg relative flex flex-col">
+
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+
+  <!-- Header -->
+  <div class="relative z-10 flex items-end justify-between mb-7">
+    <div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">02 · OVERVIEW</span>
+      </div>
+      <h1 class="text-white font-bold tracking-tight" style="font-size:40px; line-height:1.05;">Résumé <span class="gradient-text">Exécutif</span></h1>
+    </div>
+    <span class="badge badge-success"><span class="material-icons" style="font-size:13px;">cloud_done</span>DÉPLOYÉ</span>
+  </div>
+
+  <!-- 2x2 stat grid -->
+  <div class="relative z-10 grid grid-cols-2 gap-4 mb-6">
+
+    <!-- Stat 1 -->
+    <div class="card stat-card relative overflow-hidden">
+      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
+      <div class="flex items-start justify-between">
+        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.25);">
+          <span class="material-icons text-indigo-400" style="font-size:22px;">description</span>
+        </div>
+        <span class="badge badge-success text-[10px]">HTTP 200</span>
+      </div>
+      <div class="mt-5">
+        <div class="stat-num gradient-text" style="font-size:54px;">26/26</div>
+        <div class="text-sm text-gray-300 mt-1.5 font-medium">Pages HTTP 200</div>
+        <div class="text-xs text-gray-500 mt-0.5">Toutes les routes Vercel répondent</div>
+      </div>
+    </div>
+
+    <!-- Stat 2 -->
+    <div class="card stat-card relative overflow-hidden">
+      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
+      <div class="flex items-start justify-between">
+        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.25);">
+          <span class="material-icons text-violet-400" style="font-size:22px;">hub</span>
+        </div>
+        <span class="badge badge-success text-[10px]">FONCTIONNEL</span>
+      </div>
+      <div class="mt-5">
+        <div class="stat-num gradient-text" style="font-size:54px;">10/10</div>
+        <div class="text-sm text-gray-300 mt-1.5 font-medium">Modules API fonctionnels</div>
+        <div class="text-xs text-gray-500 mt-0.5">Endpoints validés en production</div>
+      </div>
+    </div>
+
+    <!-- Stat 3 -->
+    <div class="card stat-card relative overflow-hidden">
+      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
+      <div class="flex items-start justify-between">
+        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.25);">
+          <span class="material-icons" style="font-size:22px; color:#22d3ee;">auto_awesome</span>
+        </div>
+        <span class="badge badge-info text-[10px]">OPENROUTER</span>
+      </div>
+      <div class="mt-5">
+        <div class="stat-num gradient-text" style="font-size:54px;">1001</div>
+        <div class="text-sm text-gray-300 mt-1.5 font-medium">Caractères générés par l'IA</div>
+        <div class="text-xs text-gray-500 mt-0.5">Génération async réussie en ~10s</div>
+      </div>
+    </div>
+
+    <!-- Stat 4 -->
+    <div class="card stat-card relative overflow-hidden">
+      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
+      <div class="flex items-start justify-between">
+        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25);">
+          <span class="material-icons text-green-400" style="font-size:22px;">trending_up</span>
+        </div>
+        <span class="badge badge-success text-[10px]">RENTABLE</span>
+      </div>
+      <div class="mt-5">
+        <div class="stat-num gradient-text" style="font-size:54px;">100%</div>
+        <div class="text-sm text-gray-300 mt-1.5 font-medium">Marge brute</div>
+        <div class="text-xs text-gray-500 mt-0.5">Coût IA négligeable (modèle free)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer message -->
+  <div class="relative z-10 card-accent flex items-center gap-4 mt-auto">
+    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(99,102,241,0.2);">
+      <span class="material-icons text-indigo-300" style="font-size:20px;">check_circle</span>
+    </div>
+    <p class="text-[15px] text-gray-200 leading-snug">
+      Déploiement <span class="text-white font-semibold">Vercel</span> + <span class="text-white font-semibold">Supabase</span> réussi. Tous les modules sont opérationnels sur la production.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AfriLaunch AI — Conclusion & Prochaines Étapes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+  html, body { background: #050508; }
+  .grid-bg {
+    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .step-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+    transition: border-color .2s ease;
+  }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700; font-size: 12px; color: white;
+  }
+  .check-row {
+    display:flex; align-items:flex-start; gap:10px;
+    font-size: 13px; color: #d1d5db; line-height:1.4;
+  }
+  .check-row .material-icons { font-size:18px; margin-top:1px; flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="slide slide-pad grid-bg relative flex flex-col">
+
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+
+  <!-- Header -->
+  <div class="relative z-10 flex items-end justify-between mb-6">
+    <div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">09 · CLOSING</span>
+      </div>
+      <h1 class="text-white font-bold tracking-tight" style="font-size:40px; line-height:1.05;"><span class="gradient-text">Conclusion</span></h1>
+    </div>
+    <span class="badge badge-success"><span class="material-icons" style="font-size:13px;">verified</span>RAPPORT TERMINÉ</span>
+  </div>
+
+  <!-- Main 2-col body -->
+  <div class="relative z-10 grid grid-cols-[0.95fr_1.05fr] gap-5 flex-1">
+
+    <!-- LEFT: Bilan / 3 checkmarks -->
+    <div class="card-accent relative overflow-hidden flex flex-col">
+      <div class="absolute -top-16 -right-16 w-40 h-40 rounded-full" style="background:radial-gradient(circle, rgba(34,197,94,0.22), transparent 70%);"></div>
+
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#22c55e,#6366f1);">
+          <span class="material-icons text-white" style="font-size:20px;">task_alt</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-green-300">BILAN DU TEST</div>
+          <h3 class="text-white font-semibold text-base">Validé en production</h3>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:20px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13.5px]">26/26 pages opérationnelles</span>
+              <span class="font-mono text-[12px] text-green-400">26/26</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Déployées sur <span class="text-green-300">Vercel</span></p>
+          </div>
+        </div>
+
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:20px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13.5px]">Supabase configuré</span>
+              <span class="badge badge-success text-[9px]">DB OK</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Et persistant · <span class="font-mono text-indigo-300">Postgres</span></p>
+          </div>
+        </div>
+
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:20px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-[13.5px]">IA OpenRouter active</span>
+              <span class="badge badge-info text-[9px]">OPENROUTER</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5">Génération en <span class="font-mono text-violet-300">10s</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-4 flex items-center justify-between rounded-xl px-4 py-3" style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25);">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-green-400" style="font-size:18px;">rocket_launch</span>
+          <span class="text-[12px] text-gray-200">Statut global</span>
+        </div>
+        <span class="font-mono text-[13px] text-green-400 font-bold">PRODUCTION READY</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Prochaines étapes -->
+    <div class="card relative overflow-hidden flex flex-col">
+      <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full" style="background:radial-gradient(circle, rgba(139,92,246,0.22), transparent 70%);"></div>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3);">
+          <span class="material-icons text-violet-400" style="font-size:20px;">flag</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-violet-300">ROADMAP</div>
+          <h3 class="text-white font-semibold text-base">PROCHAINES ÉTAPES</h3>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <!-- step 1 -->
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-violet-400" style="font-size:15px;">record_voice_over</span>
+              <span class="text-white font-semibold text-[13px]">Configurer Twilio + ElevenLabs</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5 pl-[21px]">Pour WhatsApp voix</p>
+          </div>
+        </div>
+        <!-- step 2 -->
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-green-400" style="font-size:15px;">credit_card</span>
+              <span class="text-white font-semibold text-[13px]">Activer Stripe / Flutterwave</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5 pl-[21px]">Pour paiements automatiques</p>
+          </div>
+        </div>
+        <!-- step 3 -->
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-cyan-400" style="font-size:15px;">send</span>
+              <span class="text-white font-semibold text-[13px]">Créer le bot Telegram</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5 pl-[21px]">Via <span class="font-mono text-cyan-300">@BotFather</span></p>
+          </div>
+        </div>
+        <!-- step 4 -->
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-amber-400" style="font-size:15px;">campaign</span>
+              <span class="text-white font-semibold text-[13px]">Lancer la campagne marketing</span>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-0.5 pl-[21px]">Acquisition utilisateurs</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-4 flex items-center gap-2 text-[11px] text-gray-500">
+        <span class="material-icons" style="font-size:13px;">timeline</span>
+        <span class="font-mono">4 actions priorisées</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer: repo -->
+  <div class="relative z-10 mt-5 flex items-center justify-between rounded-xl px-4 py-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.25);">
+        <span class="material-icons text-indigo-400" style="font-size:16px;">code</span>
+      </div>
+      <span class="text-[12px] text-gray-300 font-semibold">AfriLaunch AI</span>
+      <span class="text-gray-700">—</span>
+      <span class="font-mono text-[12px] text-gray-400">https://github.com/alljob367-cyber/AfriLaunch-AI</span>
+    </div>
+    <span class="badge badge-info"><span class="material-icons" style="font-size:13px;">link</span>REPO</span>
+  </div>
+
+</div>
+</body>
+</html>

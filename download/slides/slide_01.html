@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AfriLaunch AI — Couverture</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+  html, body { background: #050508; }
+  .cover-grid {
+    background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .title-glow { text-shadow: 0 0 60px rgba(99,102,241,0.35); }
+  .ring-dot::before {
+    content:''; position:absolute; inset:0; border-radius:50%;
+    border:1px solid rgba(99,102,241,0.4);
+  }
+</style>
+</head>
+<body>
+<div class="slide slide-pad cover-grid relative flex flex-col justify-between">
+
+  <!-- Aurora blobs -->
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+  <div class="aurora" style="top:40%; left:45%; width:260px; height:260px; background:#22d3ee; opacity:0.08;"></div>
+
+  <!-- Top bar -->
+  <div class="relative z-10 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 0 30px rgba(99,102,241,0.5);">
+        <span class="material-icons" style="font-size:22px; color:#fff;">rocket_launch</span>
+      </div>
+      <div class="font-mono text-xs tracking-widest text-gray-400">AFRILAUNCH · REPORT</div>
+    </div>
+    <span class="badge badge-success"><span class="material-icons" style="font-size:13px;">verified</span>PRODUCTION</span>
+  </div>
+
+  <!-- Hero -->
+  <div class="relative z-10 flex flex-col items-center text-center">
+    <div class="flex items-center gap-2 mb-5">
+      <span class="h-px w-12 bg-gradient-to-r from-transparent to-indigo-500"></span>
+      <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">RAPPORT DE TEST</span>
+      <span class="h-px w-12 bg-gradient-to-l from-transparent to-indigo-500"></span>
+    </div>
+
+    <h1 class="gradient-text title-glow font-black tracking-tight" style="font-size:108px; line-height:0.95; letter-spacing:-0.04em;">
+      AfriLaunch AI
+    </h1>
+
+    <p class="mt-6 text-2xl font-light text-gray-200">Rapport de Test — <span class="text-white font-medium">Tous Modules</span></p>
+
+    <div class="mt-7 flex items-center gap-6">
+      <div class="flex items-center gap-2 text-gray-400">
+        <span class="material-icons text-indigo-400" style="font-size:18px;">calendar_today</span>
+        <span class="font-mono text-sm">27 Août 2026</span>
+      </div>
+      <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+      <div class="flex items-center gap-2 text-gray-400">
+        <span class="material-icons text-violet-400" style="font-size:18px;">language</span>
+        <span class="font-mono text-sm text-gray-300">afrilaunchia.vercel.app</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="relative z-10 grid grid-cols-3 gap-4">
+    <div class="glass p-5 flex items-center gap-4">
+      <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25);">
+        <span class="material-icons text-green-400" style="font-size:22px;">description</span>
+      </div>
+      <div>
+        <div class="stat-num text-white" style="font-size:26px;">26/26</div>
+        <div class="text-xs text-gray-400 mt-0.5">Pages ✅</div>
+      </div>
+    </div>
+    <div class="glass p-5 flex items-center gap-4">
+      <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.25);">
+        <span class="material-icons text-indigo-400" style="font-size:22px;">api</span>
+      </div>
+      <div>
+        <div class="stat-num text-white" style="font-size:26px;">10/10</div>
+        <div class="text-xs text-gray-400 mt-0.5">API Modules ✅</div>
+      </div>
+    </div>
+    <div class="glass p-5 flex items-center gap-4">
+      <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.25);">
+        <span class="material-icons text-violet-400" style="font-size:22px;">grid_view</span>
+      </div>
+      <div>
+        <div class="stat-num text-white" style="font-size:26px;">26</div>
+        <div class="text-xs text-gray-400 mt-0.5">Modules Testés</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

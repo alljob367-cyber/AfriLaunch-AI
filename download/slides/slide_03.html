@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AfriLaunch AI — Authentification & Organisation</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<style>
+  html, body { background: #050508; }
+  .grid-bg {
+    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .col-divider {
+    background: linear-gradient(180deg, transparent, rgba(99,102,241,0.25), transparent);
+  }
+</style>
+</head>
+<body>
+<div class="slide slide-pad grid-bg relative flex flex-col">
+
+  <div class="aurora aurora-1"></div>
+  <div class="aurora aurora-2"></div>
+
+  <!-- Header -->
+  <div class="relative z-10 flex items-end justify-between mb-7">
+    <div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">03 · CORE MODULES</span>
+      </div>
+      <h1 class="text-white font-bold tracking-tight" style="font-size:36px; line-height:1.05;">Authentification <span class="text-gray-500">&</span> <span class="gradient-text">Organisation</span></h1>
+    </div>
+    <span class="badge badge-success"><span class="material-icons" style="font-size:13px;">verified_user</span>6/6 TESTS OK</span>
+  </div>
+
+  <!-- Split 2 cols -->
+  <div class="relative z-10 grid grid-cols-2 gap-5 flex-1">
+
+    <!-- LEFT: AUTH -->
+    <div class="card relative overflow-hidden flex flex-col">
+      <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full" style="background:radial-gradient(circle, rgba(99,102,241,0.2), transparent 70%);"></div>
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3);">
+          <span class="material-icons text-indigo-400" style="font-size:20px;">lock</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-indigo-300">MODULE 01</div>
+          <h2 class="text-white font-bold text-lg leading-tight">AUTHENTIFICATION</h2>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <!-- item 1 -->
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:18px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">Register</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">TestFinal créé · <span class="font-mono text-indigo-300">plan=starter</span>, <span class="font-mono text-violet-300">credits=500</span></p>
+          </div>
+        </div>
+        <!-- item 2 -->
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:18px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">Login</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Token session généré · <span class="font-mono text-indigo-300">JWT actif</span></p>
+          </div>
+        </div>
+        <!-- item 3 -->
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:18px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">Me</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Profil récupéré · <span class="font-mono text-violet-300">email=final@test.com</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-4 flex items-center gap-2 text-[11px] text-gray-500">
+        <span class="material-icons" style="font-size:13px;">vpn_key</span>
+        <span class="font-mono">JWT + Supabase Auth</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: ORGANISATION -->
+    <div class="card relative overflow-hidden flex flex-col">
+      <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full" style="background:radial-gradient(circle, rgba(139,92,246,0.2), transparent 70%);"></div>
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3);">
+          <span class="material-icons text-violet-400" style="font-size:20px;">corporate_fare</span>
+        </div>
+        <div>
+          <div class="text-[11px] font-mono tracking-widest text-violet-300">MODULE 02</div>
+          <h2 class="text-white font-bold text-lg leading-tight">ORGANISATION</h2>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <!-- item 1 -->
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:18px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">Organisation créée</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Hotel Albermon · <span class="text-violet-300">Hôtellerie</span>, <span class="text-indigo-300">Cameroun</span></p>
+          </div>
+        </div>
+        <!-- item 2 -->
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:18px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">Persistance Supabase</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Confirmée · <span class="font-mono text-indigo-300">Row en DB</span></p>
+          </div>
+        </div>
+        <!-- item 3 -->
+        <div class="rounded-xl p-3.5 flex items-start gap-3" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+          <span class="material-icons text-green-400 mt-0.5" style="font-size:18px;">check_circle</span>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-white font-semibold text-sm">Synchronisation modules</span>
+              <span class="badge badge-success text-[9px]">OK</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Activée · <span class="font-mono text-violet-300">multi-modules linkés</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto pt-4 flex items-center gap-2 text-[11px] text-gray-500">
+        <span class="material-icons" style="font-size:13px;">storage</span>
+        <span class="font-mono">Supabase Postgres</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>
