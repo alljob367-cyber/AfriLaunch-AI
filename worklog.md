@@ -179,3 +179,24 @@ Stage Summary:
 - 2 modules fully functional with AI
 - Website: generates complete HTML/CSS site, preview in iframe, download
 - Content: 16 formats, single + batch (3 variants), character count, copy
+
+---
+Task ID: payment-manual-fcfa
+Agent: general-purpose
+Task: Remove Free plan + convert to FCFA + implement manual payment system (Cameroon first)
+
+Work Log:
+- Removed Free plan from PLANS + user-types
+- Converted all prices to FCFA (Starter 5000, Pro 15000, Business 40000, Enterprise 150000)
+- Created lib/payment-manual.ts (orders + approve/reject + stats)
+- Created 5 API routes (create, upload, list, admin-list, admin-action)
+- Created dashboard payment-manual page (country + method + proof upload)
+- Created admin payments-manual page (validate/reject orders)
+- Updated pricing.tsx (removed Free, FCFA prices)
+- Updated subscription page (FCFA + manual payment CTA)
+- Added Wallet icon to both sidebars
+
+Stage Summary:
+- Free plan removed, all prices in FCFA
+- Manual payment: Cameroon (MTN MoMo, Orange Money, Virement) with proof upload
+- Admin can approve/reject → auto-activates plan or credits

@@ -120,6 +120,12 @@
       "namedRegex": "^/admin/payments(?:/)?$"
     },
     {
+      "page": "/admin/payments-manual",
+      "regex": "^/admin/payments\\-manual(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/payments\\-manual(?:/)?$"
+    },
+    {
       "page": "/admin/social",
       "regex": "^/admin/social(?:/)?$",
       "routeKeys": {},
@@ -300,6 +306,42 @@
       "namedRegex": "^/api/marketplace/install(?:/)?$"
     },
     {
+      "page": "/api/payment-manual/admin-action",
+      "regex": "^/api/payment\\-manual/admin\\-action(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment\\-manual/admin\\-action(?:/)?$"
+    },
+    {
+      "page": "/api/payment-manual/admin-list",
+      "regex": "^/api/payment\\-manual/admin\\-list(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment\\-manual/admin\\-list(?:/)?$"
+    },
+    {
+      "page": "/api/payment-manual/create",
+      "regex": "^/api/payment\\-manual/create(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment\\-manual/create(?:/)?$"
+    },
+    {
+      "page": "/api/payment-manual/list",
+      "regex": "^/api/payment\\-manual/list(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment\\-manual/list(?:/)?$"
+    },
+    {
+      "page": "/api/payment-manual/proof",
+      "regex": "^/api/payment\\-manual/proof(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment\\-manual/proof(?:/)?$"
+    },
+    {
+      "page": "/api/payment-manual/upload",
+      "regex": "^/api/payment\\-manual/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/payment\\-manual/upload(?:/)?$"
+    },
+    {
       "page": "/api/referral/stats",
       "regex": "^/api/referral/stats(?:/)?$",
       "routeKeys": {},
@@ -412,6 +454,12 @@
       "regex": "^/dashboard/organization(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/organization(?:/)?$"
+    },
+    {
+      "page": "/dashboard/payment-manual",
+      "regex": "^/dashboard/payment\\-manual(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/payment\\-manual(?:/)?$"
     },
     {
       "page": "/dashboard/payments",

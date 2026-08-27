@@ -106,7 +106,7 @@ export default function BillingPage() {
     );
   }
 
-  const currentPlan = PLANS[user?.plan ?? 'free'];
+  const currentPlan = PLANS[user?.plan ?? 'starter'];
 
   return (
     <div className="min-h-screen mesh-bg">

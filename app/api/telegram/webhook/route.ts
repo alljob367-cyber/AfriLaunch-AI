@@ -185,7 +185,7 @@ async function processWithAgent(
   // Call AI
   // Get the user's plan (we have `user` from the auth check above)
   const linkedUser = telegramUserId ? await getUserByTelegramId(telegramUserId) : null;
-  const userPlan = linkedUser?.plan || 'free';
+  const userPlan = linkedUser?.plan || 'starter';
 
   const result = await runAIForPlan({
     systemPrompt: `${agent.systemPrompt}\n\nContexte: Tu discutes avec ${userName} via Telegram. Sois concis (max 4000 caractères car limite Telegram). Utilise le formatage Markdown quand pertinent (gras, listes).`,

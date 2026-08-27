@@ -55,8 +55,8 @@ Message original de ${item.authorName}:
 
 Génère UNIQUEMENT la réponse (pas de préfixe, pas de guillemets):`;
 
-  // Use plan-based routing — ads items may belong to a user or be unattributed (free tier)
-  const plan = item.userId ? 'pro' : 'free'; // unattributed ad comments use free tier (cheapest model)
+  // Use plan-based routing — ads items may belong to a user or be unattributed (use starter tier)
+  const plan = item.userId ? 'pro' : 'starter';
 
   const result = await runAIForPlan({
     systemPrompt,

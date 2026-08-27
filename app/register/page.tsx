@@ -44,8 +44,8 @@ function RegisterForm() {
       toast({
         title: 'Compte créé ! 🎉',
         description: referredBy
-          ? 'Bienvenue ! Vous avez reçu 50 crédits de parrainage bonus.'
-          : 'Bienvenue sur AfriLaunch AI. 50 crédits offerts pour commencer.',
+          ? 'Bienvenue ! 1 mois Starter offert + 100 crédits bonus de parrainage.'
+          : 'Bienvenue ! 1 mois Starter offert (500 crédits IA). Activez votre abonnement pour continuer après l\'essai.',
         variant: 'success',
       });
       setTimeout(() => router.push('/dashboard'), 800);
@@ -70,10 +70,10 @@ function RegisterForm() {
 
         <div className="glass rounded-3xl p-8 border border-white/10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 mb-4">
-            <span className="text-xs font-bold text-green-400">✓ 50 crédits offerts à l'inscription</span>
+            <span className="text-xs font-bold text-green-400">✓ 1 mois Starter offert · 500 crédits IA</span>
           </div>
           <h1 className="text-2xl font-bold mb-2">Lancez votre business 🚀</h1>
-          <p className="text-sm text-gray-400 mb-8">Aucune carte bancaire requise</p>
+          <p className="text-sm text-gray-400 mb-8">Essai gratuit 30 jours · Sans engagement</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

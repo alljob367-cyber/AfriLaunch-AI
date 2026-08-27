@@ -81,11 +81,11 @@ export async function createUser(data: {
     lastName: data.lastName,
     passwordHash: hashPassword(data.password),
     createdAt: now,
-    plan: 'free',
+    plan: 'starter',
     planStatus: 'active',
     planStartedAt: now,
-    planEndsAt: null,
-    credits: PLANS.free.creditsPerMonth,
+    planEndsAt: nextMonth.toISOString(), // 1 month trial
+    credits: PLANS.starter.creditsPerMonth,
     creditsUsedThisMonth: 0,
     creditsResetAt: nextMonth.toISOString(),
     referralCode: generateReferralCode(data.firstName),
@@ -168,8 +168,7 @@ export async function addCredits(id: string, amount: number): Promise<User | nul
 
 // Daily limit per plan (in credits). 0 = no daily limit.
 const DAILY_LIMITS: Record<PlanId, number> = {
-  free: 10,        // 10 messages/jour
-  starter: 0,      // pas de plafond quotidien (plafond mensuel seulement)
+  starter: 50,     // 50 messages/jour
   pro: 0,
   business: 0,
   enterprise: 0,

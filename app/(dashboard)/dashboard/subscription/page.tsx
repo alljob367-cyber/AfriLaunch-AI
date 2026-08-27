@@ -6,14 +6,14 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   CreditCard, Loader2, Check, Sparkles, Zap, TrendingUp,
-  Receipt, AlertCircle, Crown, LogIn,
+  Receipt, AlertCircle, Crown, LogIn, Wallet, ArrowRight,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { useToast } from '@/components/providers/toast-provider';
 import { cn } from '@/lib/utils';
 import {
-  PLANS, CREDIT_PACKS, type PlanId, type Plan, type CreditPack,
+  PLANS, CREDIT_PACKS, formatFCFA, type PlanId, type Plan, type CreditPack,
 } from '@/lib/user-types';
 
 interface FullUser {
@@ -34,7 +34,7 @@ interface CreditsInfo {
   creditsResetAt: string;
 }
 
-const PLAN_ORDER: PlanId[] = ['free', 'starter', 'pro', 'business', 'enterprise'];
+const PLAN_ORDER: PlanId[] = ['starter', 'pro', 'business', 'enterprise'];
 
 function formatDate(iso: string): string {
   try {
@@ -123,14 +123,6 @@ export default function SubscriptionPage() {
 
   async function handleChoosePlan(plan: Plan) {
     if (plan.id === user?.plan) return;
-    if (plan.id === 'free') {
-      toast({
-        title: 'Plan gratuit',
-        description: 'Le plan Free est attribué par défaut. Contactez le support pour le réinitialiser.',
-        variant: 'warning',
-      });
-      return;
-    }
     setLoadingItem(`plan-${plan.id}`);
     try {
       const res = await fetch('/api/checkout/session', {
@@ -217,7 +209,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  const currentPlan: Plan = PLANS[user?.plan ?? 'free'];
+  const currentPlan: Plan = PLANS[user?.plan ?? 'starter'];
   const used = credits?.creditsUsedThisMonth ?? user?.creditsUsedThisMonth ?? 0;
   const remaining = credits?.credits ?? user?.credits ?? 0;
   const isUnlimited = currentPlan.creditsPerMonth === -1 || remaining >= 999999;
@@ -257,9 +249,7 @@ export default function SubscriptionPage() {
                   {currentPlan.name}
                 </span>
                 <span className="text-sm text-gray-400">
-                  {currentPlan.priceMonthly === 0
-                    ? 'Gratuit'
-                    : `${currentPlan.priceMonthly.toFixed(2)} $ / mois`}
+                  {formatFCFA(currentPlan.priceMonthly)} / mois
                 </span>
               </div>
             </div>
@@ -335,7 +325,10 @@ export default function SubscriptionPage() {
             <TrendingUp className="w-5 h-5 text-indigo-400" aria-hidden="true" />
             <h2 id="plans-title" className="text-lg font-bold">Comparer les plans</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <p className="text-xs text-gray-500 mb-4">
+            Deux options de paiement : <span className="text-emerald-300 font-semibold">Mobile Money / Virement (FCFA)</span> ou <span className="text-indigo-300 font-semibold">carte bancaire internationale</span>.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {PLAN_ORDER.map((id) => {
               const plan = PLANS[id];
               const isCurrent = id === user?.plan;
@@ -368,7 +361,7 @@ export default function SubscriptionPage() {
 
                   <div className="mb-4">
                     <span className="text-2xl font-bold">
-                      {plan.priceMonthly === 0 ? '0 $' : `${plan.priceMonthly.toFixed(2)} $`}
+                      {formatFCFA(plan.priceMonthly)}
                     </span>
                     <span className="text-xs text-gray-400"> / mois</span>
                   </div>
@@ -392,6 +385,7 @@ export default function SubscriptionPage() {
                     type="button"
                     onClick={() => handleChoosePlan(plan)}
                     disabled={isCurrent || isLoading}
+                    aria-label={`Paiement carte bancaire international — ${plan.name}`}
                     className={cn(
                       'w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all',
                       isCurrent
@@ -408,9 +402,21 @@ export default function SubscriptionPage() {
                         Plan actuel
                       </>
                     ) : (
-                      'Choisir'
+                      <>
+                        <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
+                        Carte bancaire
+                      </>
                     )}
                   </button>
+                  {!isCurrent && (
+                    <Link
+                      href={`/dashboard/payment-manual?item=${id}&type=plan`}
+                      className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors"
+                    >
+                      <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
+                      Mobile Money / Virement
+                    </Link>
+                  )}
                 </motion.div>
               );
             })}
@@ -456,7 +462,7 @@ export default function SubscriptionPage() {
                     </div>
 
                     <div className="mb-4">
-                      <span className="text-xl font-bold">{pack.price.toFixed(2)} $</span>
+                      <span className="text-xl font-bold">{formatFCFA(pack.price)}</span>
                       <span className="text-xs text-gray-400"> / unique</span>
                     </div>
 
@@ -470,21 +476,60 @@ export default function SubscriptionPage() {
                       type="button"
                       onClick={() => handleBuyPack(pack)}
                       disabled={isLoading}
+                      aria-label={`Acheter le pack ${pack.credits} crédits par carte bancaire`}
                       className="mt-auto w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:scale-[1.02] transition-transform shadow-lg disabled:opacity-60 disabled:hover:scale-100"
                     >
                       {isLoading ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                       ) : (
-                        <Zap className="w-3.5 h-3.5" aria-hidden="true" />
+                        <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
                       )}
-                      Acheter
+                      Carte bancaire
                     </button>
+                    <Link
+                      href={`/dashboard/payment-manual?item=${pack.id}&type=pack`}
+                      className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors"
+                    >
+                      <Wallet className="w-3.5 h-3.5" aria-hidden="true" />
+                      Mobile Money
+                    </Link>
                   </motion.div>
                 );
               })}
             </div>
           </section>
         )}
+
+        {/* ─── Manual payment callout ───────────────────────────────── */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10"
+          aria-labelledby="manual-payment-title"
+        >
+          <div className="glass rounded-2xl p-6 border border-emerald-500/30 bg-emerald-500/5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                  <Wallet className="w-5 h-5 text-white" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 id="manual-payment-title" className="text-lg font-bold">Paiement manuel</h2>
+                  <p className="text-sm text-gray-400 mt-1 max-w-xl">
+                    Payez par <span className="text-emerald-300 font-semibold">MTN Mobile Money</span>, <span className="text-emerald-300 font-semibold">Orange Money</span> ou <span className="text-emerald-300 font-semibold">virement bancaire</span> en FCFA. Téléversez votre justificatif, l&apos;activation se fait sous 24h.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/payment-manual"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:scale-105 transition-transform shadow-lg"
+              >
+                Payer par Mobile Money / Virement
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </motion.section>
 
         {/* ─── Billing history (empty) ───────────────────────────────── */}
         <section aria-labelledby="billing-title">

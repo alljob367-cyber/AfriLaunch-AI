@@ -48,10 +48,7 @@ async function requireAdmin(req: NextRequest): Promise<boolean> {
 }
 
 // Average cost per credit (USD) — based on model routing
-// Free uses gemini-flash (~0.0002$/msg), Starter uses gpt-4o-mini (~0.0005$/msg),
-// Pro/Business use claude-3.5-sonnet (~0.012$/msg), Enterprise uses gpt-4o (~0.009$/msg)
 const COST_PER_CREDIT_BY_PLAN: Record<PlanId, number> = {
-  free: 0.0002,
   starter: 0.0005,
   pro: 0.012,
   business: 0.012,
@@ -73,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   // Count users per plan
   const usersByPlan: Record<PlanId, number> = {
-    free: 0, starter: 0, pro: 0, business: 0, enterprise: 0,
+    starter: 0, pro: 0, business: 0, enterprise: 0,
   };
   for (const u of users) {
     if (u.plan in usersByPlan) usersByPlan[u.plan]++;

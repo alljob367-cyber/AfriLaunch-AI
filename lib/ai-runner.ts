@@ -22,9 +22,7 @@ export interface RunResult {
 }
 
 // Plan-based model routing on OpenRouter (cost optimization)
-// Maps a user's plan to the best model for that tier
 const PLAN_MODELS: Record<PlanId, string> = {
-  free: 'google/gemini-flash-1.5',         // ~0.0002$/msg — quasi gratuit
   starter: 'openai/gpt-4o-mini',            // ~0.0005$/msg — économique
   pro: 'anthropic/claude-3.5-sonnet',       // ~0.012$/msg — qualité pro
   business: 'anthropic/claude-3.5-sonnet',  // ~0.012$/msg — qualité pro
@@ -61,8 +59,7 @@ export async function runAIForPlan(opts: RunOptions, plan: PlanId): Promise<RunR
   // If OpenRouter is enabled and has a key, use plan-based model routing
   const openrouter = config.ai.providers.openrouter;
   if (openrouter?.enabled && openrouter.apiKey) {
-    const targetModel = PLAN_MODELS[plan] || PLAN_MODELS.free;
-    // Override the model on a clone of the provider config (don't mutate the stored config)
+    const targetModel = PLAN_MODELS[plan] || PLAN_MODELS.starter;
     const providerConfig = { ...openrouter, model: targetModel };
     return callProvider('openrouter', providerConfig, opts, config);
   }

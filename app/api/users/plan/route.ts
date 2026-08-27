@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { changeUserPlan, PLANS, sanitizeUser, type PlanId } from '@/lib/user-store';
 import { requireUser } from '@/lib/auth-helpers';
 
-const VALID_PLAN_IDS = new Set<PlanId>(['free', 'starter', 'pro', 'business', 'enterprise']);
+const VALID_PLAN_IDS = new Set<PlanId>(['starter', 'pro', 'business', 'enterprise']);
 
 export async function GET(req: NextRequest) {
   try {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const { plan } = body as { plan?: PlanId };
     if (!plan || !VALID_PLAN_IDS.has(plan as PlanId)) {
       return NextResponse.json(
-        { error: 'Plan invalide. Valeurs acceptées: free, starter, pro, business, enterprise' },
+        { error: 'Plan invalide. Valeurs acceptées: starter, pro, business, enterprise' },
         { status: 400 },
       );
     }
