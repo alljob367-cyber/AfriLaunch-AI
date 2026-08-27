@@ -60,6 +60,12 @@
       "namedRegex": "^/admin(?:/)?$"
     },
     {
+      "page": "/admin/ads",
+      "regex": "^/admin/ads(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/ads(?:/)?$"
+    },
+    {
       "page": "/admin/ai",
       "regex": "^/admin/ai(?:/)?$",
       "routeKeys": {},
@@ -160,6 +166,48 @@
       "regex": "^/api/admin/test(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/admin/test(?:/)?$"
+    },
+    {
+      "page": "/api/ads/facebook/webhook",
+      "regex": "^/api/ads/facebook/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/facebook/webhook(?:/)?$"
+    },
+    {
+      "page": "/api/ads/google/webhook",
+      "regex": "^/api/ads/google/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/google/webhook(?:/)?$"
+    },
+    {
+      "page": "/api/ads/inbox",
+      "regex": "^/api/ads/inbox(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/inbox(?:/)?$"
+    },
+    {
+      "page": "/api/ads/respond",
+      "regex": "^/api/ads/respond(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/respond(?:/)?$"
+    },
+    {
+      "page": "/api/ads/seed",
+      "regex": "^/api/ads/seed(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/seed(?:/)?$"
+    },
+    {
+      "page": "/api/ads/stats",
+      "regex": "^/api/ads/stats(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/stats(?:/)?$"
+    },
+    {
+      "page": "/api/ads/youtube/webhook",
+      "regex": "^/api/ads/youtube/webhook(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ads/youtube/webhook(?:/)?$"
     },
     {
       "page": "/api/auth/login",
@@ -274,6 +322,12 @@
       "regex": "^/dashboard(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/dashboard/ads-inbox",
+      "regex": "^/dashboard/ads\\-inbox(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/ads\\-inbox(?:/)?$"
     },
     {
       "page": "/dashboard/agents",

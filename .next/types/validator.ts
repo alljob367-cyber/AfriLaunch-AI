@@ -47,6 +47,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 
 
+// Validate ../../app/(dashboard)/dashboard/ads-inbox/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/dashboard/ads-inbox">> = Specific
+  const handler = {} as typeof import("../../app/(dashboard)/dashboard/ads-inbox/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/(dashboard)/dashboard/agents/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/dashboard/agents">> = Specific
@@ -204,6 +213,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
   const handler = {} as typeof import("../../app/(marketing)/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/admin/(panel)/ads/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/admin/ads">> = Specific
+  const handler = {} as typeof import("../../app/admin/(panel)/ads/page.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
@@ -384,6 +402,69 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/admin/test">> = Specific
   const handler = {} as typeof import("../../app/api/admin/test/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/facebook/webhook/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/facebook/webhook">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/facebook/webhook/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/google/webhook/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/google/webhook">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/google/webhook/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/inbox/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/inbox">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/inbox/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/respond/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/respond">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/respond/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/seed/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/seed">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/seed/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/stats/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/stats">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/stats/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/ads/youtube/webhook/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ads/youtube/webhook">> = Specific
+  const handler = {} as typeof import("../../app/api/ads/youtube/webhook/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

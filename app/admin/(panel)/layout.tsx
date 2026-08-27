@@ -7,7 +7,7 @@ import Link from 'next/link';
 import {
   Shield, Settings, Database, Bot, CreditCard, Share2, Mail,
   HardDrive, Webhook, ToggleLeft, FileText, Users, LogOut,
-  Loader2, Rocket, Send,
+  Loader2, Rocket, Send, Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/providers/toast-provider';
@@ -18,7 +18,8 @@ const navItems = [
   { href: '/admin/ai', label: 'IA & LLM', icon: Bot, color: 'text-violet-400' },
   { href: '/admin/payments', label: 'Paiements', icon: CreditCard, color: 'text-teal-400' },
   { href: '/admin/social', label: 'Réseaux sociaux', icon: Share2, color: 'text-green-400' },
-  { href: '/admin/email', label: 'Email & Notifications', icon: Mail, color: 'text-orange-400' },
+  { href: '/admin/ads', label: 'Publicités & IA', icon: Megaphone, color: 'text-orange-400' },
+  { href: '/admin/email', label: 'Email & Notifications', icon: Mail, color: 'text-amber-400' },
   { href: '/admin/storage', label: 'Stockage', icon: HardDrive, color: 'text-cyan-400' },
   { href: '/admin/webhooks', label: 'Webhooks & API', icon: Webhook, color: 'text-pink-400' },
   { href: '/admin/telegram', label: 'Telegram Bot', icon: Send, color: 'text-sky-400' },

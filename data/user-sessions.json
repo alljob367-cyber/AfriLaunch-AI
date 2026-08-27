@@ -1,20 +1,14 @@
 [
   {
-    "token": "74b37e7c534d89f96b8372d101b2de88298d5f35f39470a403c5134fed4427a0",
+    "token": "7b0a78a8f5d54ecb0087217f1529d5d293a1d0ba3a22e19a531af8c6a4dbdc2a",
     "userId": "usr_0afe7f03eb40504f71b014f0",
-    "createdAt": 1786203828111,
-    "expiresAt": 1786808628111
+    "createdAt": 1787803366294,
+    "expiresAt": 1788408166294
   },
   {
-    "token": "7d400826f9a88b76dc766a24af509dd78c1cd5e55275e99807c477dbc43f914b",
+    "token": "dd1641a477c88de439165871549060908b19f89e64243f63629f55ea0c986c7d",
     "userId": "usr_0afe7f03eb40504f71b014f0",
-    "createdAt": 1786203828227,
-    "expiresAt": 1786808628227
-  },
-  {
-    "token": "c876b06b682c1709d04a9142bf77670ae2155105bcbc256ec332ac7d824548b1",
-    "userId": "usr_9cf18a0d854cab0cdfa4019d",
-    "createdAt": 1786203838645,
-    "expiresAt": 1786808638645
+    "createdAt": 1787803511520,
+    "expiresAt": 1788408311520
   }
 ]

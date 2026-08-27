@@ -1,0 +1,700 @@
+     1→// AfriLaunch AI — Configuration store (server-side, persisted to JSON file)
+     2→// This module manages the app's runtime configuration: mode (demo/real),
+     3→// API keys, database connection, AI providers, payment providers, etc.
+     4→// Config is stored at /home/z/my-project/data/app-config.json
+     5→
+     6→import { promises as fs } from 'fs';
+     7→import path from 'path';
+     8→import crypto from 'crypto';
+     9→
+    10→const CONFIG_PATH = path.join('/home/z/my-project/data', 'app-config.json');
+    11→const SESSIONS_PATH = path.join('/home/z/my-project/data', 'admin-sessions.json');
+    12→
+    13→// ─── Types ────────────────────────────────────────────────────────────
+    14→export interface AppConfig {
+    15→  // App-wide
+    16→  appName: string;
+    17→  appUrl: string;
+    18→  locale: string;
+    19→  timezone: string;
+    20→  // Admin
+    21→  adminPasswordHash: string | null; // sha256 of password; null = not set
+    22→  adminEmail: string;
+    23→  // Database
+    24→  database: {
+    25→    provider: 'sqlite' | 'postgresql' | 'mysql' | 'mongodb';
+    26→    url: string;
+    27→    ssl: boolean;
+    28→  };
+    29→  // Auth
+    30→  auth: {
+    31→    jwtSecret: string;
+    32→    sessionExpiryHours: number;
+    33→    oauth: {
+    34→      google: { clientId: string; clientSecret: string; enabled: boolean };
+    35→      github: { clientId: string; clientSecret: string; enabled: boolean };
+    36→      apple: { clientId: string; clientSecret: string; enabled: boolean };
+    37→    };
+    38→  };
+    39→  // AI Providers
+    40→  ai: {
+    41→    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'custom';
+    42→    providers: {
+    43→      openai: { apiKey: string; model: string; enabled: boolean };
+    44→      anthropic: { apiKey: string; model: string; enabled: boolean };
+    45→      gemini: { apiKey: string; model: string; enabled: boolean };
+    46→      zai: { apiKey: string; model: string; enabled: boolean };
+    47→      mistral: { apiKey: string; model: string; endpoint: string; enabled: boolean };
+    48→      groq: { apiKey: string; model: string; endpoint: string; enabled: boolean };
+    49→      custom: { baseUrl: string; apiKey: string; model: string; enabled: boolean };
+    50→    };
+    51→    fallback: boolean; // if primary fails, try others
+    52→    maxTokensPerRequest: number;
+    53→  };
+    54→  // Payments
+    55→  payments: {
+    56→    currency: string;
+    57→    providers: {
+    58→      stripe: { publishableKey: string; secretKey: string; webhookSecret: string; enabled: boolean };
+    59→      flutterwave: { publicKey: string; secretKey: string; encryptionKey: string; enabled: boolean };
+    60→      paypal: { clientId: string; clientSecret: string; mode: 'sandbox' | 'live'; enabled: boolean };
+    61→      orangeMoney: { apiKey: string; merchantKey: string; enabled: boolean };
+    62→      wave: { apiKey: string; enabled: boolean };
+    63→      mobileMoney: { enabled: boolean };
+    64→    };
+    65→  };
+    66→  // Social Media APIs
+    67→  social: {
+    68→    instagram: { accessToken: string; businessAccountId: string; enabled: boolean };
+    69→    tiktok: { clientKey: string; clientSecret: string; accessToken: string; enabled: boolean };
+    70→    facebook: { appId: string; appSecret: string; pageAccessToken: string; enabled: boolean };
+    71→    whatsapp: { phoneNumberId: string; accessToken: string; businessId: string; enabled: boolean };
+    72→    linkedin: { clientId: string; clientSecret: string; accessToken: string; enabled: boolean };
+    73→    twitter: { apiKey: string; apiSecret: string; accessToken: string; accessSecret: string; enabled: boolean };
+    74→  };
+    75→  // Email
+    76→  email: {
+    77→    provider: 'resend' | 'sendgrid' | 'smtp' | 'none';
+    78→    from: string;
+    79→    replyTo: string;
+    80→    resend: { apiKey: string };
+    81→    sendgrid: { apiKey: string };
+    82→    smtp: { host: string; port: number; user: string; password: string; secure: boolean };
+    83→  };
+    84→  // Storage
+    85→  storage: {
+    86→    provider: 'local' | 's3' | 'cloudinary';
+    87→    local: { path: string };
+    88→    s3: { bucket: string; region: string; accessKey: string; secretKey: string; endpoint: string };
+    89→    cloudinary: { cloudName: string; apiKey: string; apiSecret: string };
+    90→    maxFileSizeMb: number;
+    91→  };
+    92→  // Webhooks
+    93→  webhooks: {
+    94→    inboundUrl: string;
+    95→    events: string[]; // e.g. ['payment.success', 'user.signup', 'agent.run']
+    96→  };
+    97→  // Telegram Bot
+    98→  telegram: {
+    99→    botToken: string;
+   100→    webhookSecret: string;
+   101→    enabled: boolean;
+   102→    welcomeMessage: string;
+   103→    defaultAgent: string; // agent id used when no /command is specified
+   104→    allowedUserIds: number[]; // empty = allow everyone
+   105→  };
+   106→  // Marketplace (premium agents created by community/partners)
+   107→  marketplace: {
+   108→    enabled: boolean;
+   109→    revenueSharePercent: number; // percentage the platform takes (default 30)
+   110→    agents: Array<{
+   111→      id: string;
+   112→      name: string;
+   113→      author: string;
+   114→      description: string;
+   115→      category: string;
+   116→      priceMonthly: number;
+   117→      systemPrompt: string;
+   118→      command: string;
+   119→      icon: string; // emoji or lucide icon name
+   120→      color: string;
+   121→      rating: number;
+   122→      installs: number;
+   123→      featured: boolean;
+   124→    }>;
+   125→  };
+   126→  // Referral program
+   127→  referral: {
+   128→    enabled: boolean;
+   129→    rewardCreditsReferrer: number; // credits given to referrer
+   130→    rewardCreditsReferee: number; // credits given to new user
+   131→    minPayoutAmount: number; // USD
+   132→  };
+   133→  // Ads platforms (Facebook, Google, YouTube) — AI auto-responds to comments/messages
+   134→  ads: {
+   135→    // Master toggle for auto-responding
+   136→    autoRespond: boolean;
+   137→    autoRespondDelaySeconds: number; // simulate "human" delay before responding
+   138→    autoRespondTone: 'professional' | 'friendly' | 'casual' | 'sales';
+   139→    // Facebook Ads + Pages
+   140→    facebook: {
+   141→      enabled: boolean;
+   142→      pageAccessToken: string;
+   143→      pageId: string;
+   144→      appId: string;
+   145→      appSecret: string;
+   146→      verifyToken: string; // for webhook verification
+   147→      autoReplyPrivateMessage: boolean; // reply in Messenger DM
+   148→      autoReplyComment: boolean; // reply as comment on the ad post
+   149→    };
+   150→    // Google Ads (lead form extensions)
+   151→    google: {
+   152→      enabled: boolean;
+   153→      developerToken: string;
+   154→      clientId: string;
+   155→      clientSecret: string;
+   156→      refreshToken: string;
+   157→      customerId: string; // Google Ads account ID (XXX-XXX-XXXX)
+   158→      leadFormWebhookSecret: string;
+   159→      autoEmailLead: boolean; // auto-send email to leads
+   160→    };
+   161→    // YouTube Ads (video comments)
+   162→    youtube: {
+   163→      enabled: boolean;
+   164→      apiKey: string;
+   165→      channelId: string;
+   166→      autoReplyComments: boolean;
+   167→      pubsubhubbubCallbackUrl: string; // where YouTube sends new comment notifications
+   168→      verifyToken: string;
+   169→    };
+   170→  };
+   171→  // Feature flags
+   172→  features: {
+   173→    agents: boolean;
+   174→    payments: boolean;
+   175→    social: boolean;
+   176→    analytics: boolean;
+   177→    ecommerce: boolean;
+   178→    ai: boolean;
+   179→    multiTenant: boolean;
+   180→    whiteLabel: boolean;
+   181→    api: boolean;
+   182→  };
+   183→  // Logs
+   184→  logging: {
+   185→    level: 'debug' | 'info' | 'warn' | 'error';
+   186→    retention: number; // days
+   187→  };
+   188→  // Metadata
+   189→  createdAt: string;
+   190→  updatedAt: string;
+   191→  version: number;
+   192→}
+   193→
+   194→// ─── Default config ───────────────────────────────────────────────────
+   195→export function getDefaultConfig(): AppConfig {
+   196→  const now = new Date().toISOString();
+   197→  return {
+   198→    appName: 'AfriLaunch AI',
+   199→    appUrl: 'https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai',
+   200→    locale: 'fr-FR',
+   201→    timezone: 'Africa/Dakar',
+   202→    adminPasswordHash: null,
+   203→    adminEmail: 'admin@afrilaunch.ai',
+   204→    database: {
+   205→      provider: 'sqlite',
+   206→      url: 'file:/home/z/my-project/db/custom.db',
+   207→      ssl: false,
+   208→    },
+   209→    auth: {
+   210→      jwtSecret: crypto.randomBytes(32).toString('hex'),
+   211→      sessionExpiryHours: 24,
+   212→      oauth: {
+   213→        google: { clientId: '', clientSecret: '', enabled: false },
+   214→        github: { clientId: '', clientSecret: '', enabled: false },
+   215→        apple: { clientId: '', clientSecret: '', enabled: false },
+   216→      },
+   217→    },
+   218→    ai: {
+   219→      primary: 'zai',
+   220→      providers: {
+   221→        openai: { apiKey: '', model: 'gpt-4o', enabled: false },
+   222→        anthropic: { apiKey: '', model: 'claude-3-5-sonnet-20241022', enabled: false },
+   223→        gemini: { apiKey: '', model: 'gemini-1.5-pro', enabled: false },
+   224→        zai: { apiKey: '', model: 'glm-4.6', enabled: false },
+   225→        mistral: { apiKey: '', model: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1', enabled: false },
+   226→        groq: { apiKey: '', model: 'llama-3.3-70b-versatile', endpoint: 'https://api.groq.com/openai/v1', enabled: false },
+   227→        custom: { baseUrl: '', apiKey: '', model: '', enabled: false },
+   228→      },
+   229→      fallback: true,
+   230→      maxTokensPerRequest: 4096,
+   231→    },
+   232→    payments: {
+   233→      currency: 'USD',
+   234→      providers: {
+   235→        stripe: { publishableKey: '', secretKey: '', webhookSecret: '', enabled: false },
+   236→        flutterwave: { publicKey: '', secretKey: '', encryptionKey: '', enabled: false },
+   237→        paypal: { clientId: '', clientSecret: '', mode: 'sandbox', enabled: false },
+   238→        orangeMoney: { apiKey: '', merchantKey: '', enabled: false },
+   239→        wave: { apiKey: '', enabled: false },
+   240→        mobileMoney: { enabled: false },
+   241→      },
+   242→    },
+   243→    social: {
+   244→      instagram: { accessToken: '', businessAccountId: '', enabled: false },
+   245→      tiktok: { clientKey: '', clientSecret: '', accessToken: '', enabled: false },
+   246→      facebook: { appId: '', appSecret: '', pageAccessToken: '', enabled: false },
+   247→      whatsapp: { phoneNumberId: '', accessToken: '', businessId: '', enabled: false },
+   248→      linkedin: { clientId: '', clientSecret: '', accessToken: '', enabled: false },
+   249→      twitter: { apiKey: '', apiSecret: '', accessToken: '', accessSecret: '', enabled: false },
+   250→    },
+   251→    email: {
+   252→      provider: 'none',
+   253→      from: 'noreply@afrilaunch.ai',
+   254→      replyTo: 'contact@afrilaunch.ai',
+   255→      resend: { apiKey: '' },
+   256→      sendgrid: { apiKey: '' },
+   257→      smtp: { host: '', port: 587, user: '', password: '', secure: false },
+   258→    },
+   259→    storage: {
+   260→      provider: 'local',
+   261→      local: { path: '/home/z/my-project/uploads' },
+   262→      s3: { bucket: '', region: '', accessKey: '', secretKey: '', endpoint: '' },
+   263→      cloudinary: { cloudName: '', apiKey: '', apiSecret: '' },
+   264→      maxFileSizeMb: 10,
+   265→    },
+   266→    webhooks: {
+   267→      inboundUrl: '',
+   268→      events: ['payment.success', 'user.signup', 'agent.run'],
+   269→    },
+   270→    telegram: {
+   271→      botToken: '',
+   272→      webhookSecret: crypto.randomBytes(16).toString('hex'),
+   273→      enabled: false,
+   274→      welcomeMessage: '👋 Bienvenue sur AfriLaunch AI Bot !\n\nJe dispose de 13 agents IA spécialisés pour votre business africain. Utilisez les commandes ci-dessous pour interagir avec un agent spécifique :\n\n/branding — Identité de marque\n/content — Création de contenu\n/seo — Optimisation SEO\n/ads — Publicités\n/support — Service client\n/analytics — Analytics\n/ecommerce — E-commerce\n/email — Email marketing\n/video — Scripts vidéo\n/translate — Traduction\n/dev — Code & intégrations\n/legal — Contrats & conformité\n/growth — Stratégie de croissance\n\n/agents — Liste tous les agents\n/help — Aide\n\nOu envoyez simplement un message et l\'agent par défaut vous répondra.',
+   275→      defaultAgent: 'growth',
+   276→      allowedUserIds: [],
+   277→    },
+   278→    marketplace: {
+   279→      enabled: true,
+   280→      revenueSharePercent: 30,
+   281→      agents: [
+   282→        {
+   283→          id: 'agent-immobilier-senegal',
+   284→          name: 'Agent Immobilier Sénégal',
+   285→          author: 'Aïssatou D.',
+   286→          description: 'Expert en immobilier à Dakar, Saly, Thiès. Estimation biens, conseils investissement locatif, lois Alur Sénégal, taxes foncières.',
+   287→          category: 'Immobilier',
+   288→          priceMonthly: 9.99,
+   289→          systemPrompt: 'Tu es l\'Agent Immobilier Sénégal, expert du marché immobilier dakarois et sénégalais. Tu connais les prix au m² par quartier, les lois Alur, les taxes foncières, et les opportunités d\'investissement locatif. Réponds en français avec des chiffres précis et des conseils actionnables.',
+   290→          command: 'immobilier',
+   291→          icon: '🏠',
+   292→          color: 'from-amber-500 to-yellow-600',
+   293→          rating: 4.8,
+   294→          installs: 1240,
+   295→          featured: true,
+   296→        },
+   297→        {
+   298→          id: 'agent-restaurant-abidjan',
+   299→          name: 'Agent Restaurant Abidjan',
+   300→          author: 'Kwame M.',
+   301→          description: 'Spécialiste restauration à Abidjan : menu, pricing, livraison, hygiène, gestion staff, marketing food.',
+   302→          category: 'Restauration',
+   303→          priceMonthly: 7.99,
+   304→          systemPrompt: 'Tu es l\'Agent Restaurant Abidjan, expert en gestion de restaurant à Abidjan et en Côte d\'Ivoire. Tu aides avec les menus, pricing, normes hygiène, recrutement staff, marketing food delivery (Glovo, Deliveroo). Réponds en français.',
+   305→          command: 'resto',
+   306→          icon: '🍽️',
+   307→          color: 'from-orange-500 to-red-600',
+   308→          rating: 4.6,
+   309→          installs: 890,
+   310→          featured: false,
+   311→        },
+   312→        {
+   313→          id: 'agent-import-export-maroc',
+   314→          name: 'Agent Import-Export Maroc',
+   315→          author: 'Mehdi B.',
+   316→          description: 'Import-export Maroc-Afrique: douane, codes HS, certificats origine, logistique Tanger Med, paiement international.',
+   317→          category: 'Commerce',
+   318→          priceMonthly: 14.99,
+   319→          systemPrompt: 'Tu es l\'Agent Import-Export Maroc, expert en commerce international depuis/vers le Maroc. Tu connais les codes douaniers HS, les certificats d\'origine, la logistique portuaire (Tanger Med, Casablanca), et les moyens de paiement internationaux (L/C, remise documentaire). Réponds en français.',
+   320→          command: 'import',
+   321→          icon: '📦',
+   322→          color: 'from-emerald-500 to-teal-600',
+   323→          rating: 4.9,
+   324→          installs: 567,
+   325→          featured: true,
+   326→        },
+   327→        {
+   328→          id: 'agent-agritech-kenya',
+   329→          name: 'Agent AgriTech Kenya',
+   330→          author: 'Grace W.',
+   331→          description: 'Agriculture moderne Kenya: cultures, irrigation, M-Pesa payments, agritech, export légumes UE.',
+   332→          category: 'Agriculture',
+   333→          priceMonthly: 11.99,
+   334→          systemPrompt: 'Tu es the AgriTech Kenya Agent, expert in modern Kenyan agriculture. You advise on crops (tea, coffee, flowers, vegetables), irrigation, M-Pesa integration, agritech solutions, and EU export regulations. Reply in English or Swahili as appropriate.',
+   335→          command: 'agri',
+   336→          icon: '🌱',
+   337→          color: 'from-green-500 to-emerald-600',
+   338→          rating: 4.7,
+   339→          installs: 423,
+   340→          featured: false,
+   341→        },
+   342→        {
+   343→          id: 'agent-fintech-nigeria',
+   344→          name: 'Agent FinTech Nigeria',
+   345→          author: 'Chidi O.',
+   346→          description: 'FinTech Nigeria: CBN regulations, Paystack/Flutterwave integration, mobile money, lending, KYC/AML.',
+   347→          category: 'Finance',
+   348→          priceMonthly: 19.99,
+   349→          systemPrompt: 'Tu es l\'Agent FinTech Nigeria, expert en services financiers digitaux au Nigeria. Tu connais les régulations CBN, l\'intégration Paystack/Flutterwave, mobile money, prêt digital, KYC/AML. Réponds en anglais avec précision technique.',
+   350→          command: 'fintech',
+   351→          icon: '💳',
+   352→          color: 'from-indigo-500 to-violet-600',
+   353→          rating: 4.8,
+   354→          installs: 1102,
+   355→          featured: true,
+   356→        },
+   357→        {
+   358→          id: 'agent-fashion-lagos',
+   359→          name: 'Agent Fashion Lagos',
+   360→          author: 'Zainab A.',
+   361→          description: 'Mode & fashion Lagos: design, production, sourcing ankara, e-commerce, Instagram marketing, pop-up stores.',
+   362→          category: 'Mode',
+   363→          priceMonthly: 8.99,
+   364→          systemPrompt: 'Tu es l\'Agent Fashion Lagos, expert en industrie de la mode nigériane. Tu aides avec le design, la production, le sourcing de tissus (ankara, aso-oke), e-commerce, marketing Instagram, et pop-up stores. Réponds en anglais.',
+   365→          command: 'fashion',
+   366→          icon: '👗',
+   367→          color: 'from-pink-500 to-rose-600',
+   368→          rating: 4.5,
+   369→          installs: 678,
+   370→          featured: false,
+   371→        },
+   372→      ],
+   373→    },
+   374→    referral: {
+   375→      enabled: true,
+   376→      rewardCreditsReferrer: 100,
+   377→      rewardCreditsReferee: 50,
+   378→      minPayoutAmount: 50,
+   379→    },
+   380→    ads: {
+   381→      autoRespond: true,
+   382→      autoRespondDelaySeconds: 15,
+   383→      autoRespondTone: 'friendly',
+   384→      facebook: {
+   385→        enabled: false,
+   386→        pageAccessToken: '',
+   387→        pageId: '',
+   388→        appId: '',
+   389→        appSecret: '',
+   390→        verifyToken: crypto.randomBytes(8).toString('hex'),
+   391→        autoReplyPrivateMessage: true,
+   392→        autoReplyComment: true,
+   393→      },
+   394→      google: {
+   395→        enabled: false,
+   396→        developerToken: '',
+   397→        clientId: '',
+   398→        clientSecret: '',
+   399→        refreshToken: '',
+   400→        customerId: '',
+   401→        leadFormWebhookSecret: crypto.randomBytes(16).toString('hex'),
+   402→        autoEmailLead: true,
+   403→      },
+   404→      youtube: {
+   405→        enabled: false,
+   406→        apiKey: '',
+   407→        channelId: '',
+   408→        autoReplyComments: true,
+   409→        pubsubhubbubCallbackUrl: '',
+   410→        verifyToken: crypto.randomBytes(8).toString('hex'),
+   411→      },
+   412→    },
+   413→    features: {
+   414→      agents: true,
+   415→      payments: true,
+   416→      social: true,
+   417→      analytics: true,
+   418→      ecommerce: false,
+   419→      ai: true,
+   420→      multiTenant: false,
+   421→      whiteLabel: false,
+   422→      api: false,
+   423→    },
+   424→    logging: {
+   425→      level: 'info',
+   426→      retention: 30,
+   427→    },
+   428→    createdAt: now,
+   429→    updatedAt: now,
+   430→    version: 1,
+   431→  };
+   432→}
+   433→
+   434→// ─── File I/O ─────────────────────────────────────────────────────────
+   435→async function readConfig(): Promise<AppConfig> {
+   436→  try {
+   437→    const raw = await fs.readFile(CONFIG_PATH, 'utf-8');
+   438→    const parsed = JSON.parse(raw) as Partial<AppConfig>;
+   439→    // Merge with defaults to handle schema evolution
+   440→    const defaults = getDefaultConfig();
+   441→    return { ...defaults, ...parsed } as AppConfig;
+   442→  } catch (err: unknown) {
+   443→    // File doesn't exist yet — create with defaults
+   444→    const defaults = getDefaultConfig();
+   445→    await writeConfig(defaults);
+   446→    return defaults;
+   447→  }
+   448→}
+   449→
+   450→async function writeConfig(config: AppConfig): Promise<void> {
+   451→  config.updatedAt = new Date().toISOString();
+   452→  config.version += 1;
+   453→  await fs.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
+   454→  await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf-8');
+   455→}
+   456→
+   457→// ─── Public API ───────────────────────────────────────────────────────
+   458→let configCache: AppConfig | null = null;
+   459→
+   460→export async function getConfig(): Promise<AppConfig> {
+   461→  if (configCache) return configCache;
+   462→  configCache = await readConfig();
+   463→  return configCache;
+   464→}
+   465→
+   466→export async function updateConfig(updates: Partial<AppConfig>): Promise<AppConfig> {
+   467→  const current = await getConfig();
+   468→  const next = deepMerge(current, updates);
+   469→  await writeConfig(next);
+   470→  configCache = next;
+   471→  return next;
+   472→}
+   473→
+   474→// Deep merge for nested config objects
+   475→function deepMerge<T>(target: T, source: Partial<T>): T {
+   476→  if (typeof target !== 'object' || target === null) return (source ?? target) as T;
+   477→  if (typeof source !== 'object' || source === null) return target;
+   478→  const result: any = Array.isArray(target) ? [...(target as any)] : { ...target };
+   479→  for (const key of Object.keys(source as any)) {
+   480→    const srcVal = (source as any)[key];
+   481→    const tgtVal = (target as any)[key];
+   482→    if (srcVal && typeof srcVal === 'object' && !Array.isArray(srcVal) && tgtVal && typeof tgtVal === 'object') {
+   483→      result[key] = deepMerge(tgtVal, srcVal);
+   484→    } else if (srcVal !== undefined) {
+   485→      result[key] = srcVal;
+   486→    }
+   487→  }
+   488→  return result as T;
+   489→}
+   490→
+   491→// ─── Password hashing ─────────────────────────────────────────────────
+   492→export function hashPassword(password: string): string {
+   493→  return crypto.createHash('sha256').update(password).digest('hex');
+   494→}
+   495→
+   496→export function verifyPassword(password: string, hash: string | null): boolean {
+   497→  if (!hash) {
+   498→    // First-time setup: default password is "admin123"
+   499→    return password === 'admin123';
+   500→  }
+   501→  return hashPassword(password) === hash;
+   502→}
+   503→
+   504→// ─── Session management ───────────────────────────────────────────────
+   505→interface AdminSession {
+   506→  token: string;
+   507→  createdAt: number;
+   508→  expiresAt: number;
+   509→}
+   510→
+   511→async function readSessions(): Promise<AdminSession[]> {
+   512→  try {
+   513→    const raw = await fs.readFile(SESSIONS_PATH, 'utf-8');
+   514→    return JSON.parse(raw) as AdminSession[];
+   515→  } catch {
+   516→    return [];
+   517→  }
+   518→}
+   519→
+   520→async function writeSessions(sessions: AdminSession[]): Promise<void> {
+   521→  await fs.mkdir(path.dirname(SESSIONS_PATH), { recursive: true });
+   522→  await fs.writeFile(SESSIONS_PATH, JSON.stringify(sessions, null, 2), 'utf-8');
+   523→}
+   524→
+   525→export async function createSession(expiryHours: number): Promise<string> {
+   526→  const token = crypto.randomBytes(32).toString('hex');
+   527→  const now = Date.now();
+   528→  const session: AdminSession = {
+   529→    token,
+   530→    createdAt: now,
+   531→    expiresAt: now + expiryHours * 60 * 60 * 1000,
+   532→  };
+   533→  const sessions = await readSessions();
+   534→  sessions.push(session);
+   535→  await writeSessions(sessions);
+   536→  return token;
+   537→}
+   538→
+   539→export async function validateSession(token: string): Promise<boolean> {
+   540→  const sessions = await readSessions();
+   541→  const now = Date.now();
+   542→  const valid = sessions.find((s) => s.token === token && s.expiresAt > now);
+   543→  if (!valid) return false;
+   544→  // Cleanup expired sessions
+   545→  const active = sessions.filter((s) => s.expiresAt > now);
+   546→  if (active.length !== sessions.length) await writeSessions(active);
+   547→  return true;
+   548→}
+   549→
+   550→export async function destroySession(token: string): Promise<void> {
+   551→  const sessions = await readSessions();
+   552→  const remaining = sessions.filter((s) => s.token !== token);
+   553→  await writeSessions(remaining);
+   554→}
+   555→
+   556→// ─── Connection testing ───────────────────────────────────────────────
+   557→export interface TestResult {
+   558→  ok: boolean;
+   559→  message: string;
+   560→  details?: unknown;
+   561→}
+   562→
+   563→export async function testDatabase(config: AppConfig): Promise<TestResult> {
+   564→  try {
+   565→    if (config.database.provider === 'sqlite') {
+   566→      // Just check the path is writable
+   567→      const dir = path.dirname(config.database.url.replace('file:', ''));
+   568→      await fs.mkdir(dir, { recursive: true });
+   569→      await fs.access(dir, fs.constants.W_OK);
+   570→      return { ok: true, message: 'SQLite: dossier accessible en écriture' };
+   571→    }
+   572→    // For other providers, just validate URL format
+   573→    if (!config.database.url) {
+   574→      return { ok: false, message: 'URL de connexion manquante' };
+   575→    }
+   576→    return { ok: true, message: `Format ${config.database.provider} validé (test de connexion réel nécessite un serveur)` };
+   577→  } catch (err) {
+   578→    return { ok: false, message: `Erreur: ${(err as Error).message}` };
+   579→  }
+   580→}
+   581→
+   582→export async function testAiProvider(config: AppConfig, provider: string): Promise<TestResult> {
+   583→  const p = (config.ai.providers as any)[provider];
+   584→  if (!p) return { ok: false, message: 'Provider inconnu' };
+   585→  if (!p.apiKey) return { ok: false, message: 'Clé API manquante' };
+   586→
+   587→  // Real API call for Mistral (OpenAI-compatible /chat/completions endpoint)
+   588→  if (provider === 'mistral') {
+   589→    try {
+   590→      const endpoint = p.endpoint || 'https://api.mistral.ai/v1';
+   591→      const res = await fetch(`${endpoint}/chat/completions`, {
+   592→        method: 'POST',
+   593→        headers: {
+   594→          'Authorization': `Bearer ${p.apiKey}`,
+   595→          'Content-Type': 'application/json',
+   596→          'Accept': 'application/json',
+   597→        },
+   598→        body: JSON.stringify({
+   599→          model: p.model || 'mistral-large-latest',
+   600→          messages: [
+   601→            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+   602→            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+   603→          ],
+   604→          max_tokens: 50,
+   605→          temperature: 0.1,
+   606→        }),
+   607→        signal: AbortSignal.timeout(15000),
+   608→      });
+   609→
+   610→      if (!res.ok) {
+   611→        const errBody = await res.text().catch(() => '');
+   612→        let errMsg = `HTTP ${res.status}`;
+   613→        try {
+   614→          const errJson = JSON.parse(errBody);
+   615→          errMsg = errJson.message || errJson.error?.message || errMsg;
+   616→        } catch { /* not JSON */ }
+   617→        if (res.status === 401) return { ok: false, message: `Mistral: clé API invalide (401). ${errMsg}` };
+   618→        if (res.status === 404) return { ok: false, message: `Mistral: modèle "${p.model}" introuvable (404). ${errMsg}` };
+   619→        return { ok: false, message: `Mistral: erreur ${res.status}. ${errMsg}` };
+   620→      }
+   621→
+   622→      const data = await res.json();
+   623→      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+   624→      return {
+   625→        ok: true,
+   626→        message: `Mistral AI connecté ✓ — modèle: ${data.model || p.model}`,
+   627→        details: { reply: reply.slice(0, 120), usage: data.usage },
+   628→      };
+   629→    } catch (err) {
+   630→      return { ok: false, message: `Mistral: erreur réseau — ${(err as Error).message}` };
+   631→    }
+   632→  }
+   633→
+   634→  // Real API call for Groq (OpenAI-compatible /chat/completions endpoint)
+   635→  if (provider === 'groq') {
+   636→    try {
+   637→      const endpoint = p.endpoint || 'https://api.groq.com/openai/v1';
+   638→      const res = await fetch(`${endpoint}/chat/completions`, {
+   639→        method: 'POST',
+   640→        headers: {
+   641→          'Authorization': `Bearer ${p.apiKey}`,
+   642→          'Content-Type': 'application/json',
+   643→          'Accept': 'application/json',
+   644→        },
+   645→        body: JSON.stringify({
+   646→          model: p.model || 'llama-3.3-70b-versatile',
+   647→          messages: [
+   648→            { role: 'system', content: 'You are a helpful assistant. Reply in one short sentence.' },
+   649→            { role: 'user', content: 'Say "AfriLaunch AI connection OK" in French.' },
+   650→          ],
+   651→          max_tokens: 50,
+   652→          temperature: 0.1,
+   653→        }),
+   654→        signal: AbortSignal.timeout(15000),
+   655→      });
+   656→
+   657→      if (!res.ok) {
+   658→        const errBody = await res.text().catch(() => '');
+   659→        let errMsg = `HTTP ${res.status}`;
+   660→        try {
+   661→          const errJson = JSON.parse(errBody);
+   662→          errMsg = errJson.message || errJson.error?.message || errMsg;
+   663→        } catch { /* not JSON */ }
+   664→        if (res.status === 401) return { ok: false, message: `Groq: clé API invalide (401). ${errMsg}` };
+   665→        if (res.status === 404) return { ok: false, message: `Groq: modèle "${p.model}" introuvable (404). ${errMsg}` };
+   666→        return { ok: false, message: `Groq: erreur ${res.status}. ${errMsg}` };
+   667→      }
+   668→
+   669→      const data = await res.json();
+   670→      const reply = data.choices?.[0]?.message?.content?.trim() || '(réponse vide)';
+   671→      return {
+   672→        ok: true,
+   673→        message: `Groq connecté ✓ — modèle: ${data.model || p.model}`,
+   674→        details: { reply: reply.slice(0, 120), usage: data.usage },
+   675→      };
+   676→    } catch (err) {
+   677→      return { ok: false, message: `Groq: erreur réseau — ${(err as Error).message}` };
+   678→    }
+   679→  }
+   680→
+   681→  // For other providers, do a simulated test (real calls require their SDKs)
+   682→  await new Promise((r) => setTimeout(r, 500));
+   683→  return { ok: true, message: `${provider}: clé API présente (test réel non implémenté pour ce provider)`, details: { model: p.model } };
+   684→}
+   685→
+   686→export async function testPaymentProvider(config: AppConfig, provider: string): Promise<TestResult> {
+   687→  const p = (config.payments.providers as any)[provider];
+   688→  if (!p) return { ok: false, message: 'Provider inconnu' };
+   689→  const hasKey = p.secretKey || p.clientSecret || p.apiKey || p.publicKey;
+   690→  if (!hasKey) return { ok: false, message: 'Identifiants manquants' };
+   691→  await new Promise((r) => setTimeout(r, 500));
+   692→  return { ok: true, message: `${provider}: identifiants valides (test simulé)`, details: { mode: p.mode || 'live' } };
+   693→}
+   694→
+   695→export async function testEmailProvider(config: AppConfig): Promise<TestResult> {
+   696→  if (config.email.provider === 'none') return { ok: false, message: 'Aucun provider configuré' };
+   697→  await new Promise((r) => setTimeout(r, 500));
+   698→  return { ok: true, message: `${config.email.provider}: configuration valide (test simulé)` };
+   699→}
+   700→

@@ -130,6 +130,44 @@ export interface AppConfig {
     rewardCreditsReferee: number; // credits given to new user
     minPayoutAmount: number; // USD
   };
+  // Ads platforms (Facebook, Google, YouTube) — AI auto-responds to comments/messages
+  ads: {
+    // Master toggle for auto-responding
+    autoRespond: boolean;
+    autoRespondDelaySeconds: number; // simulate "human" delay before responding
+    autoRespondTone: 'professional' | 'friendly' | 'casual' | 'sales';
+    // Facebook Ads + Pages
+    facebook: {
+      enabled: boolean;
+      pageAccessToken: string;
+      pageId: string;
+      appId: string;
+      appSecret: string;
+      verifyToken: string; // for webhook verification
+      autoReplyPrivateMessage: boolean; // reply in Messenger DM
+      autoReplyComment: boolean; // reply as comment on the ad post
+    };
+    // Google Ads (lead form extensions)
+    google: {
+      enabled: boolean;
+      developerToken: string;
+      clientId: string;
+      clientSecret: string;
+      refreshToken: string;
+      customerId: string; // Google Ads account ID (XXX-XXX-XXXX)
+      leadFormWebhookSecret: string;
+      autoEmailLead: boolean; // auto-send email to leads
+    };
+    // YouTube Ads (video comments)
+    youtube: {
+      enabled: boolean;
+      apiKey: string;
+      channelId: string;
+      autoReplyComments: boolean;
+      pubsubhubbubCallbackUrl: string; // where YouTube sends new comment notifications
+      verifyToken: string;
+    };
+  };
   // Feature flags
   features: {
     agents: boolean;
@@ -338,6 +376,39 @@ export function getDefaultConfig(): AppConfig {
       rewardCreditsReferrer: 100,
       rewardCreditsReferee: 50,
       minPayoutAmount: 50,
+    },
+    ads: {
+      autoRespond: true,
+      autoRespondDelaySeconds: 15,
+      autoRespondTone: 'friendly',
+      facebook: {
+        enabled: false,
+        pageAccessToken: '',
+        pageId: '',
+        appId: '',
+        appSecret: '',
+        verifyToken: crypto.randomBytes(8).toString('hex'),
+        autoReplyPrivateMessage: true,
+        autoReplyComment: true,
+      },
+      google: {
+        enabled: false,
+        developerToken: '',
+        clientId: '',
+        clientSecret: '',
+        refreshToken: '',
+        customerId: '',
+        leadFormWebhookSecret: crypto.randomBytes(16).toString('hex'),
+        autoEmailLead: true,
+      },
+      youtube: {
+        enabled: false,
+        apiKey: '',
+        channelId: '',
+        autoReplyComments: true,
+        pubsubhubbubCallbackUrl: '',
+        verifyToken: crypto.randomBytes(8).toString('hex'),
+      },
     },
     features: {
       agents: true,

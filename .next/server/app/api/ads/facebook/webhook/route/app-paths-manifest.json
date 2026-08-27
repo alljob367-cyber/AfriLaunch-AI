@@ -1,0 +1,3 @@
+{
+  "/api/ads/facebook/webhook/route": "app/api/ads/facebook/webhook/route.js"
+}

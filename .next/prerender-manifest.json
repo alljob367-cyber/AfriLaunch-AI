@@ -52,6 +52,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/dashboard/ads-inbox": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/dashboard/ads-inbox",
+      "dataRoute": "/dashboard/ads-inbox.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/dashboard/agents": {
       "experimentalBypassFor": [
         {
@@ -502,6 +527,31 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/admin/ads": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/admin/ads",
+      "dataRoute": "/admin/ads.rsc",
+      "prefetchDataRoute": null,
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/admin/ai": {
       "experimentalBypassFor": [
         {
@@ -906,8 +956,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "ac9cba6bae26f1c4e0e19c66940be6c2",
-    "previewModeSigningKey": "241b03b8d2e5d042f360f5a74c9c21b9822b80fe3ecd0556943fa77d1fe03191",
-    "previewModeEncryptionKey": "c82fc05e9954dbcb058b528f1d8f5eab1eda4c5b9d801cc194e1036dd95242e3"
+    "previewModeId": "dbedd49970a93cf24f969d4170e2560a",
+    "previewModeSigningKey": "8da26dc83cdf65279292194bd0a4ff722ca2279943de3f544a1b64e32d8d9435",
+    "previewModeEncryptionKey": "e8d851ddaf289d42a1ffa113a1cf3a72bb7e51c28be88870d45d60ef89e843d3"
   }
 }

@@ -1,0 +1,3 @@
+{
+  "/api/ads/google/webhook/route": "app/api/ads/google/webhook/route.js"
+}

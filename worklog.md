@@ -151,3 +151,17 @@ Stage Summary:
 - 4 new pages + 1 layout update
 - Full monetization UI: subscription management, marketplace browsing, referral program, billing history
 - All pages use useAuth, useToast, fetch with credentials
+
+---
+Task ID: ads-pages
+Agent: general-purpose
+Task: Create ads admin page + ads inbox dashboard page
+
+Work Log:
+- Created admin/(panel)/ads/page.tsx (config FB/Google/YouTube + auto-respond settings)
+- Created (dashboard)/dashboard/ads-inbox/page.tsx (unified inbox with live polling + AI responses)
+
+Stage Summary:
+- 2 pages created
+- Admin page: full config for 3 ad platforms with webhook URLs
+- Inbox page: real-time unified inbox with stats, filters, detail panel, AI response display
