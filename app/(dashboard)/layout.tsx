@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   Rocket, LayoutDashboard, Palette, Globe, PenSquare, Share2,
   Bot, Megaphone, CreditCard, BarChart3, Users, Settings,
-  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet,
+  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -25,6 +25,7 @@ const navSections = [
       { href: '/dashboard/identity', label: 'Identité de marque', icon: Palette },
       { href: '/dashboard/website', label: 'Site web', icon: Globe },
       { href: '/dashboard/content', label: 'Contenu', icon: PenSquare },
+      { href: '/dashboard/voice', label: 'Voix IA', icon: Mic },
     ],
   },
   {

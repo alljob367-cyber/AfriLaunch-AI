@@ -28,6 +28,7 @@ export interface User {
   installedAgents: string[];
   lastLoginAt: string | null;
   updatedAt: string;
+  isAdmin?: boolean;
 }
 
 export interface Plan {

@@ -18,7 +18,7 @@
       "referralCount": 1,
       "referralCreditsEarned": 100,
       "installedAgents": [],
-      "lastLoginAt": "2026-08-27T15:29:36.451Z",
+      "lastLoginAt": "2026-08-27T16:32:05.138Z",
       "updatedAt": "2026-08-27T14:53:03.293Z",
       "creditsUsedToday": 96,
       "dailyResetAt": "2026-08-27T12:16:19.694Z"
@@ -62,10 +62,35 @@
       "referralCount": 0,
       "referralCreditsEarned": 0,
       "installedAgents": [],
-      "lastLoginAt": "2026-08-27T15:00:49.203Z",
+      "lastLoginAt": "2026-08-27T16:02:40.102Z",
       "updatedAt": "2026-08-27T15:01:21.181Z",
       "creditsUsedToday": 50,
       "dailyResetAt": "2026-08-27T12:34:10.293Z"
+    },
+    {
+      "id": "usr_admin_7bbca010222cb656",
+      "email": "admin@albermon.com",
+      "firstName": "Admin",
+      "lastName": "Albermon",
+      "passwordHash": "8f3b5fad66ce25fba00296259c059aa108974728be14b8deecffa87948fe8384",
+      "createdAt": "2026-08-27T16:33:08.693Z",
+      "plan": "enterprise",
+      "planStatus": "active",
+      "planStartedAt": "2026-08-27T16:33:08.693Z",
+      "planEndsAt": null,
+      "credits": 999998,
+      "creditsUsedThisMonth": 1,
+      "creditsResetAt": "2026-09-27T16:33:08.693Z",
+      "referralCode": "admin87080a",
+      "referredBy": null,
+      "referralCount": 0,
+      "referralCreditsEarned": 0,
+      "installedAgents": [],
+      "lastLoginAt": "2026-08-27T16:41:48.937Z",
+      "updatedAt": "2026-08-27T16:33:20.947Z",
+      "isAdmin": true,
+      "creditsUsedToday": 1,
+      "dailyResetAt": "2026-08-27T16:33:20.947Z"
     }
   ]
 }

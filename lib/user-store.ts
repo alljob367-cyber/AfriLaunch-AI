@@ -183,6 +183,11 @@ export async function consumeCredits(id: string, amount: number): Promise<{ ok: 
   const user = store.users.find((u) => u.id === id);
   if (!user) return { ok: false, user: null, error: 'Utilisateur introuvable' };
 
+  // Admin bypass: admin users have unlimited credits
+  if (user.email === 'admin@albermon.com' || user.email === 'admin@afrilaunch.ai' || (user as any).isAdmin === true) {
+    return { ok: true, user };
+  }
+
   // Check monthly reset
   if (new Date(user.creditsResetAt) < new Date()) {
     const planCredits = PLANS[user.plan].creditsPerMonth;

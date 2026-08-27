@@ -36,7 +36,7 @@ export default function AdminAiPage() {
   const dirty = JSON.stringify(draft) !== JSON.stringify(config);
 
   const handleSave = async () => {
-    await save({ ai: draft.ai });
+    await save({ ai: draft.ai, elevenlabs: draft.elevenlabs });
   };
 
   const updateProvider = <K extends ProviderKey>(key: K, patch: Partial<ProviderMap[K]>) => {
@@ -52,6 +52,28 @@ export default function AdminAiPage() {
         providers: nextProviders,
       },
     });
+  };
+
+  const updateElevenlabs = (patch: Partial<typeof draft.elevenlabs>) => {
+    setDraft({ ...draft, elevenlabs: { ...draft.elevenlabs, ...patch } });
+  };
+
+  const testElevenlabs = async (): Promise<{ ok: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/ai/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ text: 'Connexion AfriLaunch AI OK' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok && data.audioUrl) {
+        return { ok: true, message: 'Audio généré avec succès via ElevenLabs.' };
+      }
+      return { ok: false, message: data.error || `Erreur (${res.status})` };
+    } catch (err) {
+      return { ok: false, message: (err as Error).message };
+    }
   };
 
   return (
@@ -272,6 +294,69 @@ export default function AdminAiPage() {
               </AdminCard>
             );
           })}
+
+          {/* ElevenLabs — Voice AI */}
+          <AdminCard
+            title="ElevenLabs — Voix IA"
+            description="Génération vocale pour WhatsApp et Telegram (messages vocaux)"
+            action={<StatusBadge ok={draft.elevenlabs.enabled && !!draft.elevenlabs.apiKey} />}
+          >
+            <div className="space-y-4">
+              <AdminToggle
+                label="Activer ElevenLabs"
+                description="Permet la génération de messages vocaux (TTS) pour les agents et la page Voix IA"
+                checked={draft.elevenlabs.enabled}
+                onChange={(v) => updateElevenlabs({ enabled: v })}
+              />
+              <AdminInput
+                label="Clé API"
+                value={draft.elevenlabs.apiKey}
+                onChange={(v) => updateElevenlabs({ apiKey: v })}
+                secret
+                placeholder="sk_..."
+                hint="Clé API depuis elevenlabs.io → Profile → API Keys"
+              />
+              <AdminInput
+                label="Voice ID"
+                value={draft.elevenlabs.voiceId}
+                onChange={(v) => updateElevenlabs({ voiceId: v })}
+                placeholder="21m00Tcm4TlvDq8ikWAM"
+                hint="Voice ID depuis elevenlabs.io → Voices. Défaut: 21m00Tcm4TlvDq8ikWAM (Rachel)"
+              />
+              <AdminSelect
+                label="Modèle"
+                value={draft.elevenlabs.model}
+                onChange={(v) => updateElevenlabs({ model: v })}
+                options={[
+                  { value: 'eleven_multilingual_v2', label: 'eleven_multilingual_v2' },
+                  { value: 'eleven_turbo_v2_5', label: 'eleven_turbo_v2_5' },
+                  { value: 'eleven_monolingual_v1', label: 'eleven_monolingual_v1' },
+                ]}
+                hint="Multilingual recommandé pour le français et les langues africaines"
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <AdminNumber
+                  label="Stability"
+                  value={draft.elevenlabs.stability}
+                  onChange={(v) => updateElevenlabs({ stability: v })}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  hint="0 = créatif, 1 = stable"
+                />
+                <AdminNumber
+                  label="Similarity boost"
+                  value={draft.elevenlabs.similarityBoost}
+                  onChange={(v) => updateElevenlabs({ similarityBoost: v })}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  hint="Fidélité à la voix d'origine"
+                />
+              </div>
+              <TestButton onTest={testElevenlabs} label="Tester ElevenLabs" />
+            </div>
+          </AdminCard>
 
           <SaveBar onSave={handleSave} saving={saving} dirty={dirty} />
         </div>

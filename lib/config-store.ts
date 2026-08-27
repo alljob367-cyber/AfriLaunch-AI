@@ -101,8 +101,18 @@ export interface AppConfig {
     webhookSecret: string;
     enabled: boolean;
     welcomeMessage: string;
-    defaultAgent: string; // agent id used when no /command is specified
-    allowedUserIds: number[]; // empty = allow everyone
+    defaultAgent: string;
+    allowedUserIds: number[];
+  };
+  // ElevenLabs — Voice AI for WhatsApp & Telegram voice messages
+  elevenlabs: {
+    apiKey: string;
+    voiceId: string;
+    model: string;
+    enabled: boolean;
+    stability: number;
+    similarityBoost: number;
+    style: number;
   };
   // Marketplace (premium agents created by community/partners)
   marketplace: {
@@ -283,6 +293,15 @@ export function getDefaultConfig(): AppConfig {
       welcomeMessage: '👋 Bienvenue sur AfriLaunch AI Bot !\n\nJe dispose de 13 agents IA spécialisés pour votre business africain. Utilisez les commandes ci-dessous pour interagir avec un agent spécifique :\n\n/branding — Identité de marque\n/content — Création de contenu\n/seo — Optimisation SEO\n/ads — Publicités\n/support — Service client\n/analytics — Analytics\n/ecommerce — E-commerce\n/email — Email marketing\n/video — Scripts vidéo\n/translate — Traduction\n/dev — Code & intégrations\n/legal — Contrats & conformité\n/growth — Stratégie de croissance\n\n/agents — Liste tous les agents\n/help — Aide\n\nOu envoyez simplement un message et l\'agent par défaut vous répondra.',
       defaultAgent: 'growth',
       allowedUserIds: [],
+    },
+    elevenlabs: {
+      apiKey: '',
+      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel — default voice
+      model: 'eleven_multilingual_v2',
+      enabled: false,
+      stability: 0.5,
+      similarityBoost: 0.75,
+      style: 0.0,
     },
     marketplace: {
       enabled: true,

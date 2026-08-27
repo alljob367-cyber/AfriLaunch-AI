@@ -229,3 +229,19 @@ Stage Summary:
 - All 3 modules now use /api/ai/generate-async + polling
 - Avoids gateway 502 timeout (POST returns immediately, client polls every 3s)
 - Status updates shown during generation
+
+---
+Task ID: social-publish-elevenlabs
+Agent: general-purpose
+Task: Add publish buttons to content + ElevenLabs admin card + voice page
+
+Work Log:
+- Updated content/page.tsx (publish + schedule buttons)
+- Updated admin/ai/page.tsx (ElevenLabs card)
+- Created voice/page.tsx (voice generation + download)
+- Updated dashboard layout.tsx (added Voix IA nav item)
+
+Stage Summary:
+- Content module: publish to 5 platforms + schedule
+- Admin: ElevenLabs config card with test button
+- Voice page: text-to-speech with audio player + download

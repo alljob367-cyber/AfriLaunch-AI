@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PenSquare, Sparkles, Loader2, Copy, RefreshCw, ImageIcon, Download,
+  Send, Calendar,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { EmptyState } from '@/components/dashboard/empty-state';
@@ -14,6 +15,16 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { cn } from '@/lib/utils';
 
 interface FormatOption { id: string; label: string; }
+
+type SocialPlatform = 'instagram' | 'facebook' | 'linkedin' | 'twitter' | 'whatsapp';
+
+const PUBLISH_PLATFORMS: { id: SocialPlatform; label: string }[] = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'facebook', label: 'Facebook' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'twitter', label: 'X (Twitter)' },
+  { id: 'whatsapp', label: 'WhatsApp' },
+];
 
 const FORMATS: FormatOption[] = [
   { id: 'instagram-post', label: 'Post Instagram' },
@@ -84,6 +95,13 @@ export default function ContentPage() {
   const [generateImage, setGenerateImage] = useState(true);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [generatingImage, setGeneratingImage] = useState(false);
+
+  // Publish state
+  const [showPublishMenu, setShowPublishMenu] = useState<number | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [showScheduleMenu, setShowScheduleMenu] = useState<number | null>(null);
+  const [scheduledPlatform, setScheduledPlatform] = useState<SocialPlatform | null>(null);
+  const [scheduledDate, setScheduledDate] = useState('');
 
   useEffect(() => {
     fetch('/api/organization', { credentials: 'include' })
@@ -226,6 +244,75 @@ export default function ContentPage() {
     a.target = '_blank';
     a.click();
     toast({ title: 'Téléchargement de l\'image', variant: 'success' });
+  }
+
+  async function handlePublish(platform: SocialPlatform, piece: string) {
+    setShowPublishMenu(null);
+    setPublishing(true);
+    try {
+      const res = await fetch('/api/social/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ platform, content: piece, imageUrl: generatedImageUrl || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        toast({ title: 'Échec de publication', description: data.error || 'Erreur serveur', variant: 'error' });
+        return;
+      }
+      toast({
+        title: `Publié sur ${platformLabel(platform)} !`,
+        description: data.message || 'Votre contenu est en ligne.',
+        variant: 'success',
+      });
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleScheduleConfirm(piece: string) {
+    if (!scheduledPlatform || !scheduledDate) {
+      toast({ title: 'Champs requis', description: 'Sélectionnez une plateforme et une date.', variant: 'warning' });
+      return;
+    }
+    setPublishing(true);
+    try {
+      const res = await fetch('/api/social/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          platform: scheduledPlatform,
+          content: piece,
+          imageUrl: generatedImageUrl || undefined,
+          scheduledAt: new Date(scheduledDate).toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        toast({ title: 'Échec de la programmation', description: data.error || 'Erreur serveur', variant: 'error' });
+        return;
+      }
+      toast({
+        title: `Programmé sur ${platformLabel(scheduledPlatform)} !`,
+        description: data.message || 'Publication programmée.',
+        variant: 'success',
+      });
+      setShowScheduleMenu(null);
+      setScheduledPlatform(null);
+      setScheduledDate('');
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  function platformLabel(id: SocialPlatform): string {
+    return PUBLISH_PLATFORMS.find((p) => p.id === id)?.label ?? id;
   }
 
   const generateLabel = batch ? `Générer 3 variantes (3 crédits)` : `Générer (1 crédit)`;
@@ -392,10 +479,115 @@ export default function ContentPage() {
                           {batch && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300">Variante {i + 1}/{results.length}</span>}
                           <span className="text-[11px] text-gray-500">{formatCharCount(piece.length)}</span>
                         </div>
-                        <button type="button" onClick={() => copyContent(piece)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors">
-                          <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Copier
-                        </button>
+                        <div className="flex items-center gap-2 relative">
+                          <button type="button" onClick={() => copyContent(piece)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors">
+                            <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Copier
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowPublishMenu(showPublishMenu === i ? null : i);
+                              setShowScheduleMenu(null);
+                            }}
+                            disabled={publishing}
+                            aria-haspopup="menu"
+                            aria-expanded={showPublishMenu === i}
+                            aria-label={`Publier la variante ${i + 1}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 hover:scale-[1.02] text-xs font-semibold transition-transform disabled:opacity-60"
+                          >
+                            {publishing && showPublishMenu === i ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Send className="w-3.5 h-3.5" aria-hidden="true" />}
+                            Publier
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowScheduleMenu(showScheduleMenu === i ? null : i);
+                              setShowPublishMenu(null);
+                            }}
+                            disabled={publishing}
+                            aria-haspopup="menu"
+                            aria-expanded={showScheduleMenu === i}
+                            aria-label={`Programmer la variante ${i + 1}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors disabled:opacity-60"
+                          >
+                            <Calendar className="w-3.5 h-3.5" aria-hidden="true" /> Programmer
+                          </button>
+
+                          {/* Publish dropdown */}
+                          {showPublishMenu === i && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 top-full mt-1 w-44 glass rounded-xl border border-white/10 shadow-xl z-20 overflow-hidden"
+                            >
+                              <p className="px-3 py-2 text-[10px] uppercase tracking-wide text-gray-500 border-b border-white/5">Publier sur</p>
+                              {PUBLISH_PLATFORMS.map((p) => (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => handlePublish(p.id, piece)}
+                                  disabled={publishing}
+                                  className="w-full text-left px-3 py-2 text-xs text-gray-200 hover:bg-pink-500/15 hover:text-white transition-colors disabled:opacity-50"
+                                >
+                                  {p.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Schedule dropdown */}
+                          {showScheduleMenu === i && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 top-full mt-1 w-72 glass rounded-xl border border-white/10 shadow-xl z-20 p-3 space-y-3"
+                            >
+                              <p className="text-[10px] uppercase tracking-wide text-gray-500">Programmer la publication</p>
+                              <div>
+                                <label htmlFor={`sched-platform-${i}`} className="text-[11px] text-gray-400 block mb-1">Plateforme</label>
+                                <select
+                                  id={`sched-platform-${i}`}
+                                  value={scheduledPlatform ?? ''}
+                                  onChange={(e) => setScheduledPlatform(e.target.value as SocialPlatform)}
+                                  className="w-full glass rounded-lg px-3 py-2 border border-white/10 text-xs bg-[#0a0a0f]"
+                                >
+                                  <option value="" className="bg-[#0a0a0f]">— Sélectionner —</option>
+                                  {PUBLISH_PLATFORMS.map((p) => (
+                                    <option key={p.id} value={p.id} className="bg-[#0a0a0f]">{p.label}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label htmlFor={`sched-date-${i}`} className="text-[11px] text-gray-400 block mb-1">Date &amp; heure</label>
+                                <input
+                                  id={`sched-date-${i}`}
+                                  type="datetime-local"
+                                  value={scheduledDate}
+                                  onChange={(e) => setScheduledDate(e.target.value)}
+                                  className="w-full glass rounded-lg px-3 py-2 border border-white/10 text-xs bg-[#0a0a0f] [color-scheme:dark]"
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => { setShowScheduleMenu(null); setScheduledPlatform(null); setScheduledDate(''); }}
+                                  className="flex-1 px-3 py-2 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs"
+                                >
+                                  Annuler
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleScheduleConfirm(piece)}
+                                  disabled={publishing || !scheduledPlatform || !scheduledDate}
+                                  className="flex-1 px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-rose-600 text-xs font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                                >
+                                  {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Calendar className="w-3.5 h-3.5" aria-hidden="true" />}
+                                  Confirmer
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className={cn('glass rounded-xl p-4 border border-white/5 text-sm text-gray-200 leading-relaxed', !batch && 'min-h-[200px]')}
                         style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>

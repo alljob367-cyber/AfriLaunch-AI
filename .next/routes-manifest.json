@@ -240,6 +240,12 @@
       "namedRegex": "^/api/ai/generate\\-async(?:/)?$"
     },
     {
+      "page": "/api/ai/voice",
+      "regex": "^/api/ai/voice(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/ai/voice(?:/)?$"
+    },
+    {
       "page": "/api/auth/login",
       "regex": "^/api/auth/login(?:/)?$",
       "routeKeys": {},
@@ -370,6 +376,18 @@
       "regex": "^/api/social/disconnect(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/social/disconnect(?:/)?$"
+    },
+    {
+      "page": "/api/social/publish",
+      "regex": "^/api/social/publish(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/social/publish(?:/)?$"
+    },
+    {
+      "page": "/api/social/schedule",
+      "regex": "^/api/social/schedule(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/social/schedule(?:/)?$"
     },
     {
       "page": "/api/telegram/setup",
@@ -520,6 +538,12 @@
       "regex": "^/dashboard/telegram\\-link(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard/telegram\\-link(?:/)?$"
+    },
+    {
+      "page": "/dashboard/voice",
+      "regex": "^/dashboard/voice(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/voice(?:/)?$"
     },
     {
       "page": "/dashboard/website",

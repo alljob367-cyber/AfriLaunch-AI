@@ -209,6 +209,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/(dashboard)/dashboard/voice/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/dashboard/voice">> = Specific
+  const handler = {} as typeof import("../../app/(dashboard)/dashboard/voice/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/(dashboard)/dashboard/website/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/dashboard/website">> = Specific
@@ -524,6 +533,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/ai/voice/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/ai/voice">> = Specific
+  const handler = {} as typeof import("../../app/api/ai/voice/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/auth/login/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/login">> = Specific
@@ -717,6 +735,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/disconnect">> = Specific
   const handler = {} as typeof import("../../app/api/social/disconnect/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/social/publish/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/publish">> = Specific
+  const handler = {} as typeof import("../../app/api/social/publish/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/social/schedule/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/social/schedule">> = Specific
+  const handler = {} as typeof import("../../app/api/social/schedule/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
