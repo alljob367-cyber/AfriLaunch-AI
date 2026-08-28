@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useOrganization } from '@/hooks/use-organization';
+import { AICoworker } from '@/components/dashboard/ai-coworker';
 
 const navSections = [
   {
@@ -192,6 +193,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex-1 lg:ml-64 pt-14 lg:pt-0">
         {children}
       </main>
+
+      {/* AI Coworker — flottant sur toutes les pages dashboard */}
+      <AICoworker />
     </div>
   );
 }
