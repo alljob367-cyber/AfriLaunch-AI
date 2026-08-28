@@ -6,9 +6,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Send, Mic, MicOff, Volume2, Bot, Loader2 } from 'lucide-react';
+import { Sparkles, X, Send, Mic, MicOff, Volume2, Bot, Loader2, Lock } from 'lucide-react';
 import { useToast } from '@/components/providers/toast-provider';
+import { useAuth } from '@/components/providers/auth-provider';
 import { cn } from '@/lib/utils';
+import type { PlanId } from '@/lib/user-types';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -42,8 +44,12 @@ function routeToModule(text: string): string | null {
   return null;
 }
 
+// Plans that can access the AI Coworker (Pro, Business, Enterprise)
+const ALLOWED_PLANS: PlanId[] = ['pro', 'business', 'enterprise'];
+
 export function AICoworker() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -208,6 +214,23 @@ Modules disponibles: identité de marque (/dashboard/identity), site web (/dashb
     }
   }, [input, loading, speakResponse]);
 
+  // Check if user has access (Pro, Business, Enterprise only)
+  const userPlan = user?.plan as PlanId | undefined;
+  const hasAccess = userPlan ? ALLOWED_PLANS.includes(userPlan) : false;
+  const isAdmin = user?.isAdmin === true;
+
+  const handleOpenCoworker = () => {
+    if (!hasAccess && !isAdmin) {
+      toast({
+        title: '🔒 Plan requis',
+        description: 'L\'AI Coworker est disponible à partir du plan Pro (15 000 FCFA/mois). Passez à Pro pour débloquer l\'assistant vocal.',
+        variant: 'warning',
+      });
+      return;
+    }
+    setIsOpen(true);
+  };
+
   return (
     <>
       {/* Floating button */}
@@ -217,12 +240,23 @@ Modules disponibles: identité de marque (/dashboard/identity), site web (/dashb
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 shadow-2xl shadow-indigo-500/30 flex items-center justify-center hover:scale-110 transition-transform"
+            onClick={handleOpenCoworker}
+            className={cn(
+              "fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform",
+              (hasAccess || isAdmin)
+                ? "bg-gradient-to-br from-indigo-500 to-violet-600 shadow-indigo-500/30"
+                : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-gray-500/20"
+            )}
             aria-label="Ouvrir l'AI Coworker"
           >
-            <Sparkles className="w-6 h-6 text-white" aria-hidden="true" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+            {(hasAccess || isAdmin) ? (
+              <Sparkles className="w-6 h-6 text-white" aria-hidden="true" />
+            ) : (
+              <Lock className="w-5 h-5 text-gray-300" aria-hidden="true" />
+            )}
+            {(hasAccess || isAdmin) && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+            )}
           </motion.button>
         )}
       </AnimatePresence>
