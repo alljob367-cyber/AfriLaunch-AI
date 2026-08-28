@@ -56,14 +56,17 @@ const AGENT_PLATFORMS: Record<string, string[]> = {
 
 export default function AgentsPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [messages, setMessages] = useState<ChatMessageUI[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loadingConv, setLoadingConv] = useState(false);
+  // When non-null: a typing indicator is shown for this message (pre-first-chunk)
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { user, refresh } = useAuth();
 
   // Fetch connected social accounts (to show "auto-publish" badges)
   useEffect(() => {
@@ -127,8 +130,9 @@ export default function AgentsPage() {
     const content = (text ?? input).trim();
     if (!content || !selectedAgent || sending) return;
 
+    const userMsgId = 'u_' + Date.now();
     const userMsg: ChatMessageUI = {
-      id: 'u_' + Date.now(),
+      id: userMsgId,
       role: 'user',
       content,
       createdAt: Date.now(),
@@ -136,6 +140,17 @@ export default function AgentsPage() {
     setMessages((m) => [...m, userMsg]);
     setInput('');
     setSending(true);
+    setStreamingMessageId(null); // typing indicator while waiting for first chunk
+
+    // Pre-create the assistant message placeholder so we can stream into it
+    const aiMsgId = 'a_' + Date.now();
+    setMessages((m) => [...m, {
+      id: aiMsgId,
+      role: 'assistant',
+      content: '',
+      createdAt: Date.now(),
+    }]);
+    setStreamingMessageId(aiMsgId);
 
     try {
       const res = await fetch('/api/agents/chat', {
@@ -144,25 +159,87 @@ export default function AgentsPage() {
         credentials: 'include',
         body: JSON.stringify({ agentId: selectedAgent.id, message: content }),
       });
-      const data = await res.json();
-      if (data.ok) {
-        const aiMsg: ChatMessageUI = {
-          id: 'a_' + Date.now(),
-          role: 'assistant',
-          content: data.reply,
-          createdAt: Date.now(),
-        };
-        setMessages((m) => [...m, aiMsg]);
-      } else {
-        toast({ title: 'Erreur', description: data.error, variant: 'error' });
-        // Remove the user message on failure
-        setMessages((m) => m.filter((msg) => msg.id !== userMsg.id));
+
+      // Non-SSE response (JSON error) — bail out cleanly
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: 'Erreur', description: data.error || `HTTP ${res.status}`, variant: 'error' });
+        // Remove both user and empty AI messages
+        setMessages((m) => m.filter((msg) => msg.id !== userMsgId && msg.id !== aiMsgId));
+        return;
       }
+
+      if (!res.body) {
+        toast({ title: 'Erreur', description: 'Aucun flux reçu du serveur', variant: 'error' });
+        setMessages((m) => m.filter((msg) => msg.id !== userMsgId && msg.id !== aiMsgId));
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let gotFirstChunk = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        // SSE events are separated by a blank line ("\n\n")
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const evt of events) {
+          const dataLine = evt.split('\n').find((l) => l.startsWith('data:'));
+          if (!dataLine) continue;
+          const dataStr = dataLine.slice(5).trim();
+          if (!dataStr) continue;
+          let data: { type?: string; chunk?: string; error?: string; done?: boolean; creditsRemaining?: number };
+          try { data = JSON.parse(dataStr); } catch { continue; }
+
+          if (data.type === 'chunk' && data.chunk) {
+            if (!gotFirstChunk) {
+              gotFirstChunk = true;
+              setStreamingMessageId(null); // hide typing indicator, real text now flowing
+            }
+            const chunkText = data.chunk;
+            setMessages((m) => m.map((msg) =>
+              msg.id === aiMsgId ? { ...msg, content: msg.content + chunkText } : msg,
+            ));
+          } else if (data.type === 'start') {
+            // Stream started but no text yet — keep typing indicator
+          } else if (data.type === 'done') {
+            setStreamingMessageId(null);
+            // Refresh credits in the auth context (best-effort)
+            try { refresh(); } catch { /* ignore */ }
+            // If the assistant message is empty (provider returned nothing), remove it
+            setMessages((m) => {
+              const aiMsg = m.find((msg) => msg.id === aiMsgId);
+              if (aiMsg && aiMsg.content.length === 0) {
+                return m.filter((msg) => msg.id !== aiMsgId);
+              }
+              return m;
+            });
+          } else if (data.type === 'error') {
+            setStreamingMessageId(null);
+            toast({ title: 'Erreur agent', description: data.error, variant: 'error' });
+            // Remove empty AI message + user message (since the call failed)
+            setMessages((m) => m.filter((msg) => msg.id !== userMsgId && msg.id !== aiMsgId));
+          }
+        }
+      }
+
+      // Stream ended — make sure typing indicator is off
+      setStreamingMessageId(null);
     } catch (err) {
+      setStreamingMessageId(null);
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
-      setMessages((m) => m.filter((msg) => msg.id !== userMsg.id));
+      // Remove user message + empty AI placeholder
+      setMessages((m) => m.filter((msg) => msg.id !== userMsgId && msg.id !== 'a_' + Date.now()));
     } finally {
       setSending(false);
+      setStreamingMessageId(null);
     }
   }
 
@@ -350,6 +427,13 @@ export default function AgentsPage() {
                         : 'glass border border-white/5 text-gray-100',
                     )}>
                       {msg.content}
+                      {/* Streaming cursor — show a blinking caret while this message is actively streaming */}
+                      {streamingMessageId === msg.id && (
+                        <span
+                          className="inline-block w-1.5 h-3.5 ml-0.5 bg-violet-400 align-text-bottom animate-pulse"
+                          aria-hidden="true"
+                        />
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -364,7 +448,16 @@ export default function AgentsPage() {
                     </div>
                     <div className="glass border border-white/5 rounded-2xl px-4 py-2.5 flex items-center gap-2">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" aria-hidden="true" />
-                      <span className="text-xs text-gray-400">L&apos;agent réfléchit…</span>
+                      <span className="text-xs text-gray-400">
+                        {streamingMessageId ? 'L\'agent réfléchit…' : 'Écriture…'}
+                      </span>
+                      {streamingMessageId && (
+                        <span className="flex gap-0.5" aria-hidden="true">
+                          <span className="w-1 h-1 rounded-full bg-gray-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                          <span className="w-1 h-1 rounded-full bg-gray-500 animate-pulse" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1 h-1 rounded-full bg-gray-500 animate-pulse" style={{ animationDelay: '300ms' }} />
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

@@ -95,6 +95,130 @@ export async function runAIForPlanFast(opts: RunOptions, plan: PlanId): Promise<
   return runAIForPlan(opts, plan);
 }
 
+// Streaming variant — yields chunks as they arrive from the LLM.
+// Falls back to the non-streaming runner (yielded as a single chunk) when the
+// configured provider doesn't support SSE.
+export interface StreamEvent {
+  chunk?: string;
+  error?: string;
+  done?: boolean;
+  usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+}
+
+export async function* runAIForPlanFastStream(opts: RunOptions, plan: PlanId): AsyncGenerator<StreamEvent> {
+  const config = await getConfig();
+  const openrouter = config.ai.providers.openrouter;
+  const maxTokens = opts.maxTokens ?? 800;
+  const timeoutMs = maxTokens <= 1000 ? 45000 : 180000;
+
+  // Fallback path: no OpenRouter → run synchronously and yield the whole reply
+  if (!openrouter?.enabled || !openrouter.apiKey) {
+    const result = await runAIForPlanFast(opts, plan);
+    if (result.ok && result.reply) {
+      yield { chunk: result.reply };
+      yield { done: true, usage: result.usage };
+    } else {
+      yield { error: result.error || 'Réponse vide' };
+    }
+    return;
+  }
+
+  const targetModel = PLAN_MODELS_FAST[plan] || PLAN_MODELS_FAST.starter;
+  const messages = [
+    { role: 'system', content: opts.systemPrompt },
+    ...(opts.history ?? []),
+    { role: 'user', content: opts.userMessage },
+  ];
+
+  let res: Response;
+  try {
+    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openrouter.apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': openrouter.siteUrl || 'https://afrilaunch.ai',
+        'X-Title': openrouter.appName || 'AfriLaunch AI',
+      },
+      body: JSON.stringify({
+        model: targetModel,
+        messages,
+        max_tokens: maxTokens,
+        temperature: 0.7,
+        stream: true,
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    yield { error: `OpenRouter réseau: ${(err as Error).message}` };
+    return;
+  }
+
+  if (!res.ok || !res.body) {
+    const errText = await res.text().catch(() => '');
+    let errMsg = `HTTP ${res.status}`;
+    try {
+      const errJson = JSON.parse(errText);
+      errMsg = errJson.message || errJson.error?.message || errMsg;
+    } catch { /* not JSON */ }
+    if (res.status === 401) { yield { error: `OpenRouter: clé API invalide (401). ${errMsg}` }; return; }
+    if (res.status === 402) { yield { error: `OpenRouter: crédits insuffisants (402). ${errMsg}` }; return; }
+    if (res.status === 429) { yield { error: `OpenRouter: rate limit (429). ${errMsg}` }; return; }
+    yield { error: `OpenRouter: ${errMsg}` };
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      // SSE events are separated by a blank line ("\n\n")
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+
+      for (const evt of events) {
+        // Each event can have multiple "data:" lines; we only care about the
+        // ones that carry a JSON payload.
+        const dataLines = evt.split('\n').filter((l) => l.startsWith('data:'));
+        for (const line of dataLines) {
+          const data = line.slice(5).trim();
+          if (!data || data === '[DONE]') {
+            yield { done: true };
+            return;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            const chunk = parsed.choices?.[0]?.delta?.content;
+            if (typeof chunk === 'string' && chunk.length > 0) {
+              yield { chunk };
+            }
+            if (parsed.usage) {
+              yield { usage: parsed.usage };
+            }
+            // Some providers emit a "finish_reason" on the last chunk
+            if (parsed.choices?.[0]?.finish_reason === 'stop') {
+              // Don't return yet — there may still be a [DONE] marker or a
+              // final usage chunk. The reader will hit `done` naturally.
+            }
+          } catch {
+            // skip invalid JSON
+          }
+        }
+      }
+    }
+    // Stream ended without [DONE] — still emit done so the caller can finalize
+    yield { done: true };
+  } catch (err) {
+    yield { error: `Stream interrompu: ${(err as Error).message}` };
+  }
+}
+
 function findEnabledProvider(config: AppConfig): { provider: string; providerConfig: any } | null {
   for (const [name, p] of Object.entries(config.ai.providers)) {
     if ((p as any).enabled && (p as any).apiKey) {
