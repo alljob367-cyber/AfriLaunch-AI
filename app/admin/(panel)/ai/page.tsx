@@ -1,14 +1,15 @@
 // AfriLaunch AI — Admin > AI & LLM providers configuration
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Bot } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Bot, Activity, RefreshCw, Zap, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import {
   AdminPageHeader, AdminCard, AdminInput, AdminSelect, AdminToggle, AdminNumber,
   SaveBar, LoadingState, TestButton, StatusBadge,
 } from '@/components/admin/ui';
 import { useConfig } from '@/hooks/use-config';
 import type { AppConfig } from '@/lib/config-store';
+import { cn } from '@/lib/utils';
 
 type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'openrouter' | 'custom';
 
@@ -358,8 +359,163 @@ export default function AdminAiPage() {
             </div>
           </AdminCard>
 
+          <AdminCard title="Santé des providers (load balancer)">
+            <ProviderHealthPanel />
+          </AdminCard>
+
           <SaveBar onSave={handleSave} saving={saving} dirty={dirty} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Provider Health Panel ────────────────────────────────────────────
+function ProviderHealthPanel() {
+  const [health, setHealth] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
+
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/ai-health', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) setHealth(data);
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchHealth();
+    // Poll every 10s
+    const id = setInterval(fetchHealth, 10000);
+    return () => clearInterval(id);
+  }, [fetchHealth]);
+
+  async function handleReset() {
+    setResetting(true);
+    try {
+      await fetch('/api/admin/ai-health', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      await fetchHealth();
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="text-xs text-gray-500">Chargement de la santé des providers…</div>;
+  }
+
+  if (!health) {
+    return <div className="text-xs text-red-400">Impossible de charger la santé des providers.</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Capacity summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="glass rounded-xl p-3 border border-white/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="w-3.5 h-3.5 text-yellow-500" aria-hidden="true" />
+            <span className="text-xs font-semibold text-gray-400">Capacité estimée</span>
+          </div>
+          <p className="text-lg font-bold gradient-text">
+            {health.capacity?.estimatedDailyRequests?.toLocaleString('fr-FR') ?? 0}
+          </p>
+          <p className="text-[10px] text-gray-500">requêtes/jour (free tiers cumulés)</p>
+        </div>
+        <div className="glass rounded-xl p-3 border border-white/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Bot className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />
+            <span className="text-xs font-semibold text-gray-400">Utilisateurs Starter</span>
+          </div>
+          <p className="text-lg font-bold gradient-text">
+            ~{health.capacity?.estimatedStarterUsers ?? 0}
+          </p>
+          <p className="text-[10px] text-gray-500">utilisateurs actifs/jour supportés</p>
+        </div>
+        <div className="glass rounded-xl p-3 border border-white/5">
+          <div className="flex items-center gap-2 mb-1">
+            <Activity className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+            <span className="text-xs font-semibold text-gray-400">Providers actifs</span>
+          </div>
+          <p className="text-lg font-bold gradient-text">
+            {health.summary?.active ?? 0}/{health.summary?.total ?? 0}
+          </p>
+          <p className="text-[10px] text-gray-500">
+            {health.summary?.cooldown > 0 ? `${health.summary.cooldown} en cooldown` : 'Tous opérationnels'}
+          </p>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 italic">
+        💡 {health.capacity?.note}
+      </p>
+
+      {/* Per-provider health */}
+      <div className="space-y-2">
+        {health.providers?.map((p: any) => (
+          <div
+            key={p.name}
+            className={cn(
+              'flex items-center justify-between p-3 rounded-xl border',
+              p.inCooldown
+                ? 'bg-red-500/5 border-red-500/30'
+                : p.enabled && p.apiKey
+                  ? 'bg-emerald-500/5 border-emerald-500/30'
+                  : 'bg-gray-500/5 border-gray-500/20',
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                'w-8 h-8 rounded-lg flex items-center justify-center',
+                p.inCooldown ? 'bg-red-500/20' : p.enabled && p.apiKey ? 'bg-emerald-500/20' : 'bg-gray-500/20',
+              )}>
+                {p.inCooldown ? (
+                  <AlertCircle className="w-4 h-4 text-red-400" aria-hidden="true" />
+                ) : p.enabled && p.apiKey ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                ) : (
+                  <Clock className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold capitalize">{p.name}</p>
+                <p className="text-[10px] text-gray-500">
+                  {p.enabled && p.apiKey
+                    ? p.inCooldown
+                      ? `En cooldown · ${p.cooldownSecondsLeft}s restantes · dernière erreur: ${p.lastErrorKind || 'inconnue'}`
+                      : `OK · ${p.totalSuccesses} succès / ${p.totalErrors} erreurs · ${p.successRate}% succès`
+                    : 'Non configuré'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-right">
+              <div className="text-[10px] text-gray-500">
+                <p>priorité {p.priority}</p>
+                {p.consecutiveErrors > 0 && (
+                  <p className="text-red-400">{p.consecutiveErrors} erreurs consécutives</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Reset button */}
+      <div className="flex justify-end pt-2">
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={resetting}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10 disabled:opacity-50"
+        >
+          <RefreshCw className={cn('w-3 h-3', resetting && 'animate-spin')} aria-hidden="true" />
+          {resetting ? 'Reset…' : 'Reset health'}
+        </button>
       </div>
     </div>
   );

@@ -1,9 +1,14 @@
 // AfriLaunch AI — AI runner: calls the configured LLM provider
 // Supports Mistral, Groq, OpenRouter (OpenAI-compatible), and others via their APIs
-// Includes per-plan model routing for cost optimization
+// Includes per-plan model routing for cost optimization + multi-provider load balancing
 
 import { getConfig, type AppConfig } from './config-store';
 import type { PlanId } from './user-types';
+import {
+  syncHealthFromConfig, pickProviderChain, markError, markSuccess,
+  classifyError, resetHealth, getHealthSnapshot,
+  type ProviderName,
+} from './ai-load-balancer';
 
 export interface RunOptions {
   systemPrompt: string;
@@ -20,6 +25,9 @@ export interface RunResult {
   model?: string;
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 }
+
+// Re-export load balancer utilities for admin API
+export { resetHealth, getHealthSnapshot, type ProviderName };
 
 // Plan-based model routing on OpenRouter (cost optimization + speed)
 // Fast, free models — chosen for ≤2s response time on short prompts.
@@ -38,6 +46,21 @@ const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
   pro: 'minimax/minimax-m3:free',
   business: 'minimax/minimax-m3:free',
   enterprise: 'minimax/minimax-m3:free',
+};
+
+// Per-provider fast chat models (used by runAIForPlanFastStream + load balancer).
+// All free-tier — chosen for speed + multilingual support.
+const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
+  openrouter: 'meta-llama/llama-3.1-8b-instruct:free',
+  groq: 'llama-3.3-70b-versatile',       // free, 30 req/min, ~6x faster than OR
+  mistral: 'mistral-small-latest',        // free tier, decent speed
+};
+
+// Per-provider quality models (used by long-form generation: identity/website)
+const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
+  openrouter: 'minimax/minimax-m3:free',
+  groq: 'llama-3.3-70b-versatile',       // Groq doesn't have minimax, use llama-70b
+  mistral: 'mistral-large-latest',        // better quality
 };
 
 // Backward-compatible alias (used by long-form generation paths).
@@ -96,8 +119,9 @@ export async function runAIForPlanFast(opts: RunOptions, plan: PlanId): Promise<
 }
 
 // Streaming variant — yields chunks as they arrive from the LLM.
-// Falls back to the non-streaming runner (yielded as a single chunk) when the
-// configured provider doesn't support SSE.
+// Uses the load balancer to try multiple providers in priority order, with
+// automatic fallback on rate-limit (429), auth (401/403) and server (5xx)
+// errors. Falls back to non-streaming run if no provider supports SSE.
 export interface StreamEvent {
   chunk?: string;
   error?: string;
@@ -105,118 +129,176 @@ export interface StreamEvent {
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 }
 
+// Build the OpenAI-compatible request body for a given provider
+function buildChatBody(model: string, opts: RunOptions, maxTokens: number, stream: boolean) {
+  return JSON.stringify({
+    model,
+    messages: [
+      { role: 'system', content: opts.systemPrompt },
+      ...(opts.history ?? []),
+      { role: 'user', content: opts.userMessage },
+    ],
+    max_tokens: maxTokens,
+    temperature: 0.7,
+    stream,
+  });
+}
+
+// Build the request headers for a given provider
+function buildHeaders(provider: ProviderName, providerConfig: any): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${providerConfig.apiKey}`,
+    'Content-Type': 'application/json',
+  };
+  if (provider === 'openrouter') {
+    headers['HTTP-Referer'] = providerConfig.siteUrl || 'https://afrilaunch.ai';
+    headers['X-Title'] = providerConfig.appName || 'AfriLaunch AI';
+  }
+  return headers;
+}
+
+// Resolve endpoint URL for a provider (with config override)
+function getEndpoint(provider: ProviderName, providerConfig: any): string {
+  if (provider === 'openrouter') {
+    return (providerConfig.endpoint || 'https://openrouter.ai/api/v1') + '/chat/completions';
+  }
+  if (provider === 'groq') {
+    return (providerConfig.endpoint || 'https://api.groq.com/openai/v1') + '/chat/completions';
+  }
+  if (provider === 'mistral') {
+    return (providerConfig.endpoint || 'https://api.mistral.ai/v1') + '/chat/completions';
+  }
+  return '';
+}
+
 export async function* runAIForPlanFastStream(opts: RunOptions, plan: PlanId): AsyncGenerator<StreamEvent> {
   const config = await getConfig();
-  const openrouter = config.ai.providers.openrouter;
+  syncHealthFromConfig(config);
   const maxTokens = opts.maxTokens ?? 800;
   const timeoutMs = maxTokens <= 1000 ? 45000 : 180000;
 
-  // Fallback path: no OpenRouter → run synchronously and yield the whole reply
-  if (!openrouter?.enabled || !openrouter.apiKey) {
+  // Get the ordered list of providers to try (load balancer)
+  const chain = pickProviderChain(3);
+
+  // Fallback path: no provider configured at all → synchronous call (will fail
+  // gracefully with the legacy "no provider" error message)
+  if (chain.length === 0) {
     const result = await runAIForPlanFast(opts, plan);
     if (result.ok && result.reply) {
       yield { chunk: result.reply };
       yield { done: true, usage: result.usage };
     } else {
-      yield { error: result.error || 'Réponse vide' };
+      yield { error: result.error || 'Aucun provider IA configuré. Activez OpenRouter, Mistral ou Groq dans /admin/ai' };
     }
     return;
   }
 
-  const targetModel = PLAN_MODELS_FAST[plan] || PLAN_MODELS_FAST.starter;
-  const messages = [
-    { role: 'system', content: opts.systemPrompt },
-    ...(opts.history ?? []),
-    { role: 'user', content: opts.userMessage },
-  ];
+  // Try each provider in the chain
+  let lastError: string | null = null;
+  for (const provider of chain) {
+    const providerConfig = (config.ai.providers as any)[provider];
+    if (!providerConfig?.apiKey) continue;
 
-  let res: Response;
-  try {
-    res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openrouter.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': openrouter.siteUrl || 'https://afrilaunch.ai',
-        'X-Title': openrouter.appName || 'AfriLaunch AI',
-      },
-      body: JSON.stringify({
-        model: targetModel,
-        messages,
-        max_tokens: maxTokens,
-        temperature: 0.7,
-        stream: true,
-      }),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-  } catch (err) {
-    yield { error: `OpenRouter réseau: ${(err as Error).message}` };
-    return;
-  }
+    const model = FAST_MODELS_PER_PROVIDER[provider];
+    const endpoint = getEndpoint(provider, providerConfig);
+    const headers = buildHeaders(provider, providerConfig);
 
-  if (!res.ok || !res.body) {
-    const errText = await res.text().catch(() => '');
-    let errMsg = `HTTP ${res.status}`;
+    let res: Response;
     try {
-      const errJson = JSON.parse(errText);
-      errMsg = errJson.message || errJson.error?.message || errMsg;
-    } catch { /* not JSON */ }
-    if (res.status === 401) { yield { error: `OpenRouter: clé API invalide (401). ${errMsg}` }; return; }
-    if (res.status === 402) { yield { error: `OpenRouter: crédits insuffisants (402). ${errMsg}` }; return; }
-    if (res.status === 429) { yield { error: `OpenRouter: rate limit (429). ${errMsg}` }; return; }
-    yield { error: `OpenRouter: ${errMsg}` };
-    return;
-  }
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: buildChatBody(model, opts, maxTokens, true),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (err) {
+      // Network error → mark provider, try next
+      markError(provider, 'network');
+      lastError = `${provider} réseau: ${(err as Error).message}`;
+      continue;
+    }
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
+    if (!res.ok || !res.body) {
+      const kind = classifyError(res.status);
+      const errText = await res.text().catch(() => '');
+      let errMsg = `HTTP ${res.status}`;
+      try {
+        const errJson = JSON.parse(errText);
+        errMsg = errJson.message || errJson.error?.message || errMsg;
+      } catch { /* not JSON */ }
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      markError(provider, kind);
+      lastError = `${provider}: ${errMsg}`;
 
-      buffer += decoder.decode(value, { stream: true });
-      // SSE events are separated by a blank line ("\n\n")
-      const events = buffer.split('\n\n');
-      buffer = events.pop() || '';
+      // 401/403 (auth) → key is broken, don't try this provider for a while
+      // 429 (rate limit) → try the next provider immediately
+      // 5xx (server) → try the next provider
+      if (kind === 'auth' || kind === 'rate-limit' || kind === 'server') {
+        continue;
+      }
+      // Other errors (400, 404) → also try next provider
+      continue;
+    }
 
-      for (const evt of events) {
-        // Each event can have multiple "data:" lines; we only care about the
-        // ones that carry a JSON payload.
-        const dataLines = evt.split('\n').filter((l) => l.startsWith('data:'));
-        for (const line of dataLines) {
-          const data = line.slice(5).trim();
-          if (!data || data === '[DONE]') {
-            yield { done: true };
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            const chunk = parsed.choices?.[0]?.delta?.content;
-            if (typeof chunk === 'string' && chunk.length > 0) {
-              yield { chunk };
+    // Stream is OK — consume it
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let gotAnyChunk = false;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const evt of events) {
+          const dataLines = evt.split('\n').filter((l) => l.startsWith('data:'));
+          for (const line of dataLines) {
+            const data = line.slice(5).trim();
+            if (!data || data === '[DONE]') {
+              markSuccess(provider);
+              yield { done: true };
+              return;
             }
-            if (parsed.usage) {
-              yield { usage: parsed.usage };
+            try {
+              const parsed = JSON.parse(data);
+              const chunk = parsed.choices?.[0]?.delta?.content;
+              if (typeof chunk === 'string' && chunk.length > 0) {
+                gotAnyChunk = true;
+                yield { chunk };
+              }
+              if (parsed.usage) {
+                yield { usage: parsed.usage };
+              }
+            } catch {
+              // skip invalid JSON
             }
-            // Some providers emit a "finish_reason" on the last chunk
-            if (parsed.choices?.[0]?.finish_reason === 'stop') {
-              // Don't return yet — there may still be a [DONE] marker or a
-              // final usage chunk. The reader will hit `done` naturally.
-            }
-          } catch {
-            // skip invalid JSON
           }
         }
       }
+      // Stream ended cleanly
+      if (gotAnyChunk) {
+        markSuccess(provider);
+        yield { done: true };
+        return;
+      }
+      // Got 200 + empty stream → mark error and try next provider
+      markError(provider, 'server');
+      lastError = `${provider}: flux vide`;
+      continue;
+    } catch (err) {
+      markError(provider, 'network');
+      lastError = `${provider} stream: ${(err as Error).message}`;
+      continue;
     }
-    // Stream ended without [DONE] — still emit done so the caller can finalize
-    yield { done: true };
-  } catch (err) {
-    yield { error: `Stream interrompu: ${(err as Error).message}` };
   }
+
+  // All providers failed
+  yield { error: lastError || 'Tous les providers IA ont échoué. Réessayez dans 1 minute.' };
 }
 
 function findEnabledProvider(config: AppConfig): { provider: string; providerConfig: any } | null {
