@@ -42,7 +42,11 @@ export default function AdminLoginPage() {
         setLoading(false);
         return;
       }
-      toast({ title: 'Connexion réussie', description: 'Redirection vers le panneau admin...', variant: 'success' });
+      toast({
+        title: 'Connexion réussie ✅',
+        description: 'Admin connecté — accès illimité au dashboard activé.',
+        variant: 'success',
+      });
       setTimeout(() => router.replace('/admin/general'), 600);
     } catch (err) {
       toast({ title: 'Erreur réseau', description: 'Impossible de contacter le serveur', variant: 'error' });

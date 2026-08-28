@@ -105,12 +105,94 @@ export async function createUser(data: {
   return { ok: true, user };
 }
 
+// List of admin emails — these users get unlimited free access to everything.
+const ADMIN_EMAILS = new Set([
+  'admin@albermon.com',
+  'admin@afrilaunch.ai',
+]);
+
+function isAdminEmail(email: string): boolean {
+  return ADMIN_EMAILS.has(email.toLowerCase());
+}
+
 export async function authenticateUser(email: string, password: string): Promise<User | null> {
   const store = await readStore();
   const user = store.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
   if (!user) return null;
   if (user.passwordHash !== hashPassword(password)) return null;
   user.lastLoginAt = new Date().toISOString();
+
+  // Auto-correct admin users on every login: ensure they have unlimited
+  // access regardless of when they were created (pre/post payment-wall change).
+  if (isAdminEmail(user.email)) {
+    user.plan = 'enterprise';
+    user.planStatus = 'active';
+    user.credits = 999999;
+    user.creditsUsedThisMonth = 0;
+    user.planStartedAt = user.planStartedAt || new Date().toISOString();
+    user.planEndsAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // +1 year
+    user.creditsResetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    (user as any).isAdmin = true;
+  }
+
+  await writeStore(store);
+  return user;
+}
+
+// Ensure the admin user exists with the right credentials + unlimited access.
+// Called by the admin login flow so the admin can use the dashboard without
+// needing a separate user account.
+// Password = the admin panel password (same as /admin/login).
+export async function ensureAdminUser(adminPassword: string): Promise<User> {
+  const store = await readStore();
+  const adminEmail = 'admin@albermon.com';
+  let user = store.users.find((u) => u.email.toLowerCase() === adminEmail);
+
+  const now = new Date().toISOString();
+  const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+  const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  if (!user) {
+    // Create the admin user
+    user = {
+      id: 'usr_admin_' + crypto.randomBytes(6).toString('hex'),
+      email: adminEmail,
+      firstName: 'Admin',
+      lastName: 'AfriLaunch',
+      passwordHash: hashPassword(adminPassword),
+      createdAt: now,
+      plan: 'enterprise',
+      planStatus: 'active',
+      planStartedAt: now,
+      planEndsAt: nextYear,
+      credits: 999999,
+      creditsUsedThisMonth: 0,
+      creditsResetAt: nextMonth,
+      referralCode: 'admin' + crypto.randomBytes(3).toString('hex'),
+      referredBy: null,
+      referralCount: 0,
+      referralCreditsEarned: 0,
+      installedAgents: [],
+      lastLoginAt: now,
+      updatedAt: now,
+      isAdmin: true,
+    } as User;
+    store.users.push(user);
+  } else {
+    // Update existing admin user: ensure admin flags + sync password
+    user.passwordHash = hashPassword(adminPassword);
+    user.plan = 'enterprise';
+    user.planStatus = 'active';
+    user.credits = 999999;
+    user.creditsUsedThisMonth = 0;
+    user.planStartedAt = user.planStartedAt || now;
+    user.planEndsAt = nextYear;
+    user.creditsResetAt = nextMonth;
+    user.lastLoginAt = now;
+    user.updatedAt = now;
+    (user as any).isAdmin = true;
+  }
+
   await writeStore(store);
   return user;
 }

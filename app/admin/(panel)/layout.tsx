@@ -137,10 +137,11 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
         <div className="p-3 border-t border-white/5 space-y-2">
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-500/20 to-violet-500/10 text-white border border-indigo-500/30 hover:bg-indigo-500/20 transition-colors"
+            title="Accéder au dashboard avec accès illimité (admin)"
           >
             <Rocket className="w-4 h-4" aria-hidden="true" />
-            Retour à l'app
+            Dashboard (admin illimité)
           </Link>
           <button
             type="button"
