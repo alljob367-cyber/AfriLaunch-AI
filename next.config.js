@@ -2,12 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   typescript: { ignoreBuildErrors: false },
-  // Gateway (Alibaba FC + Caddy) serves prerendered HTML as static files and
-  // 301-redirects /dir → /dir/ for directories. Next.js by default does the
-  // opposite (308 /dir/ → /dir), which creates an infinite redirect loop on
-  // the public preview URL. Setting trailingSlash: true makes Next.js expect
-  // the trailing-slash form, breaking the loop.
-  trailingSlash: true,
+  // trailingSlash: false — required for Vercel (API routes need no trailing slash)
+  // The Alibaba FC gateway issue is handled separately and doesn't apply to Vercel
+  trailingSlash: false,
 };
 
 module.exports = nextConfig;
