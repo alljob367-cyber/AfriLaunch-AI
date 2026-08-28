@@ -1,100 +1,118 @@
-// AfriLaunch AI — Admin > Users (mock)
+// AfriLaunch AI — Admin > Users (real data from /api/admin/users)
 'use client';
 
-import { useState } from 'react';
-import { Users, Mail, UserPlus, Pencil, Trash2, ShieldCheck, Shield, Eye } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  AdminPageHeader, AdminCard, AdminInput, AdminSelect,
-  SaveBar, LoadingState,
+  Users, Mail, UserPlus, Trash2, ShieldCheck, Shield, Eye, RefreshCw,
+  Loader2, UserX, AlertCircle,
+} from 'lucide-react';
+import {
+  AdminPageHeader, AdminCard, AdminInput, AdminSelect, LoadingState,
 } from '@/components/admin/ui';
 import { useToast } from '@/components/providers/toast-provider';
 import { cn } from '@/lib/utils';
 
-interface MockUser {
+interface RealUser {
   id: string;
-  name: string;
+  firstName: string;
+  lastName?: string;
   email: string;
-  role: 'Owner' | 'Admin' | 'Éditeur';
-  lastActive: string;
-  avatarColor: string;
+  plan: string;
+  planStatus: string;
+  credits: number;
+  createdAt: string;
+  lastLoginAt: string | null;
+  isAdmin?: boolean;
 }
 
-const INITIAL_USERS: MockUser[] = [
-  {
-    id: 'u1',
-    name: 'Aïssatou Diallo',
-    email: 'admin@afrilaunch.ai',
-    role: 'Owner',
-    lastActive: 'Il y a 2 min',
-    avatarColor: 'from-red-500 to-orange-600',
-  },
-  {
-    id: 'u2',
-    name: 'Mamadou Sow',
-    email: 'mamadou@example.com',
-    role: 'Admin',
-    lastActive: 'Il y a 1 h',
-    avatarColor: 'from-violet-500 to-purple-600',
-  },
-  {
-    id: 'u3',
-    name: 'Fatou Ndiaye',
-    email: 'fatou@example.com',
-    role: 'Éditeur',
-    lastActive: 'Hier',
-    avatarColor: 'from-teal-500 to-green-600',
-  },
-];
-
-const ROLE_STYLES: Record<MockUser['role'], { icon: typeof ShieldCheck; classes: string }> = {
-  Owner: { icon: ShieldCheck, classes: 'bg-red-500/15 text-red-400 border border-red-500/30' },
-  Admin: { icon: Shield, classes: 'bg-violet-500/15 text-violet-400 border border-violet-500/30' },
-  Éditeur: { icon: Eye, classes: 'bg-teal-500/15 text-teal-400 border border-teal-500/30' },
-};
-
-const STATS = [
-  { label: 'Total utilisateurs', value: '1,247', hint: '+18 cette semaine' },
-  { label: 'Actifs cette semaine', value: '892', hint: '71% du total' },
-  { label: 'Admins', value: '3', hint: '1 Owner + 2 Admins/Éditeurs' },
-];
+interface Stats {
+  total: number;
+  active: number;
+  pendingPayment: number;
+  admins: number;
+  newThisMonth: number;
+}
 
 function getInitials(name: string): string {
   return name
     .split(' ')
     .map((p) => p[0])
+    .filter(Boolean)
     .slice(0, 2)
     .join('')
-    .toUpperCase();
+    .toUpperCase() || '?';
+}
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return 'Jamais';
+  const date = new Date(iso);
+  const diff = Date.now() - date.getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'À l\'instant';
+  if (min < 60) return `Il y a ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Il y a ${h} h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `Il y a ${d} j`;
+  return date.toLocaleDateString('fr-FR');
 }
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
-  const [users] = useState<MockUser[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<RealUser[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('Admin');
 
-  // No real config used here — mock data only. dirty stays false conceptually,
-  // but we pass dirty=true so the SaveBar button is enabled and the click toast fires.
-  const dirty = true;
-  const saving = false;
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/users', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) {
+        setUsers(data.users);
+        setStats(data.stats);
+      } else {
+        toast({ title: 'Échec', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
-  const handleEdit = (user: MockUser) => {
-    toast({
-      title: 'Modification (simulé)',
-      description: `Édition du rôle de ${user.name} — interface à venir.`,
-      variant: 'default',
-    });
-  };
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const handleRemove = (user: MockUser) => {
-    toast({
-      title: 'Retrait (simulé)',
-      description: `${user.name} serait retiré des administrateurs.`,
-      variant: 'warning',
-    });
-  };
+  async function handleDelete(user: RealUser) {
+    if (!confirm(`Supprimer définitivement ${user.firstName} (${user.email}) ?\n\nCette action est irréversible.`)) return;
+    setDeletingId(user.id);
+    try {
+      const res = await fetch(`/api/admin/users?id=${user.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast({
+          title: 'Utilisateur supprimé',
+          description: `${user.firstName} a été retiré de la plateforme.`,
+          variant: 'warning',
+        });
+        await fetchUsers();
+      } else {
+        toast({ title: 'Échec', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
-  const handleInvite = () => {
+  function handleInvite() {
     if (!inviteEmail || !inviteEmail.includes('@')) {
       toast({
         title: 'Email invalide',
@@ -103,21 +121,16 @@ export default function AdminUsersPage() {
       });
       return;
     }
+    // Invitations aren't persisted yet — show honest message.
     toast({
-      title: 'Invitation envoyée',
-      description: `Email envoyé à ${inviteEmail} (rôle: ${inviteRole}).`,
-      variant: 'success',
-    });
-    setInviteEmail('');
-  };
-
-  const handleSaveBar = () => {
-    toast({
-      title: 'Aucune modification à enregistrer',
-      description: 'Cette page ne persiste pas de configuration serveur.',
+      title: 'Invitation — fonctionnalité à venir',
+      description: `L'envoi d'invitations par email sera disponible prochainément. Pour le moment, demandez à ${inviteEmail} de s'inscrire sur /register.`,
       variant: 'default',
     });
-  };
+    setInviteEmail('');
+  }
+
+  if (loading) return <LoadingState />;
 
   return (
     <div className="min-h-screen mesh-bg">
@@ -128,16 +141,34 @@ export default function AdminUsersPage() {
       <div className="relative z-10 p-6 md:p-8 max-w-4xl mx-auto">
         <AdminPageHeader
           title="Utilisateurs"
-          description="Gérez les administrateurs de la plateforme (pour la démo, liste mockée)."
+          description="Liste réelle des comptes inscrits sur la plateforme."
           icon={Users}
           color="from-indigo-500 to-violet-600"
         />
 
         <div className="space-y-6">
-          {/* Statistiques */}
-          <AdminCard title="Statistiques" description="Aperçu de l'activité utilisateur">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {STATS.map((stat) => (
+          {/* Statistiques réelles */}
+          <AdminCard
+            title="Statistiques"
+            description="Données en temps réel"
+            action={
+              <button
+                type="button"
+                onClick={fetchUsers}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10"
+              >
+                <RefreshCw className="w-3 h-3" aria-hidden="true" />
+                Actualiser
+              </button>
+            }
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Total', value: stats?.total ?? 0, hint: `${stats?.newThisMonth ?? 0} ce mois` },
+                { label: 'Actifs', value: stats?.active ?? 0, hint: 'planStatus = active' },
+                { label: 'En attente paiement', value: stats?.pendingPayment ?? 0, hint: 'planStatus = pending' },
+                { label: 'Admins', value: stats?.admins ?? 0, hint: 'isAdmin = true' },
+              ].map((stat) => (
                 <div key={stat.label} className="p-4 rounded-xl glass border border-white/5">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{stat.label}</p>
                   <p className="text-2xl font-bold mt-1">{stat.value}</p>
@@ -147,77 +178,86 @@ export default function AdminUsersPage() {
             </div>
           </AdminCard>
 
-          {/* Liste admins */}
+          {/* Liste des utilisateurs réels */}
           <AdminCard
-            title="Administrateurs"
-            description="Membres avec accès au panneau admin"
+            title="Tous les utilisateurs"
+            description={`${users.length} compte(s) inscrit(s)`}
           >
-            <ul className="space-y-3 list-none p-0 m-0">
-              {users.map((user) => {
-                const roleStyle = ROLE_STYLES[user.role];
-                const RoleIcon = roleStyle.icon;
-                return (
-                  <li
-                    key={user.id}
-                    className="flex items-center gap-4 p-3 rounded-xl glass border border-white/5"
-                  >
-                    <div
-                      className={cn(
-                        'w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center text-sm font-bold text-white flex-shrink-0',
-                        user.avatarColor,
-                      )}
-                      aria-hidden="true"
+            {users.length === 0 ? (
+              <div className="text-center py-10">
+                <UserX className="w-10 h-10 text-gray-600 mx-auto mb-3" aria-hidden="true" />
+                <p className="text-sm text-gray-400">Aucun utilisateur inscrit pour le moment.</p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Les nouveaux inscrits apparaîtront ici automatiquement.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-3 list-none p-0 m-0">
+                {users.map((user) => {
+                  const isAdmin = user.isAdmin || user.email === 'admin@albermon.com' || user.email === 'admin@afrilaunch.ai';
+                  const roleStyle = isAdmin
+                    ? { icon: ShieldCheck, classes: 'bg-red-500/15 text-red-400 border border-red-500/30', label: 'Admin' }
+                    : user.planStatus === 'active'
+                      ? { icon: Eye, classes: 'bg-teal-500/15 text-teal-400 border border-teal-500/30', label: user.plan }
+                      : { icon: AlertCircle, classes: 'bg-amber-500/15 text-amber-400 border border-amber-500/30', label: 'En attente' };
+                  const RoleIcon = roleStyle.icon;
+                  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+                  return (
+                    <li
+                      key={user.id}
+                      className="flex items-center gap-4 p-3 rounded-xl glass border border-white/5"
                     >
-                      {getInitials(user.name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold truncate">{user.name}</p>
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide',
-                            roleStyle.classes,
-                          )}
-                        >
-                          <RoleIcon className="w-3 h-3" aria-hidden="true" />
-                          {user.role}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                      <p className="text-[11px] text-gray-600 mt-0.5">Actif: {user.lastActive}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleEdit(user)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10 transition-colors"
-                        aria-label={`Modifier ${user.name}`}
+                      <div
+                        className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                        aria-hidden="true"
                       >
-                        <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span className="hidden sm:inline">Modifier</span>
-                      </button>
-                      {user.role !== 'Owner' && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(user)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
-                          aria-label={`Retirer ${user.name}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span className="hidden sm:inline">Retirer</span>
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                        {getInitials(fullName || user.email)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold truncate">{fullName || '(sans nom)'}</p>
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide',
+                              roleStyle.classes,
+                            )}
+                          >
+                            <RoleIcon className="w-3 h-3" aria-hidden="true" />
+                            {roleStyle.label}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        <p className="text-[11px] text-gray-600 mt-0.5">
+                          Dernière connexion&nbsp;: {timeAgo(user.lastLoginAt)} · {user.credits.toLocaleString('fr-FR')} crédits
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {!isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(user)}
+                            disabled={deletingId === user.id}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-60"
+                            aria-label={`Supprimer ${user.email}`}
+                          >
+                            {deletingId === user.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                              : <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />}
+                            <span className="hidden sm:inline">Supprimer</span>
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </AdminCard>
 
           {/* Inviter */}
           <AdminCard
-            title="Inviter un admin"
-            description="Envoyer une invitation par email à un nouvel administrateur"
+            title="Inviter un utilisateur"
+            description="Inviter un nouvel utilisateur à s'inscrire"
             action={<UserPlus className="w-4 h-4 text-indigo-400" aria-hidden="true" />}
           >
             <div className="space-y-4">
@@ -226,19 +266,18 @@ export default function AdminUsersPage() {
                 value={inviteEmail}
                 onChange={setInviteEmail}
                 type="email"
-                placeholder="nouveau.admin@example.com"
+                placeholder="nouvel.utilisateur@example.com"
                 required
               />
               <AdminSelect
-                label="Rôle"
+                label="Rôle à attribuer après inscription"
                 value={inviteRole}
                 onChange={setInviteRole}
                 options={[
-                  { value: 'Admin', label: 'Admin (accès complet sauf Owner)' },
-                  { value: 'Éditeur', label: 'Éditeur (lecture + écriture, pas de config)' },
-                  { value: 'Lecteur', label: 'Lecteur (lecture seule)' },
+                  { value: 'Utilisateur', label: 'Utilisateur (accès dashboard standard)' },
+                  { value: 'Admin', label: 'Admin (accès panneau admin — à configurer manuellement)' },
                 ]}
-                hint="Le rôle Owner ne peut pas être attribué par invitation."
+                hint="L'invitation par email automatique sera disponible prochainement. Pour le moment, communiquez le lien /register à l'utilisateur."
               />
               <button
                 type="button"
@@ -250,8 +289,6 @@ export default function AdminUsersPage() {
               </button>
             </div>
           </AdminCard>
-
-          <SaveBar onSave={handleSaveBar} saving={saving} dirty={dirty} />
         </div>
       </div>
     </div>

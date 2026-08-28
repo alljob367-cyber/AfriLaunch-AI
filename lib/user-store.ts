@@ -212,6 +212,29 @@ export async function getUserByTelegramId(telegramUserId: number): Promise<User 
   return store.users.find((u) => u.telegramUserId === telegramUserId) ?? null;
 }
 
+// Return ALL users (admin-only). Sorted by creation date descending.
+// Strips passwordHash automatically via sanitizeUser.
+export async function getAllUsers(): Promise<User[]> {
+  const store = await readStore();
+  return [...store.users].sort((a, b) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
+
+// Admin-level delete: removes a user entirely from the store.
+// Cannot delete admin users (safety).
+export async function deleteUser(id: string): Promise<{ ok: boolean; error?: string }> {
+  const store = await readStore();
+  const user = store.users.find((u) => u.id === id);
+  if (!user) return { ok: false, error: 'Utilisateur introuvable' };
+  if (user.email === 'admin@albermon.com' || user.email === 'admin@afrilaunch.ai' || (user as any).isAdmin === true) {
+    return { ok: false, error: 'Impossible de supprimer un administrateur' };
+  }
+  store.users = store.users.filter((u) => u.id !== id);
+  await writeStore(store);
+  return { ok: true };
+}
+
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
   const store = await readStore();
   const user = store.users.find((u) => u.id === id);

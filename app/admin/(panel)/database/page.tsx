@@ -8,11 +8,9 @@ import {
   SaveBar, LoadingState, TestButton, StatusBadge,
 } from '@/components/admin/ui';
 import { useConfig } from '@/hooks/use-config';
-import { useToast } from '@/components/providers/toast-provider';
 
 export default function AdminDatabasePage() {
   const { config, loading, saving, save, test } = useConfig();
-  const { toast } = useToast();
   const [draft, setDraft] = useState<typeof config>(null);
 
   useEffect(() => { if (config && !draft) setDraft(config); }, [config, draft]);
@@ -25,14 +23,8 @@ export default function AdminDatabasePage() {
     await save({ database: draft.database });
   };
 
-  const handleInitDb = () => {
-    toast({
-      title: 'Base initialisée',
-      description: 'Prisma migrate dev exécuté (simulé)',
-      variant: 'success',
-    });
-  };
-
+  // No database migration endpoint yet — the migration runs automatically
+  // on Vercel deploy (supabase-schema.sql). The button below is informational.
   const isConfigured = !!draft.database.url;
   const prismaPath = '/home/z/my-project/prisma/schema.prisma';
 
@@ -136,14 +128,22 @@ export default function AdminDatabasePage() {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={handleInitDb}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-blue-500 to-cyan-600 hover:scale-105 transition-transform shadow-lg"
-              >
-                <Terminal className="w-4 h-4" aria-hidden="true" />
-                Initialiser la DB
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                <button
+                  type="button"
+                  disabled
+                  title="La migration s'exécute automatiquement au déploiement Vercel via supabase-schema.sql"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold glass border border-white/10 opacity-60 cursor-not-allowed"
+                >
+                  <Terminal className="w-4 h-4" aria-hidden="true" />
+                  Migration auto (au déploiement)
+                </button>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Le schéma Supabase (<code className="font-mono text-gray-400">supabase-schema.sql</code>) s'exécute
+                  automatiquement au déploiement Vercel. La table <code className="font-mono text-gray-400">kv_store</code>
+                  est créée avec les policies RLS. Aucune action manuelle requise.
+                </p>
+              </div>
             </div>
           </AdminCard>
 

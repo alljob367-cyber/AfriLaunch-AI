@@ -1,13 +1,14 @@
 // AfriLaunch AI — Admin > Logs & Monitoring
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FileText } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { FileText, RefreshCw, Loader2, FileX } from 'lucide-react';
 import {
   AdminPageHeader, AdminCard, AdminSelect, AdminNumber,
   SaveBar, LoadingState,
 } from '@/components/admin/ui';
 import { useConfig } from '@/hooks/use-config';
+import { useToast } from '@/components/providers/toast-provider';
 import { cn } from '@/lib/utils';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -25,29 +26,35 @@ const LEVEL_STYLES: Record<LogLevel, { badge: string; dot: string; label: string
   error: { badge: 'bg-red-500/15 text-red-400 border border-red-500/30', dot: 'bg-red-500', label: 'ERROR' },
 };
 
-const MOCK_LOGS: LogEntry[] = [
-  { ts: '2025-01-15 14:32:11', level: 'info', message: 'User admin@afrilaunch.ai logged in' },
-  { ts: '2025-01-15 14:30:42', level: 'info', message: 'Agent Branding executed (20 credits)' },
-  { ts: '2025-01-15 14:28:09', level: 'info', message: 'Payment 12,500 FCFA received via Orange Money' },
-  { ts: '2025-01-15 14:25:33', level: 'info', message: 'Webhook delivered to https://app.com/hook' },
-  { ts: '2025-01-15 14:21:55', level: 'warn', message: 'Rate limit exceeded for IP 1.2.3.4' },
-  { ts: '2025-01-15 14:18:02', level: 'debug', message: 'Prisma query: SELECT * FROM users WHERE id=? (12ms)' },
-  { ts: '2025-01-15 14:15:47', level: 'error', message: 'Failed to send email via SMTP: connection timeout' },
-  { ts: '2025-01-15 14:12:18', level: 'info', message: 'Agent SEO-Optimizer executed (15 credits)' },
-  { ts: '2025-01-15 14:10:03', level: 'info', message: 'New user registered: mamadou@example.com' },
-  { ts: '2025-01-15 14:08:27', level: 'warn', message: 'Flutterwave webhook signature mismatch' },
-  { ts: '2025-01-15 14:05:51', level: 'debug', message: 'Cache hit: config:ai (2ms)' },
-  { ts: '2025-01-15 14:02:14', level: 'info', message: 'Agent Copywriter executed (20 credits)' },
-  { ts: '2025-01-15 13:58:36', level: 'error', message: 'OpenAI API key invalid: 401 Unauthorized' },
-  { ts: '2025-01-15 13:55:09', level: 'info', message: 'Social post published to Instagram (post_abc123)' },
-  { ts: '2025-01-15 13:51:22', level: 'warn', message: 'Disk usage above 80% on /var/log' },
-];
-
 export default function AdminLogsPage() {
   const { config, loading, saving, save } = useConfig();
+  const { toast } = useToast();
   const [draft, setDraft] = useState<typeof config>(null);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true);
+  const [logsNote, setLogsNote] = useState<string>('');
 
   useEffect(() => { if (config && !draft) setDraft(config); }, [config, draft]);
+
+  const fetchLogs = useCallback(async () => {
+    setLogsLoading(true);
+    try {
+      const res = await fetch('/api/admin/logs?limit=50', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) {
+        setLogs(data.logs || []);
+        setLogsNote(data.note || '');
+      } else {
+        toast({ title: 'Échec', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setLogsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
   if (loading || !draft) return <LoadingState />;
 
@@ -111,32 +118,61 @@ export default function AdminLogsPage() {
           {/* Logs récents */}
           <AdminCard
             title="Logs récents"
-            description="15 derniers événements (mockés pour la démo)"
+            description="50 derniers événements"
+            action={
+              <button
+                type="button"
+                onClick={fetchLogs}
+                disabled={logsLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10 disabled:opacity-60"
+              >
+                {logsLoading ? <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> : <RefreshCw className="w-3 h-3" aria-hidden="true" />}
+                Actualiser
+              </button>
+            }
           >
-            <div className="max-h-96 overflow-y-auto custom-scrollbar rounded-xl border border-white/5">
-              <ul className="divide-y divide-white/5 list-none p-0 m-0">
-                {MOCK_LOGS.map((log, idx) => {
-                  const style = LEVEL_STYLES[log.level];
-                  return (
-                    <li key={idx} className="flex items-start gap-3 p-3 hover:bg-white/[0.02] transition-colors">
-                      <code className="text-[11px] font-mono text-gray-600 mt-0.5 flex-shrink-0 hidden sm:block">
-                        {log.ts}
-                      </code>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide flex-shrink-0',
-                          style.badge,
-                        )}
-                      >
-                        <span className={cn('w-1.5 h-1.5 rounded-full', style.dot)} aria-hidden="true" />
-                        {style.label}
-                      </span>
-                      <span className="text-xs text-gray-300 break-all flex-1">{log.message}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+            {logs.length === 0 ? (
+              <div className="text-center py-10">
+                <FileX className="w-10 h-10 text-gray-600 mx-auto mb-3" aria-hidden="true" />
+                <p className="text-sm text-gray-400">Aucun log persistant pour le moment.</p>
+                <p className="text-xs text-gray-600 mt-2 max-w-md mx-auto leading-relaxed">
+                  {logsNote || 'Les logs sont visibles en temps réel dans Vercel → Dashboard → Logs → Functions.'}
+                </p>
+                <a
+                  href="https://vercel.com/afrilaunchia/logs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10"
+                >
+                  Ouvrir Vercel Logs →
+                </a>
+              </div>
+            ) : (
+              <div className="max-h-96 overflow-y-auto custom-scrollbar rounded-xl border border-white/5">
+                <ul className="divide-y divide-white/5 list-none p-0 m-0">
+                  {logs.map((log, idx) => {
+                    const style = LEVEL_STYLES[log.level] || LEVEL_STYLES.info;
+                    return (
+                      <li key={idx} className="flex items-start gap-3 p-3 hover:bg-white/[0.02] transition-colors">
+                        <code className="text-[11px] font-mono text-gray-600 mt-0.5 flex-shrink-0 hidden sm:block">
+                          {log.ts}
+                        </code>
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide flex-shrink-0',
+                            style.badge,
+                          )}
+                        >
+                          <span className={cn('w-1.5 h-1.5 rounded-full', style.dot)} aria-hidden="true" />
+                          {style.label}
+                        </span>
+                        <span className="text-xs text-gray-300 break-all flex-1">{log.message}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </AdminCard>
 
           <SaveBar onSave={handleSave} saving={saving} dirty={dirty} />
