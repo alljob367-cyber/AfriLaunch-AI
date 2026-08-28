@@ -1,4 +1,4 @@
-// AfriLaunch AI — Site web module (génération IA réelle + background jobs)
+// AfriLaunch AI — Site web module (génération IA + publication auto + background jobs)
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Globe, Sparkles, Loader2, Download, Copy, RefreshCw, Maximize2,
   Rocket, ShoppingBag, UtensilsCrossed, Briefcase, FileText, Building2,
+  Share2, Trash2, ExternalLink, Eye, Check, QrCode,
   type LucideIcon,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
@@ -71,6 +72,25 @@ export default function WebsitePage() {
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [orgLoaded, setOrgLoaded] = useState(false);
   const restoredRef = useRef<Set<string>>(new Set());
+
+  // Publication state
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [publishedSites, setPublishedSites] = useState<Array<{
+    id: string; slug: string; title: string; url: string;
+    views: number; createdAt: number;
+  }>>([]);
+  const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
+
+  // Load user's published sites on mount
+  const fetchPublishedSites = useRef(async () => {
+    try {
+      const res = await fetch('/api/sites/list', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) setPublishedSites(data.sites);
+    } catch { /* ignore */ }
+  });
+  useEffect(() => { fetchPublishedSites.current(); }, []);
 
   useEffect(() => {
     fetch('/api/organization', { credentials: 'include' })
@@ -181,6 +201,84 @@ export default function WebsitePage() {
     a.click();
     document.body.removeChild(a);
     toast({ title: 'Téléchargement lancé', description: `${safeName}-site.html`, variant: 'success' });
+  }
+
+  async function handlePublish() {
+    if (!generatedHtml) return;
+    setPublishing(true);
+    try {
+      const res = await fetch('/api/sites/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ html: generatedHtml, title: businessName || 'Mon site' }),
+      });
+      const data = await res.json();
+      if (data.ok && data.url) {
+        setPublishedUrl(data.url);
+        toast({
+          title: 'Site publié ! 🌐',
+          description: 'Lien de partage prêt à être copié.',
+          variant: 'success',
+        });
+        // Refresh list
+        await fetchPublishedSites.current();
+        // Auto-copy to clipboard
+        try {
+          await navigator.clipboard.writeText(data.url);
+          toast({ title: 'Lien copié', description: 'Dans le presse-papiers', variant: 'success' });
+        } catch { /* ignore */ }
+      } else {
+        toast({ title: 'Échec publication', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function copyShareUrl(url: string, siteId?: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      if (siteId) {
+        setCopiedShareId(siteId);
+        setTimeout(() => setCopiedShareId(null), 2000);
+      }
+      toast({ title: 'Lien copié', description: 'Partagez-le avec vos clients !', variant: 'success' });
+    } catch {
+      toast({ title: 'Copie impossible', description: 'Copiez manuellement: ' + url, variant: 'warning' });
+    }
+  }
+
+  async function shareSite(url: string, title: string) {
+    // Use Web Share API if available (mobile WhatsApp, etc.)
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ title, url });
+        return;
+      } catch { /* user cancelled — fall through to copy */ }
+    }
+    await copyShareUrl(url);
+  }
+
+  async function deletePublishedSite(siteId: string, title: string) {
+    if (!confirm(`Supprimer "${title}" ? Le lien ne fonctionnera plus.`)) return;
+    try {
+      const res = await fetch(`/api/sites/${siteId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setPublishedSites((s) => s.filter((x) => x.id !== siteId));
+        toast({ title: 'Site supprimé', description: 'Le lien ne fonctionne plus.', variant: 'warning' });
+      } else {
+        toast({ title: 'Échec', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' });
+    }
   }
 
   // Live status message during generation
@@ -415,23 +513,71 @@ export default function WebsitePage() {
                       onClick={openFullscreen}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors"
                     >
-                      <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" /> Voir en plein écran
+                      <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" /> Plein écran
                     </button>
                     <button
                       type="button"
                       onClick={copyCode}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors"
                     >
-                      <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Copier le code
+                      <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Code
                     </button>
                     <button
                       type="button"
                       onClick={downloadHtml}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 hover:scale-[1.02] transition-transform text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors"
                     >
-                      <Download className="w-3.5 h-3.5" aria-hidden="true" /> Télécharger HTML
+                      <Download className="w-3.5 h-3.5" aria-hidden="true" /> HTML
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePublish}
+                      disabled={publishing}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:scale-[1.02] transition-transform text-xs font-semibold disabled:opacity-60 disabled:hover:scale-100"
+                    >
+                      {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Share2 className="w-3.5 h-3.5" aria-hidden="true" />}
+                      {publishing ? 'Publication…' : 'Publier en ligne'}
                     </button>
                   </div>
+
+                  {/* Published URL banner */}
+                  {publishedUrl && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="card-premium py-3 px-4 border border-emerald-500/30 bg-emerald-500/5"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" aria-hidden="true" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-emerald-300 mb-0.5">Site en ligne !</p>
+                          <a
+                            href={publishedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-300 hover:text-blue-200 underline truncate inline-flex items-center gap-1"
+                          >
+                            {publishedUrl}
+                            <ExternalLink className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                          </a>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyShareUrl(publishedUrl)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold"
+                        >
+                          <Copy className="w-3 h-3" aria-hidden="true" /> Copier
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => shareSite(publishedUrl, businessName || 'Mon site')}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:scale-[1.02] transition-transform text-xs font-semibold"
+                        >
+                          <Share2 className="w-3 h-3" aria-hidden="true" /> Partager
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* iframe preview */}
                   <iframe
@@ -456,11 +602,80 @@ export default function WebsitePage() {
                   </div>
 
                   <p className="text-xs text-gray-500 leading-relaxed px-1">
-                    Le site est généré en HTML/CSS/JS complet avec Tailwind CSS. Vous pouvez l'héberger n'importe où.
+                    Le site est généré en HTML/CSS/JS complet avec Tailwind CSS. Publiez-le en 1 clic pour obtenir un lien partageable.
                   </p>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* ─── Published sites section ─────────────────────────── */}
+            {publishedSites.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="card-premium mt-6"
+              >
+                <h2 className="font-bold text-base mb-4 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+                  Mes sites publiés
+                  <span className="text-xs text-gray-500 font-normal">({publishedSites.length})</span>
+                </h2>
+                <div className="space-y-2">
+                  {publishedSites.map((site) => (
+                    <div
+                      key={site.id}
+                      className="flex items-center gap-3 p-3 rounded-xl glass border border-white/5 hover:border-emerald-500/30 transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center flex-shrink-0">
+                        <Globe className="w-4 h-4 text-white" aria-hidden="true" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{site.title}</p>
+                        <a
+                          href={site.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-blue-300 hover:text-blue-200 underline truncate inline-flex items-center gap-0.5"
+                        >
+                          {site.url.replace(/^https?:\/\//, '')}
+                          <ExternalLink className="w-2.5 h-2.5 flex-shrink-0" aria-hidden="true" />
+                        </a>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-gray-500 mr-2">
+                        <Eye className="w-3 h-3" aria-hidden="true" />
+                        {site.views}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyShareUrl(site.url, site.id)}
+                        aria-label="Copier le lien"
+                        className="p-2 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs"
+                      >
+                        {copiedShareId === site.id
+                          ? <Check className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+                          : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => shareSite(site.url, site.title)}
+                        aria-label="Partager"
+                        className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 text-xs"
+                      >
+                        <Share2 className="w-3.5 h-3.5 text-white" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deletePublishedSite(site.id, site.title)}
+                        aria-label="Supprimer"
+                        className="p-2 rounded-lg glass border border-red-500/20 text-red-400 hover:bg-red-500/10 text-xs"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
