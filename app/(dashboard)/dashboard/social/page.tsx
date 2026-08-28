@@ -1,11 +1,11 @@
-// AfriLaunch AI — Réseaux sociaux (connexion simplifiée)
+// AfriLaunch AI — Réseaux sociaux (connexion simplifiée + publish + inbox)
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Share2, Instagram, Facebook, Youtube, Twitter, Linkedin, MessageCircle,
-  Loader2, Check, X, Link2, Unlink, Users, MessageSquare, Sparkles,
+  Loader2, Check, X, Link2, Unlink, Users, MessageSquare, Sparkles, Send,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { useToast } from '@/components/providers/toast-provider';
@@ -82,6 +82,9 @@ export default function SocialPage() {
   const [connectingPlatform, setConnectingPlatform] = useState<Platform | null>(null);
   const [handleInputs, setHandleInputs] = useState<Record<string, string>>({});
   const [showConnectForm, setShowConnectForm] = useState<Platform | null>(null);
+  const [publishingPlatform, setPublishingPlatform] = useState<Platform | null>(null);
+  const [showPublishDialog, setShowPublishDialog] = useState<Platform | null>(null);
+  const [publishContent, setPublishContent] = useState('');
 
   const fetchAccounts = useCallback(async () => {
     try {
@@ -149,6 +152,53 @@ export default function SocialPage() {
       }
     } catch (err) {
       toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' });
+    }
+  }
+
+  async function handlePublish(platform: Platform) {
+    const content = publishContent.trim();
+    if (!content) {
+      toast({ title: 'Contenu vide', description: 'Écrivez quelque chose à publier.', variant: 'warning' });
+      return;
+    }
+    setPublishingPlatform(platform);
+    try {
+      const res = await fetch('/api/social/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ platform, content }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (data.manualShareUrl) {
+          // Open manual share URL in new tab
+          window.open(data.manualShareUrl, '_blank', 'noopener,noreferrer');
+          toast({
+            title: 'Lien de partage ouvert',
+            description: 'Une fenêtre s\'est ouverte pour finaliser la publication.',
+            variant: 'success',
+          });
+        } else {
+          toast({
+            title: 'Publication réussie ! ✅',
+            description: 'Votre contenu est en ligne.',
+            variant: 'success',
+          });
+        }
+        setShowPublishDialog(null);
+        setPublishContent('');
+      } else {
+        if (data.needConnect) {
+          toast({ title: 'Compte non connecté', description: data.error, variant: 'warning' });
+        } else {
+          toast({ title: 'Échec publication', description: data.error, variant: 'error' });
+        }
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setPublishingPlatform(null);
     }
   }
 
@@ -250,18 +300,29 @@ export default function SocialPage() {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => toast({ title: 'Bientôt disponible', description: 'La publication sera disponible prochainement.', variant: 'warning' })}
+                        onClick={() => {
+                          setShowPublishDialog(platform.id);
+                          setPublishContent('');
+                        }}
                         className="flex-1 py-2 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10 flex items-center justify-center gap-1.5"
                       >
                         <Sparkles className="w-3.5 h-3.5" aria-hidden="true" /> Publier
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => toast({ title: 'Bientôt disponible', description: 'Boîte de réception bientôt disponible.', variant: 'warning' })}
+                      <a
+                        href={
+                          platform.id === 'instagram' ? `https://instagram.com/${account?.handle || ''}/direct/inbox`
+                          : platform.id === 'facebook' ? `https://messenger.com`
+                          : platform.id === 'whatsapp' ? `https://wa.me/${(account?.handle || '').replace(/[^0-9]/g, '')}`
+                          : platform.id === 'linkedin' ? `https://linkedin.com/messaging`
+                          : platform.id === 'twitter' ? `https://x.com/messages`
+                          : '#'
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex-1 py-2 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10 flex items-center justify-center gap-1.5"
                       >
                         <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" /> Messages
-                      </button>
+                      </a>
                       <button
                         type="button"
                         onClick={() => handleDisconnect(platform.id)}
@@ -346,12 +407,89 @@ export default function SocialPage() {
                 1. Cliquez sur « Connecter » pour chaque réseau.{' '}
                 2. Entrez votre nom d\'utilisateur (sans @).{' '}
                 3. Cliquez « Confirmer ».{' '}
-                Votre compte est lié instantanément — vous pouvez publier du contenu depuis le module Contenu et répondre aux messages depuis la boîte de réception unifiée.
+                Votre compte est lié instantanément — vous pouvez publier du contenu depuis le module Contenu ou depuis le bouton « Publier » ci-dessus.
               </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Publish dialog */}
+      <AnimatePresence>
+        {showPublishDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowPublishDialog(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass rounded-2xl p-6 border border-white/10 max-w-lg w-full"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  {(() => {
+                    const p = PLATFORMS.find((x) => x.id === showPublishDialog);
+                    if (!p) return null;
+                    return (
+                      <>
+                        <div className={cn('w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg', p.gradient)}>
+                          <p.icon className="w-5 h-5 text-white" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm">Publier sur {p.name}</p>
+                          <p className="text-xs text-gray-500">@{getAccount(showPublishDialog)?.handle}</p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPublishDialog(null)}
+                  aria-label="Fermer"
+                  className="p-2 rounded-lg hover:bg-white/5"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              <textarea
+                value={publishContent}
+                onChange={(e) => setPublishContent(e.target.value)}
+                placeholder="Que voulez-vous publier aujourd'hui ?"
+                rows={5}
+                autoFocus
+                className="w-full glass rounded-xl px-4 py-3 border border-white/5 focus:border-violet-500/40 outline-none text-sm resize-none mb-3"
+              />
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs text-gray-500">{publishContent.length} caractères</span>
+                <span className="text-xs text-blue-300">
+                  {showPublishDialog === 'whatsapp' || showPublishDialog === 'twitter'
+                    ? 'Partage via lien ouvert dans un nouvel onglet'
+                    : 'Publication directe si OAuth configuré'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handlePublish(showPublishDialog)}
+                disabled={!publishContent.trim() || publishingPlatform === showPublishDialog}
+                className="w-full py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-500 to-indigo-600 hover:scale-[1.01] transition-transform shadow-lg disabled:opacity-60 disabled:hover:scale-100 flex items-center justify-center gap-2"
+              >
+                {publishingPlatform === showPublishDialog
+                  ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  : <Send className="w-4 h-4" aria-hidden="true" />}
+                {publishingPlatform === showPublishDialog ? 'Publication…' : 'Publier maintenant'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

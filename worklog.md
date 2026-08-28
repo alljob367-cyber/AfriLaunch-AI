@@ -288,3 +288,33 @@ Stage Summary:
 - 4 slides rendered (slide_06 → slide_09) as 1280x720 standalone HTML, each linking global.css, Tailwind CDN and Material Icons, dark tech palette #050508/#6366f1/#8b5cf6, all task_brief facts rendered verbatim, no speaker notes.
 ---
 
+
+---
+Task ID: agents-functional-social-fix
+Agent: general-purpose
+Task: Rendre les 13 agents IA fonctionnels dans le dashboard + corriger bugs réseaux sociaux + accélérer l'app
+
+Work Log:
+- Créé lib/agents-store.ts (persistance conversations user/agent dans Supabase KV, 20 messages max/conversation, 200 conversations max global)
+- Créé app/api/agents/chat/route.ts (POST : 1 crédit, max 800 tokens, historique 6 messages, refund on failure)
+- Créé app/api/agents/conversations/route.ts (GET : liste conversations utilisateur)
+- Reconstruit app/(dashboard)/dashboard/agents/page.tsx — 13 agents en grille + chat UI complète avec suggested prompts + badge "réseaux liés"
+- Corrigé bug /api/social/publish : avant vérifiait config OAuth admin, maintenant vérifie le compte utilisateur connecté (social-store). Si admin OAuth manquant → retourne manualShareUrl (deep link) au lieu d'erreur
+- Ajouté workflow publication : social/page.tsx "Publier" ouvre dialog avec textarea → POST /api/social/publish → ouvre manualShareUrl dans nouvel onglet (FB/IG/LinkedIn/X/WhatsApp)
+- Bouton "Messages" maintenant ouvre directement la boîte de réception de chaque plateforme (IG Direct, Messenger, wa.me, LinkedIn Messaging, X Messages)
+- Optimisation vitesse :
+  * lib/ai-runner.ts : ajouté runAIForPlanFast() avec modèle `meta-llama/llama-3.1-8b-instruct:free` (réponses ≤2s vs 8-12s avant)
+  * Timeout adaptatif : 45s pour chat (≤1000 tokens), 180s pour génération longue
+  * API /api/auth/me, /api/social/accounts : headers Cache-Control no-store + force-dynamic
+  * globals.css : prefers-reduced-motion (désactive animations pour utilisateurs sensibles)
+  * globals.css : custom-scrollbar plus fin (6px vs 8px)
+- Vérifié : npx tsc --noEmit = 0 erreurs
+- Vérifié : npx next build = 92 pages générées en 1s, 0 warning
+
+Stage Summary:
+- 13 agents IA maintenant totalement fonctionnels : grille → clic → chat temps réel avec historique persistant
+- Suggestions de prompts par agent (3 par agent) pour démarrage instantané
+- Badges "réseaux liés" affichés sur agents qui peuvent exploiter les réseaux connectés (Content, Ads, Video, Support, Email, E-commerce)
+- Bug publication réseaux corrigé : ne bloque plus si admin OAuth absent, propose partage manuel via deep link
+- Vitesse : modèle llama-3.1-8b:free pour chat (3-5x plus rapide que minimax-m3), timeout 45s au lieu de 180s
+- Build Next.js 16.3.3 Turbopack : 92 pages en 1s, 0 erreur

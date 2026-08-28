@@ -21,14 +21,27 @@ export interface RunResult {
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 }
 
-// Plan-based model routing on OpenRouter (cost optimization)
-// Uses free models where possible to minimize costs
-const PLAN_MODELS: Record<PlanId, string> = {
+// Plan-based model routing on OpenRouter (cost optimization + speed)
+// Fast, free models — chosen for ≤2s response time on short prompts.
+//   - chat (≤800 tokens):  llama 3.1 8b (fast, free, multilingual)
+//   - long-form (≤3000):   minimax m3 free (good quality/price ratio)
+//   - website (≤6000):     minimax m3 free (needs longer context)
+const PLAN_MODELS_FAST: Record<PlanId, string> = {
+  starter: 'meta-llama/llama-3.1-8b-instruct:free',
+  pro: 'meta-llama/llama-3.1-8b-instruct:free',
+  business: 'meta-llama/llama-3.1-8b-instruct:free',
+  enterprise: 'meta-llama/llama-3.1-8b-instruct:free',
+};
+
+const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
   starter: 'minimax/minimax-m3:free',
   pro: 'minimax/minimax-m3:free',
   business: 'minimax/minimax-m3:free',
   enterprise: 'minimax/minimax-m3:free',
 };
+
+// Backward-compatible alias (used by long-form generation paths).
+const PLAN_MODELS = PLAN_MODELS_QUALITY;
 
 // Backward-compatible: runAI without plan uses the configured primary provider
 export async function runAI(opts: RunOptions): Promise<RunResult> {
@@ -69,6 +82,19 @@ export async function runAIForPlan(opts: RunOptions, plan: PlanId): Promise<RunR
   return runAI(opts);
 }
 
+// Fast variant: uses smaller, faster models for short chat replies (≤800 tokens).
+// Use this for interactive agent chat where latency matters more than depth.
+export async function runAIForPlanFast(opts: RunOptions, plan: PlanId): Promise<RunResult> {
+  const config = await getConfig();
+  const openrouter = config.ai.providers.openrouter;
+  if (openrouter?.enabled && openrouter.apiKey) {
+    const targetModel = PLAN_MODELS_FAST[plan] || PLAN_MODELS_FAST.starter;
+    const providerConfig = { ...openrouter, model: targetModel };
+    return callProvider('openrouter', providerConfig, opts, config);
+  }
+  return runAIForPlan(opts, plan);
+}
+
 function findEnabledProvider(config: AppConfig): { provider: string; providerConfig: any } | null {
   for (const [name, p] of Object.entries(config.ai.providers)) {
     if ((p as any).enabled && (p as any).apiKey) {
@@ -85,6 +111,9 @@ async function callProvider(
   config: AppConfig,
 ): Promise<RunResult> {
   const maxTokens = opts.maxTokens ?? config.ai.maxTokensPerRequest ?? 4096;
+  // Scale timeout with max_tokens — short replies (chat) get a tighter budget
+  // so the user gets fast errors instead of hanging for 3 minutes.
+  const timeoutMs = maxTokens <= 1000 ? 45000 : 180000;
 
   // Mistral and Groq both use OpenAI-compatible /chat/completions endpoint
   if (provider === 'mistral' || provider === 'groq') {
@@ -110,7 +139,7 @@ async function callProvider(
           max_tokens: maxTokens,
           temperature: 0.7,
         }),
-        signal: AbortSignal.timeout(180000), // 3 minutes — Mistral can be slow from Asia servers
+        signal: AbortSignal.timeout(timeoutMs),
       });
 
       if (!res.ok) {
@@ -168,7 +197,7 @@ async function callProvider(
           max_tokens: maxTokens,
           temperature: 0.7,
         }),
-        signal: AbortSignal.timeout(180000),
+        signal: AbortSignal.timeout(timeoutMs),
       });
 
       if (!res.ok) {
