@@ -2,15 +2,25 @@
 // POST /api/agents/chat { agentId, message }
 // → text/event-stream: data: {"chunk":"..."}\n\n  ...  data: {"done":true,"creditsRemaining":N}\n\n
 //
-// Fallback: if the body cannot be parsed or the user is not authed, returns
-// a regular JSON error (not SSE) so the client can branch on Content-Type.
+// The agent's system prompt is enriched with:
+//   1. The user's organization data (name, industry, country, etc.) so the
+//      agent speaks in the right context and uses the right brand voice.
+//   2. The agent's recent artifacts ("memory" of what it created for this user)
+//      so it stays consistent across sessions and doesn't re-do work.
+//   3. The list of social platforms the user has connected, so social agents
+//      (Content, Ads, Support, Video, Email, E-commerce) know which channels
+//      they can publish to.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 import { getAgentById } from '@/lib/agents';
 import { runAIForPlanFastStream } from '@/lib/ai-runner';
-import { addMessage, getConversation } from '@/lib/agents-store';
+import {
+  addMessage, getConversation, getAgentArtifacts, addArtifact, detectArtifact,
+} from '@/lib/agents-store';
+import { getOrganizationByUserId } from '@/lib/org-store';
+import { getSocialAccounts } from '@/lib/social-store';
 import type { PlanId } from '@/lib/user-types';
 
 const CREDIT_COST = 1; // cheap: 1 credit per agent message
@@ -19,6 +29,74 @@ const MAX_HISTORY = 6;  // last 6 messages (3 turns) — keeps prompt small
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// Build the enriched system prompt: agent base + org context + memory + social
+async function buildEnrichedSystemPrompt(agentId: string, userId: string, basePrompt: string): Promise<string> {
+  const parts: string[] = [basePrompt];
+
+  // 1. Organization context
+  try {
+    const org = await getOrganizationByUserId(userId);
+    if (org) {
+      parts.push(`
+
+── CONTEXTE DE L'ORGANISATION DE L'UTILISATEUR ──
+- Nom du business: ${org.name}
+- Industrie/Secteur: ${org.industry || 'non précisée'}
+- Pays/Région: ${org.country || 'Afrique'}
+- Description: ${org.description || 'non fournie'}
+- Email: ${org.email || 'non fourni'}
+- Téléphone: ${org.phone || 'non fourni'}
+- Site web: ${org.website || 'aucun'}
+- Adresse: ${org.address || 'non fournie'}
+
+IMPORTANT: Adapte TOUTES tes réponses à cette organisation. Utilise le nom du business, l'industrie et le pays comme contexte. Propose des solutions concrètes adaptées à ce business précis, pas des réponses génériques.`);
+    }
+  } catch { /* ignore — org optional */ }
+
+  // 2. Agent memory (artifacts)
+  try {
+    const artifacts = await getAgentArtifacts(userId, agentId);
+    if (artifacts.length > 0) {
+      const recent = artifacts.slice(0, 10); // last 10 creations
+      const memoryLines = recent.map((a) =>
+        `- ${new Date(a.createdAt).toLocaleDateString('fr-FR')}: ${a.title} — ${a.description}`,
+      ).join('\n');
+      parts.push(`
+
+── MÉMOIRE — CE QUE TU AS DÉJÀ CRUÉ POUR CET UTILISATEUR ──
+${memoryLines}
+
+IMPORTANT: Tu as déjà créé ces éléments. Sois cohérent avec ce qui existe déjà. Si l'utilisateur demande quelque chose que tu as déjà fait, propose une amélioration ou une variante plutôt que de tout refaire de zéro. Référence-toi à tes créations précédentes quand c'est pertinent.`);
+    }
+  } catch { /* ignore */ }
+
+  // 3. Connected social platforms (for social-capable agents)
+  try {
+    const accounts = await getSocialAccounts(userId);
+    const connected = accounts.filter((a) => a.connected);
+    if (connected.length > 0) {
+      const platformLines = connected.map((a) => `- ${a.platform} (@${a.handle}, ${a.followers || 0} abonnés)`).join('\n');
+      parts.push(`
+
+── RÉSEAUX SOCIAUX CONNECTÉS PAR L'UTILISATEUR ──
+${platformLines}
+
+Si l'utilisateur te demande de publier, planifier ou répondre sur les réseaux, indique clairement sur quelle plateforme tu proposes d'agir. Pour publier réellement, l'utilisateur devra utiliser le module "Réseaux sociaux" ou "Contenu" du dashboard. Tu peux préparer le contenu, suggérer la plateforme idéale, et proposer une légende + hashtags + CTA prêts à publier.`);
+    } else {
+      // No social connected — only mention for social agents
+      const socialAgentIds = ['content', 'ads', 'support', 'video', 'email', 'ecommerce'];
+      if (socialAgentIds.includes(agentId)) {
+        parts.push(`
+
+── RÉSEAUX SOCIAUX ──
+L'utilisateur n'a encore connecté aucun réseau social. Si ta tâche implique de publier ou répondre sur les réseaux, propose-lui d'aller dans le module "Réseaux sociaux" du dashboard pour connecter Instagram, Facebook, WhatsApp, LinkedIn ou X avant de publier.`);
+      }
+    }
+  } catch { /* ignore */ }
+
+  return parts.join('\n');
+}
 
 export async function POST(req: NextRequest) {
   const user = await requireUser(req);
@@ -65,6 +143,9 @@ export async function POST(req: NextRequest) {
   const plan = user.plan as PlanId;
   const creditsRemainingAfterConsume = consumed.user?.credits;
 
+  // Build the enriched system prompt (org + memory + social context)
+  const enrichedSystemPrompt = await buildEnrichedSystemPrompt(agentId, userId, agent.systemPrompt);
+
   // Build the SSE stream
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
@@ -82,7 +163,7 @@ export async function POST(req: NextRequest) {
 
       try {
         const gen = runAIForPlanFastStream({
-          systemPrompt: agent.systemPrompt,
+          systemPrompt: enrichedSystemPrompt,
           userMessage: message,
           history,
           maxTokens: MAX_TOKENS,
@@ -113,6 +194,17 @@ export async function POST(req: NextRequest) {
             // Persist the assistant reply (only if we got at least one chunk)
             if (fullReply.length > 0) {
               await addMessage(userId, agentId, 'assistant', fullReply);
+
+              // Heuristic: detect if this message describes a creation
+              // and store it as an artifact for future memory.
+              try {
+                const detected = detectArtifact(agentId, fullReply);
+                if (detected) {
+                  await addArtifact(userId, agentId, detected.title, detected.description, detected.tags);
+                  // Notify the client that an artifact was saved
+                  send({ type: 'artifact', artifact: detected });
+                }
+              } catch { /* ignore — artifact save is best-effort */ }
             }
             send({
               type: 'done',
@@ -129,6 +221,13 @@ export async function POST(req: NextRequest) {
         if (!didError) {
           if (fullReply.length > 0) {
             await addMessage(userId, agentId, 'assistant', fullReply);
+            try {
+              const detected = detectArtifact(agentId, fullReply);
+              if (detected) {
+                await addArtifact(userId, agentId, detected.title, detected.description, detected.tags);
+                send({ type: 'artifact', artifact: detected });
+              }
+            } catch { /* ignore */ }
           }
           send({ type: 'done', creditsRemaining: creditsRemainingAfterConsume, usage });
         }

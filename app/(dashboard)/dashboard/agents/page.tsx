@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Send, Loader2, Sparkles, ArrowLeft, Trash2, MessageSquare,
-  Check, Link2, Zap,
+  Check, Link2, Zap, Share2,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { useToast } from '@/components/providers/toast-provider';
@@ -25,6 +25,63 @@ interface ChatMessageUI {
   role: 'user' | 'assistant';
   content: string;
   createdAt: number;
+  // When the agent's reply contains a publishable piece of content, we attach
+  // a quick-action button so the user can publish/reply in 1 click.
+  action?: {
+    type: 'publish_social' | 'reply_social';
+    platform: string;
+    content: string;
+    recipientHandle?: string;
+    label: string;
+  };
+}
+
+// Detect if the agent's reply is a publishable piece of content
+// (post Instagram, tweet, message WhatsApp, etc.) and return an action object.
+function detectPublishableAction(
+  content: string,
+  agentId: string,
+  connectedPlatforms: Set<string>,
+): ChatMessageUI['action'] | null {
+  const lower = content.toLowerCase();
+
+  // Only social-capable agents can publish
+  const socialAgents = ['content', 'ads', 'support', 'video', 'email', 'ecommerce'];
+  if (!socialAgents.includes(agentId)) return null;
+
+  // Detect platform mentions
+  let platform: string | null = null;
+  if (lower.includes('instagram') || lower.includes('ig ')) platform = 'instagram';
+  else if (lower.includes('facebook') || lower.includes('fb ')) platform = 'facebook';
+  else if (lower.includes('whatsapp') || lower.includes('wa ')) platform = 'whatsapp';
+  else if (lower.includes('linkedin')) platform = 'linkedin';
+  else if (lower.includes('twitter') || lower.includes('tweet') || lower.includes(' x ')) platform = 'twitter';
+
+  if (!platform) return null;
+
+  // Only offer the action if the user has connected this platform
+  if (!connectedPlatforms.has(platform)) return null;
+
+  // Detect if it's a reply (mentions "@user" or "réponse à")
+  const replyMatch = content.match(/@([a-z0-9._]+)/i);
+  const isReply = lower.includes('réponse') || lower.includes('reply') || lower.includes('répondre à');
+
+  // Extract the main content (best-effort: take the longest paragraph after the intro)
+  // Limit to ~600 chars to keep the publish payload reasonable
+  const paragraphs = content.split(/\n\n+/).filter((p) => p.trim().length > 20);
+  const longest = paragraphs.length > 0
+    ? paragraphs.reduce((a, b) => a.length > b.length ? a : b)
+    : content;
+
+  return {
+    type: isReply ? 'reply_social' : 'publish_social',
+    platform,
+    content: longest.slice(0, 2000),
+    recipientHandle: replyMatch ? replyMatch[1] : undefined,
+    label: isReply
+      ? `Répondre sur ${platform}`
+      : `Publier sur ${platform}`,
+  };
 }
 
 // Per-agent suggested prompts (clickable to start fast)
@@ -64,6 +121,8 @@ export default function AgentsPage() {
   const [loadingConv, setLoadingConv] = useState(false);
   // When non-null: a typing indicator is shown for this message (pre-first-chunk)
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  // When non-null: an agent action (publish/reply) is executing for this message
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { user, refresh } = useAuth();
@@ -195,7 +254,7 @@ export default function AgentsPage() {
           if (!dataLine) continue;
           const dataStr = dataLine.slice(5).trim();
           if (!dataStr) continue;
-          let data: { type?: string; chunk?: string; error?: string; done?: boolean; creditsRemaining?: number };
+          let data: { type?: string; chunk?: string; error?: string; done?: boolean; creditsRemaining?: number; artifact?: { title: string; description: string; tags: string[] } };
           try { data = JSON.parse(dataStr); } catch { continue; }
 
           if (data.type === 'chunk' && data.chunk) {
@@ -221,6 +280,26 @@ export default function AgentsPage() {
               }
               return m;
             });
+            // Detect if the agent's reply contains a publishable action
+            // (e.g. "Voici un post Instagram prêt à publier") and surface
+            // quick-action buttons under the message.
+            setMessages((m) => m.map((msg) => {
+              if (msg.id !== aiMsgId) return msg;
+              const content = msg.content || '';
+              const publishable = detectPublishableAction(content, selectedAgent.id, connectedPlatforms);
+              return publishable ? { ...msg, action: publishable } : msg;
+            }));
+          } else if (data.type === 'artifact') {
+            // Agent saved something to memory — show a small toast
+            // (best-effort, non-blocking)
+            try {
+              const artifactTitle = data.artifact?.title || 'élément';
+              toast({
+                title: 'Mémoire mise à jour 🧠',
+                description: `L'agent a sauvegardé: ${artifactTitle}`,
+                variant: 'success',
+              });
+            } catch { /* ignore */ }
           } else if (data.type === 'error') {
             setStreamingMessageId(null);
             toast({ title: 'Erreur agent', description: data.error, variant: 'error' });
@@ -240,6 +319,60 @@ export default function AgentsPage() {
     } finally {
       setSending(false);
       setStreamingMessageId(null);
+    }
+  }
+
+  async function handleAgentAction(msgId: string, action: NonNullable<ChatMessageUI['action']>, agentId: string) {
+    setActionLoading(msgId);
+    try {
+      const res = await fetch('/api/agents/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: action.type,
+          agentId,
+          platform: action.platform,
+          content: action.content,
+          recipientHandle: action.recipientHandle,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        if (action.type === 'reply_social' && data.replyUrl) {
+          // Open the reply URL in a new tab
+          window.open(data.replyUrl, '_blank', 'noopener,noreferrer');
+          toast({
+            title: 'Conversation ouverte 💬',
+            description: data.message,
+            variant: 'success',
+          });
+        } else if (data.manualShareUrl) {
+          // Publish via manual share link
+          window.open(data.manualShareUrl, '_blank', 'noopener,noreferrer');
+          toast({
+            title: 'Lien de partage ouvert 🔗',
+            description: 'Finalisez la publication dans la fenêtre ouverte.',
+            variant: 'success',
+          });
+        } else {
+          toast({
+            title: 'Publication réussie ! ✅',
+            description: 'Votre contenu est en ligne.',
+            variant: 'success',
+          });
+        }
+      } else {
+        if (data.needConnect) {
+          toast({ title: 'Compte non connecté', description: data.error, variant: 'warning' });
+        } else {
+          toast({ title: 'Échec', description: data.error, variant: 'error' });
+        }
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setActionLoading(null);
     }
   }
 
@@ -420,19 +553,38 @@ export default function AgentsPage() {
                         <Bot className="w-4 h-4 text-white" aria-hidden="true" />
                       </div>
                     )}
-                    <div className={cn(
-                      'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words',
-                      msg.role === 'user'
-                        ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white'
-                        : 'glass border border-white/5 text-gray-100',
-                    )}>
-                      {msg.content}
-                      {/* Streaming cursor — show a blinking caret while this message is actively streaming */}
-                      {streamingMessageId === msg.id && (
-                        <span
-                          className="inline-block w-1.5 h-3.5 ml-0.5 bg-violet-400 align-text-bottom animate-pulse"
-                          aria-hidden="true"
-                        />
+                    <div className="flex flex-col gap-2 max-w-[80%]">
+                      <div className={cn(
+                        'rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words',
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white'
+                          : 'glass border border-white/5 text-gray-100',
+                      )}>
+                        {msg.content}
+                        {/* Streaming cursor — show a blinking caret while this message is actively streaming */}
+                        {streamingMessageId === msg.id && (
+                          <span
+                            className="inline-block w-1.5 h-3.5 ml-0.5 bg-violet-400 align-text-bottom animate-pulse"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </div>
+
+                      {/* Quick action button — publish/reply on social */}
+                      {msg.action && msg.role === 'assistant' && streamingMessageId !== msg.id && (
+                        <button
+                          type="button"
+                          onClick={() => selectedAgent && handleAgentAction(msg.id, msg.action!, selectedAgent.id)}
+                          disabled={actionLoading === msg.id}
+                          className="self-start inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:scale-[1.02] transition-transform text-xs font-semibold disabled:opacity-60 disabled:hover:scale-100"
+                        >
+                          {actionLoading === msg.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <Share2 className="w-3 h-3" aria-hidden="true" />
+                          )}
+                          {msg.action.label}
+                        </button>
                       )}
                     </div>
                   </motion.div>

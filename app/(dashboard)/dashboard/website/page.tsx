@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Globe, Sparkles, Loader2, Download, Copy, RefreshCw, Maximize2,
   Rocket, ShoppingBag, UtensilsCrossed, Briefcase, FileText, Building2,
-  Share2, Trash2, ExternalLink, Eye, Check, QrCode,
+  Share2, Trash2, ExternalLink, Eye, Check, Lock,
   type LucideIcon,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
@@ -111,6 +111,12 @@ export default function WebsitePage() {
   // finished generation.
   const websiteJob = jobs.find((j) => j.type === 'website');
   const isGenerating = !!websiteJob && (websiteJob.status === 'pending' || websiteJob.status === 'running');
+
+  // Plan gate: only 'business' and 'enterprise' can publish sites publicly.
+  // Admins always bypass.
+  const userPlan = (user as any)?.plan as string | undefined;
+  const isAdmin = (user as any)?.isAdmin === true || user?.email === 'admin@albermon.com' || user?.email === 'admin@afrilaunch.ai';
+  const canPublish = isAdmin || userPlan === 'business' || userPlan === 'enterprise';
 
   // Auto-restore the generated HTML when a job completes (even if user
   // navigated away and came back)
@@ -228,6 +234,17 @@ export default function WebsitePage() {
           await navigator.clipboard.writeText(data.url);
           toast({ title: 'Lien copié', description: 'Dans le presse-papiers', variant: 'success' });
         } catch { /* ignore */ }
+      } else if (data.upgradeRequired) {
+        // Plan restriction — show upgrade toast + redirect to subscription
+        toast({
+          title: 'Plan Business requis 🔒',
+          description: 'Passez au plan Business pour publier votre site en ligne avec un lien partageable.',
+          variant: 'warning',
+        });
+        // Slight delay so the toast is visible before navigation
+        setTimeout(() => {
+          window.location.href = '/dashboard/subscription';
+        }, 1500);
       } else {
         toast({ title: 'Échec publication', description: data.error, variant: 'error' });
       }
@@ -533,10 +550,22 @@ export default function WebsitePage() {
                       type="button"
                       onClick={handlePublish}
                       disabled={publishing}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 hover:scale-[1.02] transition-transform text-xs font-semibold disabled:opacity-60 disabled:hover:scale-100"
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-transform text-xs font-semibold disabled:opacity-60 disabled:hover:scale-100',
+                        canPublish
+                          ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:scale-[1.02]'
+                          : 'glass border border-amber-500/30 text-amber-300 hover:bg-amber-500/10',
+                      )}
+                      title={canPublish ? 'Publier en ligne' : 'Plan Business requis'}
                     >
-                      {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <Share2 className="w-3.5 h-3.5" aria-hidden="true" />}
-                      {publishing ? 'Publication…' : 'Publier en ligne'}
+                      {publishing ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                      ) : canPublish ? (
+                        <Share2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5" aria-hidden="true" />
+                      )}
+                      {publishing ? 'Publication…' : canPublish ? 'Publier en ligne' : 'Business requis'}
                     </button>
                   </div>
 
