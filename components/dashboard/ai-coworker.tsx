@@ -118,22 +118,21 @@ export function AICoworker() {
     setIsListening(false);
   }, []);
 
-  const speakResponse = useCallback(async (text: string) => {
+  const speakResponse = useCallback((text: string) => {
     if (!speakEnabled) return;
-    try {
-      const res = await fetch('/api/ai/voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ text: text.slice(0, 1000) }), // ElevenLabs limit
-      });
-      const data = await res.json();
-      if (data.ok && data.audioUrl) {
-        const audio = new Audio(data.audioUrl);
-        audio.play().catch(() => {});
-      }
-    } catch {
-      // Silent fail — voice is optional
+    // Use Web Speech API (free, no API key, built into browser)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text.slice(0, 500));
+      utterance.lang = 'fr-FR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      // Try to find a French voice
+      const voices = window.speechSynthesis.getVoices();
+      const frVoice = voices.find((v) => v.lang.startsWith('fr'));
+      if (frVoice) utterance.voice = frVoice;
+      window.speechSynthesis.speak(utterance);
     }
   }, [speakEnabled]);
 
