@@ -217,7 +217,7 @@ Modules disponibles: identité de marque (/dashboard/identity), site web (/dashb
   // Check if user has access (Pro, Business, Enterprise only)
   const userPlan = user?.plan as PlanId | undefined;
   const hasAccess = userPlan ? ALLOWED_PLANS.includes(userPlan) : false;
-  const isAdmin = user?.isAdmin === true;
+  const isAdmin = (user as any)?.isAdmin === true || (user as any)?.email === 'admin@albermon.com';
 
   const handleOpenCoworker = () => {
     if (!hasAccess && !isAdmin) {
