@@ -8,10 +8,11 @@ import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 
 const CREDIT_COSTS: Record<string, number> = {
-  identity: 5,       // JSON branding kit (~3000 tokens)
+  identity: 5,       // JSON branding kit (~3000 tokens) — text only
   website: 10,       // full HTML/CSS generation (~6000 tokens)
   content: 1,        // single piece of content (~800 tokens)
   content_batch: 3,  // 3 variants (~2400 tokens)
+  // Note: visual brand kit (with images) costs 20 credits — see /api/brand-kit/generate
 };
 
 interface GenerateRequest {

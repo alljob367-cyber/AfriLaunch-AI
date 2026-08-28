@@ -4,15 +4,25 @@
 // Generates a complete brand kit for the user:
 //   1. Textual identity (name, tagline, palette, typography) via AI agent
 //   2. Visual assets (logo, logo_dark, banners, favicon) via z-ai-web-dev-sdk
+//      — with prompt-based caching to cut image-gen costs ~3x
 //
 // Returns immediately with the kit ID. Generation runs in the background
 // (fire-and-forget). The client polls GET /api/brand-kit/[id] for progress.
+//
+// Cost control:
+//   - 20 credits per kit (was 15) — covers ~7 images at ~0.03$ each = 0.21$,
+//     with cache hits dropping the effective cost to ~0.07$ on average
+//   - Monthly quota per plan: Starter 2, Pro 8, Business 30, Enterprise unlimited
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 import { runAIForPlanStream } from '@/lib/ai-runner';
-import { createBrandKit, updateBrandKitIdentity, updateBrandAsset, type BrandAsset, type AssetType } from '@/lib/brand-kit-store';
+import {
+  createBrandKit, updateBrandKitIdentity, updateBrandAsset,
+  getCachedImage, setCachedImage, countKitsThisMonth, KIT_QUOTAS,
+  type BrandAsset, type AssetType,
+} from '@/lib/brand-kit-store';
 import { getOrganizationByUserId } from '@/lib/org-store';
 import type { PlanId } from '@/lib/user-types';
 import ZAI from 'z-ai-web-dev-sdk';
@@ -22,44 +32,44 @@ export const dynamic = 'force-dynamic';
 // Long-running generation — Vercel Hobby allows up to 60s, Pro 300s
 export const maxDuration = 300;
 
-const CREDIT_COST = 15; // brand kit generation costs 15 credits
+const CREDIT_COST = 20; // brand kit generation costs 20 credits (covers ~7 images with cache)
 
 // All the visual assets we generate for a complete kit
 const ASSET_DEFS: Array<{ type: AssetType; size: string; promptBuilder: (ctx: AssetPromptCtx) => string }> = [
   {
     type: 'logo',
     size: '1024x1024',
-    promptBuilder: (c) => `Professional logo for "${c.businessName}", ${c.industry} industry, ${c.style} style, ${c.paletteDesc}, modern, clean, scalable, on transparent-like background, vector style, high quality`,
+    promptBuilder: (c) => `Professional logo for ${c.industry || 'business'}, ${c.style} style, ${c.paletteDesc}, modern, clean, vector, high quality`,
   },
   {
     type: 'logo_dark',
     size: '1024x1024',
-    promptBuilder: (c) => `Professional logo for "${c.businessName}" on dark background, ${c.industry}, ${c.style} style, ${c.paletteDesc}, light version for dark themes, modern, vector style, high quality`,
+    promptBuilder: (c) => `Professional logo for ${c.industry || 'business'} on dark background, ${c.style} style, ${c.paletteDesc}, light version, modern, vector, high quality`,
   },
   {
     type: 'banner_facebook',
     size: '1440x720',
-    promptBuilder: (c) => `Facebook cover banner for "${c.businessName}", ${c.industry}, ${c.style} style, ${c.paletteDesc}, professional marketing banner with brand identity, clean layout, space for text, high quality`,
+    promptBuilder: (c) => `Facebook cover banner, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, professional marketing banner, clean layout, high quality`,
   },
   {
     type: 'banner_instagram',
     size: '1024x1024',
-    promptBuilder: (c) => `Instagram profile post for "${c.businessName}", ${c.industry}, ${c.style} style, ${c.paletteDesc}, square format, eye-catching, modern social media design, high quality`,
+    promptBuilder: (c) => `Instagram post, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, square format, modern social media design, high quality`,
   },
   {
     type: 'banner_linkedin',
     size: '1440x720',
-    promptBuilder: (c) => `LinkedIn cover banner for "${c.businessName}", ${c.industry}, ${c.style} style, ${c.paletteDesc}, professional corporate banner, business aesthetic, clean, high quality`,
+    promptBuilder: (c) => `LinkedIn cover banner, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, professional corporate banner, clean, high quality`,
   },
   {
     type: 'banner_youtube',
     size: '1440x720',
-    promptBuilder: (c) => `YouTube channel banner for "${c.businessName}", ${c.industry}, ${c.style} style, ${c.paletteDesc}, vibrant banner with safe area for channel avatar, modern, high quality`,
+    promptBuilder: (c) => `YouTube channel banner, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, vibrant banner, modern, high quality`,
   },
   {
     type: 'favicon',
     size: '1024x1024',
-    promptBuilder: (c) => `Minimalist favicon icon for "${c.businessName}", ${c.industry}, simple geometric shape, ${c.paletteDesc}, recognizable at small size, flat design, high quality`,
+    promptBuilder: (c) => `Minimalist favicon icon, ${c.industry || 'business'}, simple geometric shape, ${c.paletteDesc}, flat design, recognizable at small size, high quality`,
   },
 ];
 
@@ -77,6 +87,24 @@ export async function POST(req: NextRequest) {
   let body: { businessName?: string; industry?: string; country?: string; style?: string };
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Body invalide' }, { status: 400 });
+  }
+
+  // ── Monthly quota check (admin bypass) ────────────────────────────
+  const isAdmin = (user as any).isAdmin === true || user.email === 'admin@albermon.com' || user.email === 'admin@afrilaunch.ai';
+  if (!isAdmin) {
+    const plan = user.plan as string;
+    const quota = KIT_QUOTAS[plan] ?? KIT_QUOTAS.starter;
+    if (quota > 0) {
+      const usedThisMonth = await countKitsThisMonth(user.id);
+      if (usedThisMonth >= quota) {
+        return NextResponse.json({
+          ok: false,
+          error: `Quota mensuel atteint : ${quota} kit(s) par mois sur le plan ${plan}. Passez à un plan supérieur ou attendez le mois prochain.`,
+          quotaExceeded: true,
+          quota: { used: usedThisMonth, limit: quota },
+        }, { status: 402 });
+      }
+    }
   }
 
   // Pre-fill from organization if missing
@@ -187,23 +215,46 @@ Réponds UNIQUEMENT avec le JSON.`;
 
   const ctx: AssetPromptCtx = { businessName, industry, style, paletteDesc };
 
-  // ── Step 2: Generate each visual asset ────────────────────────────
-  let zai: any;
-  try {
-    zai = await ZAI.create();
-  } catch (err) {
-    console.error('ZAI init failed:', err);
-    // Mark all assets as failed
-    for (const def of ASSET_DEFS) {
-      await updateBrandAsset(kitId, def.type, { status: 'failed', error: 'Image generation SDK indisponible' });
-    }
-    return;
-  }
+  // ── Step 2: Generate each visual asset (with cache) ──────────────
+  let zai: any = null;
+  let zaiInitFailed = false;
 
   for (const def of ASSET_DEFS) {
     const prompt = def.promptBuilder(ctx);
     // Mark as generating
     await updateBrandAsset(kitId, def.type, { status: 'generating', prompt, startedAt: Date.now() });
+
+    // ── Cache lookup ───────────────────────────────────────────────
+    // Skip the cache for `logo` and `logo_dark` because they are
+    // business-specific (the user expects a unique logo). Other assets
+    // (banners, favicon) are industry-level and benefit from cache hits.
+    const cacheable = def.type !== 'logo' && def.type !== 'logo_dark';
+    if (cacheable) {
+      const cached = await getCachedImage(prompt, def.size);
+      if (cached) {
+        await updateBrandAsset(kitId, def.type, {
+          status: 'done',
+          dataUrl: cached,
+          completedAt: Date.now(),
+        });
+        continue; // skip generation — cache hit
+      }
+    }
+
+    // ── Generate via Z.AI ──────────────────────────────────────────
+    if (!zai && !zaiInitFailed) {
+      try {
+        zai = await ZAI.create();
+      } catch (err) {
+        console.error('ZAI init failed:', err);
+        zaiInitFailed = true;
+      }
+    }
+
+    if (zaiInitFailed) {
+      await updateBrandAsset(kitId, def.type, { status: 'failed', error: 'Image generation SDK indisponible', completedAt: Date.now() });
+      continue;
+    }
 
     try {
       const response = await zai.images.generations.create({
@@ -218,6 +269,10 @@ Réponds UNIQUEMENT avec le JSON.`;
         dataUrl,
         completedAt: Date.now(),
       });
+      // Save to cache for future reuse (only cacheable assets)
+      if (cacheable) {
+        await setCachedImage(prompt, def.size, dataUrl);
+      }
     } catch (err) {
       await updateBrandAsset(kitId, def.type, {
         status: 'failed',

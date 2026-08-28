@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   DollarSign, TrendingUp, TrendingDown, Users, Zap, Gift,
-  Loader2, RefreshCw, AlertCircle, Activity, Calculator,
+  Loader2, RefreshCw, AlertCircle, Activity, Calculator, Database, Image,
 } from 'lucide-react';
 import {
   AdminPageHeader, AdminCard, LoadingState,
@@ -182,6 +182,9 @@ export default function AdminMetricsPage() {
             </AdminCard>
           </div>
 
+          {/* Cost optimization (real-time data from /api/admin/quotas) */}
+          <CostOptimizationPanel />
+
           {/* Recommendations */}
           <AdminCard title="💡 Recommandations d'optimisation" description="Actions pour améliorer la marge">
             <ul className="space-y-2 text-sm">
@@ -237,5 +240,182 @@ function KpiCard({ icon: Icon, label, value, subtitle, gradient, highlight }: {
       <p className="text-xs text-gray-500 mt-0.5">{label}</p>
       <p className="text-[10px] text-gray-600 mt-0.5">{subtitle}</p>
     </motion.div>
+  );
+}
+
+// ─── Cost Optimization Panel ─────────────────────────────────────────
+// Fetches real-time data from /api/admin/quotas: image cache stats, kits
+// generated this month, projected costs, AI provider health.
+function CostOptimizationPanel() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetch_ = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/quotas', { credentials: 'include' });
+      const d = await res.json();
+      if (d.ok) setData(d);
+    } catch (err) {
+      toast({ title: 'Échec quotas', description: (err as Error).message, variant: 'error' });
+    }
+    setLoading(false);
+  }, [toast]);
+
+  useEffect(() => {
+    fetch_();
+    const id = setInterval(fetch_, 30000);
+    return () => clearInterval(id);
+  }, [fetch_]);
+
+  if (loading) {
+    return (
+      <AdminCard title="⚙️ Optimisation des coûts (temps réel)" description="Cache images, quotas kits, santé providers IA">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-500" aria-hidden="true" />
+        </div>
+      </AdminCard>
+    );
+  }
+
+  if (!data) {
+    return (
+      <AdminCard title="⚙️ Optimisation des coûts (temps réel)" description="Cache images, quotas kits, santé providers IA">
+        <p className="text-xs text-gray-500 text-center py-4">Impossible de charger les données.</p>
+      </AdminCard>
+    );
+  }
+
+  return (
+    <AdminCard
+      title="⚙️ Optimisation des coûts (temps réel)"
+      description="Cache images, quotas kits, santé providers IA"
+      action={
+        <button
+          type="button"
+          onClick={fetch_}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10"
+        >
+          <RefreshCw className="w-3 h-3" aria-hidden="true" />
+          Actualiser
+        </button>
+      }
+    >
+      <div className="space-y-5">
+        {/* Row 1: 4 KPI cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="glass rounded-xl p-3 border border-emerald-500/20 bg-emerald-500/5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Database className="w-3 h-3 text-emerald-400" aria-hidden="true" />
+              <span className="text-[10px] font-semibold text-gray-400 uppercase">Cache hit rate</span>
+            </div>
+            <p className="text-xl font-bold text-emerald-400">{data.cache.hitRate}%</p>
+            <p className="text-[10px] text-gray-500">{data.cache.totalHits} hits · {data.cache.entries} entries</p>
+          </div>
+          <div className="glass rounded-xl p-3 border border-white/5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Image className="w-3 h-3 text-violet-400" aria-hidden="true" />
+              <span className="text-[10px] font-semibold text-gray-400 uppercase">Kits ce mois</span>
+            </div>
+            <p className="text-xl font-bold">{data.kits.thisMonth}</p>
+            <p className="text-[10px] text-gray-500">{data.kits.total} total</p>
+          </div>
+          <div className="glass rounded-xl p-3 border border-amber-500/20 bg-amber-500/5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <DollarSign className="w-3 h-3 text-amber-400" aria-hidden="true" />
+              <span className="text-[10px] font-semibold text-gray-400 uppercase">Coût estimé (mois)</span>
+            </div>
+            <p className="text-xl font-bold text-amber-400">${data.costs.estimatedThisMonthUsd}</p>
+            <p className="text-[10px] text-gray-500">${data.costs.costPerImageUsd}/image</p>
+          </div>
+          <div className="glass rounded-xl p-3 border border-green-500/20 bg-green-500/5">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingUp className="w-3 h-3 text-green-400" aria-hidden="true" />
+              <span className="text-[10px] font-semibold text-gray-400 uppercase">Économies cache</span>
+            </div>
+            <p className="text-xl font-bold text-green-400">${data.costs.estimatedSavingsUsd}</p>
+            <p className="text-[10px] text-gray-500">{data.costs.savingsPercent}% de réduction</p>
+          </div>
+        </div>
+
+        {/* Row 2: kits by plan + cost comparison */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs font-semibold text-gray-400 mb-2">Kits générés ce mois par plan</p>
+            <div className="space-y-1.5">
+              {Object.entries(data.kits.byPlan).map(([plan, count]) => {
+                const max = Math.max(...Object.values(data.kits.byPlan) as number[], 1);
+                const pct = ((count as number) / max) * 100;
+                return (
+                  <div key={plan} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 w-20 capitalize">{plan}</span>
+                    <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-violet-500 to-purple-600"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold w-8 text-right">{count as number}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-gray-400 mb-2">Comparaison coûts (avec vs sans optimisation)</p>
+            <div className="glass rounded-xl p-3 border border-white/5 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-400">Sans cache ni quotas</span>
+                <span className="text-red-400 line-through">${data.costs.estimatedWithoutOptimizationUsd}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-400">Avec cache + quotas</span>
+                <span className="text-emerald-400 font-bold">${data.costs.estimatedThisMonthUsd}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs pt-2 border-t border-white/5">
+                <span className="text-gray-300 font-semibold">Économie mensuelle</span>
+                <span className="text-green-400 font-bold">${data.costs.estimatedSavingsUsd} ({data.costs.savingsPercent}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 3: AI providers health */}
+        <div>
+          <p className="text-xs font-semibold text-gray-400 mb-2">Santé des providers IA (load balancer)</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {data.providers.map((p: any) => (
+              <div
+                key={p.name}
+                className={cn(
+                  'glass rounded-lg p-2.5 border text-xs',
+                  p.inCooldown ? 'border-red-500/30 bg-red-500/5' : p.enabled && p.apiKey ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/5',
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-semibold capitalize">{p.name}</span>
+                  {p.inCooldown ? (
+                    <span className="text-[9px] text-red-400">⚠ Cooldown</span>
+                  ) : p.enabled && p.apiKey ? (
+                    <span className="text-[9px] text-emerald-400">✓ Actif</span>
+                  ) : (
+                    <span className="text-[9px] text-gray-500">Inactif</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-gray-500">
+                  <span>{p.totalSuccesses} ✓ / {p.totalErrors} ✗</span>
+                  <span>{p.successRate}% succès</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Cache info */}
+        <p className="text-[10px] text-gray-600 text-center">
+          Cache images : {data.cache.entries} entries · TTL 7 jours · LRU 200 max · {data.cache.oldestAgeHours}h depuis la plus ancienne entry
+        </p>
+      </div>
+    </AdminCard>
   );
 }
