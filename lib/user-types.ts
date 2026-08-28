@@ -11,7 +11,7 @@ export interface User {
   passwordHash?: string; // server-only, stripped before sending to client
   createdAt: string;
   plan: PlanId;
-  planStatus: 'active' | 'canceled' | 'past_due' | 'trialing';
+  planStatus: 'active' | 'canceled' | 'past_due' | 'trialing' | 'pending_payment';
   planStartedAt: string | null;
   planEndsAt: string | null;
   stripeCustomerId?: string;

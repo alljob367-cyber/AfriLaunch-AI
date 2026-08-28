@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   Rocket, LayoutDashboard, Palette, Globe, PenSquare, Share2,
   Bot, Megaphone, CreditCard, BarChart3, Users, Settings,
@@ -61,6 +62,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, logout } = useAuth();
   const { organization, isLoading: orgLoading } = useOrganization();
   const { activeJobs } = useBackgroundJobs();
+
+  // PAYMENT WALL — block the entire dashboard if user hasn't paid
+  // (the /dashboard/subscription page is exempt so they can pay)
+  const isOnSubscriptionPage = pathname === '/dashboard/subscription';
+  const planStatus = (user as any)?.planStatus as string | undefined;
+  const isAdmin = (user as any)?.isAdmin === true || user?.email === 'admin@albermon.com' || user?.email === 'admin@afrilaunch.ai';
+  const needsPayment = !isAdmin && planStatus === 'pending_payment' && !isOnSubscriptionPage;
 
   const orgName = organization?.name ?? 'Mon organisation';
   const initials = (orgName || 'MO')
@@ -194,14 +202,55 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <main className="flex-1 lg:ml-64 pt-14 lg:pt-0">
-        {children}
+        {needsPayment ? <PaymentWall /> : children}
       </main>
 
-      {/* Background jobs indicator (floating, bottom-right) */}
-      {activeJobs.length > 0 && <BackgroundJobsIndicator jobs={activeJobs} />}
+      {/* Background jobs indicator (floating, bottom-right) — hidden when payment wall is shown */}
+      {!needsPayment && activeJobs.length > 0 && <BackgroundJobsIndicator jobs={activeJobs} />}
 
-      {/* AI Coworker — flottant sur toutes les pages dashboard */}
-      <AICoworker />
+      {/* AI Coworker — flottant sur toutes les pages dashboard — hidden when payment wall is shown */}
+      {!needsPayment && <AICoworker />}
+    </div>
+  );
+}
+
+// ─── Payment Wall ─────────────────────────────────────────────────────
+// Full-screen overlay shown when user.planStatus === 'pending_payment'.
+// The user can only navigate to /dashboard/subscription to pay.
+function PaymentWall() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6 mesh-bg">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl animate-aurora" />
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 rounded-full bg-violet-500/8 blur-3xl animate-aurora delay-300" />
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 glass rounded-3xl p-8 border border-amber-500/30 max-w-md w-full text-center"
+      >
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg mx-auto mb-5">
+          <Wallet className="w-8 h-8 text-white" aria-hidden="true" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Abonnement requis 🔒</h1>
+        <p className="text-sm text-gray-400 mb-6 leading-relaxed">
+          Bienvenue sur AfriLaunch AI ! Pour utiliser la plateforme, souscrivez un abonnement.
+          <br />
+          À partir de <strong className="text-amber-300">5 000 FCFA / mois</strong>.
+        </p>
+        <Link
+          href="/dashboard/subscription"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-600 hover:scale-[1.02] transition-transform shadow-lg w-full justify-center"
+        >
+          <Wallet className="w-4 h-4" aria-hidden="true" />
+          Souscrire un abonnement
+        </Link>
+        <p className="text-[10px] text-gray-600 mt-4">
+          Paiement Mobile Money (MTN, Orange, Wave) ou virement bancaire.
+          <br />
+          Activation manuelle par notre équipe sous 24h.
+        </p>
+      </motion.div>
     </div>
   );
 }

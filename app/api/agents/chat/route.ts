@@ -124,9 +124,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: false,
       error: consumed.error,
-      insufficientCredits: !consumed.dailyLimit,
+      insufficientCredits: !consumed.dailyLimit && !consumed.paymentRequired,
       dailyLimitReached: !!consumed.dailyLimit,
-    }, { status: 402 });
+      paymentRequired: !!consumed.paymentRequired,
+    }, { status: consumed.paymentRequired ? 402 : 402 });
   }
 
   // Load conversation history (last N messages) for context

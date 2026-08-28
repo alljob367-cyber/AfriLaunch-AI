@@ -50,17 +50,21 @@ const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
 
 // Per-provider fast chat models (used by runAIForPlanFastStream + load balancer).
 // All free-tier — chosen for speed + multilingual support.
+// NOTE (2025-08): OpenRouter retired `meta-llama/llama-3.1-8b-instruct:free`.
+// The only reliably-working free model on OpenRouter right now is
+// `minimax/minimax-m3:free` (tested OK with streaming). We use it for both
+// fast chat and quality long-form on OpenRouter — Groq provides the speed.
 const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
-  openrouter: 'meta-llama/llama-3.1-8b-instruct:free',
-  groq: 'llama-3.3-70b-versatile',       // free, 30 req/min, ~6x faster than OR
-  mistral: 'mistral-small-latest',        // free tier, decent speed
+  openrouter: 'minimax/minimax-m3:free',     // tested OK with streaming
+  groq: 'llama-3.3-70b-versatile',           // free, 30 req/min, ~6x faster than OR
+  mistral: 'mistral-small-latest',            // free tier, decent speed
 };
 
 // Per-provider quality models (used by long-form generation: identity/website)
 const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
-  openrouter: 'minimax/minimax-m3:free',
-  groq: 'llama-3.3-70b-versatile',       // Groq doesn't have minimax, use llama-70b
-  mistral: 'mistral-large-latest',        // better quality
+  openrouter: 'minimax/minimax-m3:free',     // same — only free model that works
+  groq: 'llama-3.3-70b-versatile',           // Groq doesn't have minimax, use llama-70b
+  mistral: 'mistral-large-latest',            // better quality
 };
 
 // Backward-compatible alias (used by long-form generation paths).

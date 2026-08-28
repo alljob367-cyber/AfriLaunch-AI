@@ -80,8 +80,9 @@ export async function POST(req: NextRequest) {
   if (!consumed.ok) {
     return NextResponse.json({
       ok: false, error: consumed.error,
-      insufficientCredits: !consumed.dailyLimit,
+      insufficientCredits: !consumed.dailyLimit && !consumed.paymentRequired,
       dailyLimitReached: !!consumed.dailyLimit,
+      paymentRequired: !!consumed.paymentRequired,
     }, { status: 402 });
   }
 

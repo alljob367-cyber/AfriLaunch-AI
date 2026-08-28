@@ -63,8 +63,6 @@ export async function createUser(data: {
   }
 
   const now = new Date().toISOString();
-  const nextMonth = new Date();
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
 
   const user: User = {
     id: generateUserId(),
@@ -73,13 +71,17 @@ export async function createUser(data: {
     lastName: data.lastName,
     passwordHash: hashPassword(data.password),
     createdAt: now,
+    // NO FREE TRIAL — user must pay before using the app.
+    // New users get plan 'starter' but planStatus 'pending_payment' with 0 credits.
+    // They can log in but every AI action is blocked until they pay
+    // (handled in consumeCredits + a payment wall in the dashboard).
     plan: 'starter',
-    planStatus: 'active',
-    planStartedAt: now,
-    planEndsAt: nextMonth.toISOString(), // 1 month trial
-    credits: PLANS.starter.creditsPerMonth,
+    planStatus: 'pending_payment',
+    planStartedAt: null,
+    planEndsAt: null,
+    credits: 0,
     creditsUsedThisMonth: 0,
-    creditsResetAt: nextMonth.toISOString(),
+    creditsResetAt: now,
     referralCode: generateReferralCode(data.firstName),
     referredBy: data.referredBy ?? null,
     referralCount: 0,
@@ -170,7 +172,7 @@ function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-export async function consumeCredits(id: string, amount: number): Promise<{ ok: boolean; user: User | null; error?: string; dailyLimit?: { limit: number; usedToday: number } }> {
+export async function consumeCredits(id: string, amount: number): Promise<{ ok: boolean; user: User | null; error?: string; dailyLimit?: { limit: number; usedToday: number }; paymentRequired?: boolean }> {
   const store = await readStore();
   const user = store.users.find((u) => u.id === id);
   if (!user) return { ok: false, user: null, error: 'Utilisateur introuvable' };
@@ -178,6 +180,17 @@ export async function consumeCredits(id: string, amount: number): Promise<{ ok: 
   // Admin bypass: admin users have unlimited credits
   if (user.email === 'admin@albermon.com' || user.email === 'admin@afrilaunch.ai' || (user as any).isAdmin === true) {
     return { ok: true, user };
+  }
+
+  // PAYMENT WALL — block all AI actions if user hasn't paid
+  // (skip for negative amounts = refunds)
+  if (amount > 0 && user.planStatus === 'pending_payment') {
+    return {
+      ok: false,
+      user,
+      error: 'Abonnement requis. Votre compte est en attente de paiement. Souscrivez un plan dans Abonnement pour débloquer l\'app.',
+      paymentRequired: true,
+    };
   }
 
   // Check monthly reset
