@@ -301,6 +301,123 @@ export async function* runAIForPlanFastStream(opts: RunOptions, plan: PlanId): A
   yield { error: lastError || 'Tous les providers IA ont échoué. Réessayez dans 1 minute.' };
 }
 
+// Long-form streaming variant — for website/identity generation (richer content).
+// Same load-balanced fallback logic as runAIForPlanFastStream, but uses the
+// QUALITY model per provider (minimax-m3:free on OR, llama-3.3-70b on Groq,
+// mistral-large on Mistral) and supports larger max_tokens budgets.
+export async function* runAIForPlanStream(opts: RunOptions, plan: PlanId): AsyncGenerator<StreamEvent> {
+  const config = await getConfig();
+  syncHealthFromConfig(config);
+  const maxTokens = opts.maxTokens ?? 4000;
+  const timeoutMs = maxTokens <= 1000 ? 45000 : 240000; // 4 min for long-form
+
+  const chain = pickProviderChain(3);
+
+  if (chain.length === 0) {
+    const result = await runAIForPlan(opts, plan);
+    if (result.ok && result.reply) {
+      yield { chunk: result.reply };
+      yield { done: true, usage: result.usage };
+    } else {
+      yield { error: result.error || 'Aucun provider IA configuré. Activez OpenRouter, Mistral ou Groq dans /admin/ai' };
+    }
+    return;
+  }
+
+  let lastError: string | null = null;
+  for (const provider of chain) {
+    const providerConfig = (config.ai.providers as any)[provider];
+    if (!providerConfig?.apiKey) continue;
+
+    const model = QUALITY_MODELS_PER_PROVIDER[provider];
+    const endpoint = getEndpoint(provider, providerConfig);
+    const headers = buildHeaders(provider, providerConfig);
+
+    let res: Response;
+    try {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: buildChatBody(model, opts, maxTokens, true),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (err) {
+      markError(provider, 'network');
+      lastError = `${provider} réseau: ${(err as Error).message}`;
+      continue;
+    }
+
+    if (!res.ok || !res.body) {
+      const kind = classifyError(res.status);
+      const errText = await res.text().catch(() => '');
+      let errMsg = `HTTP ${res.status}`;
+      try {
+        const errJson = JSON.parse(errText);
+        errMsg = errJson.message || errJson.error?.message || errMsg;
+      } catch { /* not JSON */ }
+
+      markError(provider, kind);
+      lastError = `${provider}: ${errMsg}`;
+      continue;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let gotAnyChunk = false;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const evt of events) {
+          const dataLines = evt.split('\n').filter((l) => l.startsWith('data:'));
+          for (const line of dataLines) {
+            const data = line.slice(5).trim();
+            if (!data || data === '[DONE]') {
+              markSuccess(provider);
+              yield { done: true };
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              const chunk = parsed.choices?.[0]?.delta?.content;
+              if (typeof chunk === 'string' && chunk.length > 0) {
+                gotAnyChunk = true;
+                yield { chunk };
+              }
+              if (parsed.usage) {
+                yield { usage: parsed.usage };
+              }
+            } catch {
+              // skip invalid JSON
+            }
+          }
+        }
+      }
+      if (gotAnyChunk) {
+        markSuccess(provider);
+        yield { done: true };
+        return;
+      }
+      markError(provider, 'server');
+      lastError = `${provider}: flux vide`;
+      continue;
+    } catch (err) {
+      markError(provider, 'network');
+      lastError = `${provider} stream: ${(err as Error).message}`;
+      continue;
+    }
+  }
+
+  yield { error: lastError || 'Tous les providers IA ont échoué. Réessayez dans 1 minute.' };
+}
+
 function findEnabledProvider(config: AppConfig): { provider: string; providerConfig: any } | null {
   for (const [name, p] of Object.entries(config.ai.providers)) {
     if ((p as any).enabled && (p as any).apiKey) {

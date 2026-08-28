@@ -3,7 +3,7 @@
 // GET  /api/ai/generate-async?jobId=xxx — polls for result
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runAIForPlan } from '@/lib/ai-runner';
+import { runAIForPlanStream } from '@/lib/ai-runner';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 import type { PlanId } from '@/lib/user-types';
@@ -18,6 +18,10 @@ interface GenJob {
   error?: string;
   createdAt: number;
   completedAt?: number;
+  // Live progress (updated as chunks stream in) so polling can show
+  // "X caractères générés" before the final result is ready.
+  partialLength?: number;
+  startedAt?: number;
 }
 
 // Jobs are persisted in the Supabase kv_store under 'ai-jobs' so they survive
@@ -98,6 +102,7 @@ async function generateInBackground(jobId: string, body: any, plan: string, user
   const job = await getJob(jobId);
   if (!job) return;
   job.status = 'running';
+  job.startedAt = Date.now();
   await saveJob(job);
 
   try {
@@ -158,30 +163,78 @@ Réponds UNIQUEMENT avec le HTML. Pas de markdown.`;
       userPrompt = `Sujet: ${body.topic || ''}\nBusiness: ${body.businessName || ''}\nIndustrie: ${body.industry || ''}`;
     }
 
-    const result = await runAIForPlan({
-      systemPrompt, userMessage: userPrompt,
-      maxTokens: body.type === 'website' ? 6000 : 3000,
-    }, plan as PlanId);
+    // Use the load-balanced streaming runner.
+    // - For website (long HTML): maxTokens=4000 (was 6000 — faster, still rich)
+    // - For identity (JSON): maxTokens=2000 (was 3000 — JSON is compact)
+    // - For content: maxTokens=1500 (was 3000 — most content is short)
+    const maxTokens = body.type === 'website' ? 4000 : body.type === 'identity' ? 2000 : 1500;
 
-    if (!result.ok || !result.reply) {
+    let fullContent = '';
+    let provider: string | undefined;
+    let model: string | undefined;
+    let usage: any;
+    let lastSaveAt = 0;
+
+    for await (const evt of runAIForPlanStream({
+      systemPrompt, userMessage: userPrompt, maxTokens,
+    }, plan as PlanId)) {
+      if (evt.chunk) {
+        fullContent += evt.chunk;
+        // Throttle progress saves to once per 800ms (avoid hammering Supabase)
+        const now = Date.now();
+        if (now - lastSaveAt > 800) {
+          lastSaveAt = now;
+          const liveJob = await getJob(jobId);
+          if (liveJob) {
+            liveJob.partialLength = fullContent.length;
+            await saveJob(liveJob);
+          }
+        }
+      } else if (evt.usage) {
+        usage = evt.usage;
+      } else if (evt.done) {
+        // Will be saved below
+      } else if (evt.error) {
+        await consumeCredits(userId, -creditCost);
+        const failedJob = await getJob(jobId);
+        if (failedJob) {
+          failedJob.status = 'failed';
+          failedJob.error = evt.error;
+          failedJob.completedAt = Date.now();
+          await saveJob(failedJob);
+        }
+        return;
+      }
+    }
+
+    if (!fullContent) {
       await consumeCredits(userId, -creditCost);
-      job.status = 'failed';
-      job.error = result.error || 'Réponse vide';
-      job.completedAt = Date.now();
-      await saveJob(job);
+      const failedJob = await getJob(jobId);
+      if (failedJob) {
+        failedJob.status = 'failed';
+        failedJob.error = 'Réponse vide du provider';
+        failedJob.completedAt = Date.now();
+        await saveJob(failedJob);
+      }
       return;
     }
 
-    job.status = 'done';
-    job.result = { content: result.reply, provider: result.provider, model: result.model, usage: result.usage };
-    job.completedAt = Date.now();
-    await saveJob(job);
+    const doneJob = await getJob(jobId);
+    if (!doneJob) return; // job was deleted (expired)
+    doneJob.status = 'done';
+    doneJob.result = { content: fullContent, provider, model, usage };
+    doneJob.partialLength = fullContent.length;
+    doneJob.completedAt = Date.now();
+    await saveJob(doneJob);
   } catch (err) {
     await consumeCredits(userId, -creditCost);
-    job.status = 'failed';
-    job.error = (err as Error).message;
-    job.completedAt = Date.now();
-    await saveJob(job);
+    const failedJob = await getJob(jobId);
+    if (failedJob) {
+      failedJob.status = 'failed';
+      failedJob.error = (err as Error).message;
+      failedJob.completedAt = Date.now();
+      await saveJob(failedJob);
+    }
   }
 }
 
@@ -200,6 +253,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true, jobId: job.id, status: job.status,
     elapsed: Math.round((Date.now() - job.createdAt) / 1000),
+    partialLength: job.partialLength ?? 0,
     result: job.result, error: job.error,
   });
 }

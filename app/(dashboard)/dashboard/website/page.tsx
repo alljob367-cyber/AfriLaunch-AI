@@ -1,7 +1,7 @@
-// AfriLaunch AI — Site web module (génération IA réelle)
+// AfriLaunch AI — Site web module (génération IA réelle + background jobs)
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -13,6 +13,7 @@ import { ModuleHeader } from '@/components/dashboard/module-header';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { useToast } from '@/components/providers/toast-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useBackgroundJobs } from '@/hooks/use-background-jobs';
 import { cn } from '@/lib/utils';
 
 interface TemplateOption {
@@ -31,39 +32,45 @@ const TEMPLATES: TemplateOption[] = [
   { id: 'business', name: 'Business', description: 'Site vitrine pro', icon: Building2 },
 ];
 
-async function pollJob(jobId: string, onStatus?: (status: string, elapsed: number) => void): Promise<{ ok: boolean; content?: string; error?: string; provider?: string; model?: string }> {
-  const maxAttempts = 100; // 100 × 3s = 5 min max
-  for (let i = 0; i < maxAttempts; i++) {
-    await new Promise(r => setTimeout(r, 3000));
-    try {
-      const res = await fetch(`/api/ai/generate-async?jobId=${jobId}`, { credentials: 'include' });
-      const data = await res.json();
-      if (onStatus) onStatus(data.status, data.elapsed || 0);
-      if (data.status === 'done' && data.result) {
-        return { ok: true, content: data.result.content, provider: data.result.provider, model: data.result.model };
-      }
-      if (data.status === 'failed') {
-        return { ok: false, error: data.error || 'Génération échouée' };
-      }
-      // Still pending or running → continue polling
-    } catch { /* retry */ }
+// Sanitize the AI-generated HTML (force visible, close tags, etc.)
+function sanitizeHtml(content: string): string {
+  let html = content.replace(/^```html?\s*/i, '').replace(/```\s*$/, '').trim();
+  html = html.replace(/\.slide-in\s*\{[^}]*opacity:\s*0[^}]*\}/gi, (match: string) =>
+    match.replace(/opacity:\s*0[^;]*;?/gi, 'opacity: 1;'),
+  );
+  html = html.replace(/\.slide-in\s*\{[^}]*transform:\s*translateY\([^)]*\)[^}]*\}/gi, (match: string) =>
+    match.replace(/transform:\s*translateY\([^)]*\)[^;]*;?/gi, 'transform: none;'),
+  );
+  const forceVisibleCSS = `<style>
+    .slide-in, .fade-in, .fade-up, .reveal { opacity: 1 !important; transform: none !important; }
+    [style*="opacity: 0"], [style*="opacity:0"] { opacity: 1 !important; }
+    [style*="display: none"], [style*="display:none"] { display: block !important; }
+  </style>`;
+  if (html.includes('</head>')) {
+    html = html.replace('</head>', forceVisibleCSS + '\n</head>');
+  } else if (html.includes('<body')) {
+    html = html.replace('<body', forceVisibleCSS + '\n<body');
+  } else {
+    html = forceVisibleCSS + html;
   }
-  return { ok: false, error: 'Timeout: la génération prend trop de temps' };
+  if (!html.includes('</body>')) html += '\n</body>';
+  if (!html.includes('</html>')) html += '\n</html>';
+  return html;
 }
 
 export default function WebsitePage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { jobs, registerJob } = useBackgroundJobs();
 
   const [template, setTemplate] = useState<string>('landing');
   const [businessName, setBusinessName] = useState('');
   const [industry, setIndustry] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#6366f1');
-  const [generating, setGenerating] = useState(false);
-  const [statusMsg, setStatusMsg] = useState('');
   const [generatedHtml, setGeneratedHtml] = useState<string | null>(null);
   const [creditsRemaining, setCreditsRemaining] = useState<number | null>(null);
   const [orgLoaded, setOrgLoaded] = useState(false);
+  const restoredRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/organization', { credentials: 'include' })
@@ -79,14 +86,41 @@ export default function WebsitePage() {
       .catch(() => setOrgLoaded(true));
   }, []);
 
+  // Find the latest website job (active or recently done) — this lets the
+  // user navigate away and come back without losing the in-progress or
+  // finished generation.
+  const websiteJob = jobs.find((j) => j.type === 'website');
+  const isGenerating = !!websiteJob && (websiteJob.status === 'pending' || websiteJob.status === 'running');
+
+  // Auto-restore the generated HTML when a job completes (even if user
+  // navigated away and came back)
+  useEffect(() => {
+    if (!websiteJob) return;
+    if (websiteJob.status === 'done' && websiteJob.result?.content && !restoredRef.current.has(websiteJob.jobId)) {
+      restoredRef.current.add(websiteJob.jobId);
+      setGeneratedHtml(sanitizeHtml(websiteJob.result.content));
+      toast({
+        title: 'Site restauré ✅',
+        description: `Votre site est prêt (${websiteJob.elapsed}s)`,
+        variant: 'success',
+      });
+    }
+    if (websiteJob.status === 'failed' && !restoredRef.current.has(websiteJob.jobId)) {
+      restoredRef.current.add(websiteJob.jobId);
+      toast({
+        title: 'Génération échouée',
+        description: websiteJob.error || 'Erreur inconnue',
+        variant: 'error',
+      });
+    }
+  }, [websiteJob, toast]);
+
   async function handleGenerate() {
     if (!user) {
       toast({ title: 'Connexion requise', description: 'Connectez-vous pour générer', variant: 'warning' });
       return;
     }
-    setGenerating(true);
     setGeneratedHtml(null);
-    setStatusMsg('Démarrage de la génération...');
     try {
       const res = await fetch('/api/ai/generate-async', {
         method: 'POST',
@@ -101,66 +135,20 @@ export default function WebsitePage() {
         } else {
           toast({ title: 'Échec', description: data.error, variant: 'error' });
         }
-        setGenerating(false);
-        setStatusMsg('');
         return;
       }
-      const creditsRemaining = data.creditsRemaining;
-      // Poll the async job until done or failed
-      const startTime = Date.now();
-      const result = await pollJob(data.jobId, (_status, _elapsed) => {
-        const seconds = Math.max(1, Math.round((Date.now() - startTime) / 1000));
-        setStatusMsg(`Génération en cours... (${seconds}s)`);
+      // Register the job with the background-jobs hook — polling happens
+      // globally in the dashboard layout, so the user can navigate away
+      // and the job will keep running + a toast will fire when done.
+      registerJob(data.jobId, 'website', { template, businessName, industry });
+      if (typeof data.creditsRemaining === 'number') setCreditsRemaining(data.creditsRemaining);
+      toast({
+        title: 'Génération démarrée 🚀',
+        description: 'Vous pouvez changer de page — la génération continue en arrière-plan.',
+        variant: 'success',
       });
-      if (!result.ok) {
-        toast({ title: 'Échec', description: result.error, variant: 'error' });
-        setGenerating(false);
-        setStatusMsg('');
-        return;
-      }
-      const content = result.content || '';
-      // Strip markdown code fences if present
-      let html = content.replace(/^```html?\s*/i, '').replace(/```\s*$/, '').trim();
-
-      // Sanitize: force all content visible (fixes slide-in opacity:0 + other hidden elements)
-      // Many AI-generated sites use opacity:0 or transform animations that need JS to reveal.
-      // In the sandboxed iframe, scripts may not run reliably, so we force-visible everything.
-      html = html.replace(/\.slide-in\s*\{[^}]*opacity:\s*0[^}]*\}/gi, (match: string) => {
-        return match.replace(/opacity:\s*0[^;]*;?/gi, 'opacity: 1;');
-      });
-      html = html.replace(/\.slide-in\s*\{[^}]*transform:\s*translateY\([^)]*\)[^}]*\}/gi, (match: string) => {
-        return match.replace(/transform:\s*translateY\([^)]*\)[^;]*;?/gi, 'transform: none;');
-      });
-      // Also inject a forced-visible style right before </head> as a safety net
-      const forceVisibleCSS = `<style>
-        .slide-in, .fade-in, .fade-up, .reveal { opacity: 1 !important; transform: none !important; }
-        [style*="opacity: 0"], [style*="opacity:0"] { opacity: 1 !important; }
-        [style*="display: none"], [style*="display:none"] { display: block !important; }
-      </style>`;
-      if (html.includes('</head>')) {
-        html = html.replace('</head>', forceVisibleCSS + '\n</head>');
-      } else if (html.includes('<body')) {
-        html = html.replace('<body', forceVisibleCSS + '\n<body');
-      } else {
-        html = forceVisibleCSS + html;
-      }
-
-      // Auto-close HTML if truncated (missing </body></html>)
-      if (!html.includes('</body>')) {
-        html += '\n</body>';
-      }
-      if (!html.includes('</html>')) {
-        html += '\n</html>';
-      }
-
-      setGeneratedHtml(html);
-      if (typeof creditsRemaining === 'number') setCreditsRemaining(creditsRemaining);
-      toast({ title: 'Site généré ! 🌐', description: '10 crédits débités', variant: 'success' });
     } catch (err) {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setGenerating(false);
-      setStatusMsg('');
     }
   }
 
@@ -195,6 +183,13 @@ export default function WebsitePage() {
     toast({ title: 'Téléchargement lancé', description: `${safeName}-site.html`, variant: 'success' });
   }
 
+  // Live status message during generation
+  const statusMsg = websiteJob
+    ? websiteJob.partialLength
+      ? `Génération en cours... ${websiteJob.partialLength.toLocaleString('fr-FR')} caractères générés (${websiteJob.elapsed}s)`
+      : `Démarrage de la génération... (${websiteJob.elapsed ?? 0}s)`
+    : '';
+
   return (
     <div className="min-h-screen mesh-bg">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -205,7 +200,7 @@ export default function WebsitePage() {
       <div className="relative z-10 p-6 md:p-8 max-w-6xl mx-auto">
         <ModuleHeader
           title="Site web"
-          description="Générez votre landing page, boutique ou site vitrine en minutes avec l'IA. Choisissez un template et laissez l'IA générer le contenu."
+          description="Générez votre landing page, boutique ou site vitrine en minutes avec l'IA. La génération continue en arrière-plan si vous changez de page."
           icon={Globe}
           gradient="from-blue-500 to-cyan-600"
         />
@@ -240,8 +235,9 @@ export default function WebsitePage() {
                           type="button"
                           onClick={() => setTemplate(tpl.id)}
                           aria-pressed={selected}
+                          disabled={isGenerating}
                           className={cn(
-                            'flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all',
+                            'flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed',
                             selected
                               ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/10'
                               : 'border-white/5 glass hover:bg-white/5',
@@ -267,7 +263,8 @@ export default function WebsitePage() {
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="Ex: Teranga Mode"
-                    className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-blue-500/40 outline-none text-sm"
+                    disabled={isGenerating}
+                    className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-blue-500/40 outline-none text-sm disabled:opacity-60"
                   />
                 </div>
 
@@ -282,7 +279,8 @@ export default function WebsitePage() {
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                     placeholder="Ex: Mode, Restaurant, Tech..."
-                    className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-blue-500/40 outline-none text-sm"
+                    disabled={isGenerating}
+                    className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-blue-500/40 outline-none text-sm disabled:opacity-60"
                   />
                 </div>
 
@@ -303,6 +301,7 @@ export default function WebsitePage() {
                         type="color"
                         value={primaryColor}
                         onChange={(e) => setPrimaryColor(e.target.value)}
+                        disabled={isGenerating}
                         className="absolute inset-0 opacity-0 cursor-pointer"
                       />
                     </label>
@@ -310,7 +309,8 @@ export default function WebsitePage() {
                       type="text"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="flex-1 glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-blue-500/40 outline-none text-sm font-mono uppercase"
+                      disabled={isGenerating}
+                      className="flex-1 glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-blue-500/40 outline-none text-sm font-mono uppercase disabled:opacity-60"
                       aria-label="Code couleur hexadécimal"
                     />
                   </div>
@@ -320,12 +320,12 @@ export default function WebsitePage() {
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  disabled={generating}
-                  className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-500 to-cyan-600 hover:scale-[1.02] transition-transform shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                  disabled={isGenerating}
+                  className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-500 to-cyan-600 hover:scale-[1.02] transition-transform shadow-lg disabled:opacity-60 disabled:hover:scale-100 flex items-center justify-center gap-2"
                 >
-                  {generating ? (
+                  {isGenerating ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Génération (30 crédits)...
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Génération en cours...
                     </>
                   ) : (
                     <>
@@ -333,6 +333,13 @@ export default function WebsitePage() {
                     </>
                   )}
                 </button>
+
+                {isGenerating && (
+                  <p className="text-[11px] text-blue-300 text-center flex items-center justify-center gap-1.5">
+                    <Sparkles className="w-3 h-3" aria-hidden="true" />
+                    Vous pouvez changer de page — la génération continue en arrière-plan
+                  </p>
+                )}
 
                 {!user && (
                   <p className="text-xs text-amber-400 text-center">Connectez-vous pour générer</p>
@@ -344,8 +351,8 @@ export default function WebsitePage() {
           {/* ─── Preview (right) ───────────────────────────────────── */}
           <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-              {/* Loading state */}
-              {generating && (
+              {/* Loading state — shows live progress */}
+              {isGenerating && (
                 <motion.div
                   key="loading"
                   initial={{ opacity: 0 }}
@@ -355,12 +362,25 @@ export default function WebsitePage() {
                 >
                   <Loader2 className="w-12 h-12 animate-spin text-blue-500 mb-4" aria-hidden="true" />
                   <p className="text-sm text-gray-400">{statusMsg || "L'IA génère votre site web..."}</p>
-                  <p className="text-xs text-gray-600 mt-2">HTML, CSS, sections, contenu — en 15-30s</p>
+                  <p className="text-xs text-gray-600 mt-2">HTML, CSS, sections, contenu — streaming temps réel</p>
+                  {websiteJob?.partialLength ? (
+                    <div className="mt-4 w-full max-w-xs">
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-600 transition-all duration-500"
+                          style={{ width: `${Math.min(100, (websiteJob.partialLength / 4000) * 100)}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-1 text-center">
+                        {websiteJob.partialLength.toLocaleString('fr-FR')} / ~4000 caractères
+                      </p>
+                    </div>
+                  ) : null}
                 </motion.div>
               )}
 
               {/* Empty state */}
-              {!generating && !generatedHtml && (
+              {!isGenerating && !generatedHtml && (
                 <motion.div
                   key="empty"
                   initial={{ opacity: 0 }}
@@ -377,7 +397,7 @@ export default function WebsitePage() {
               )}
 
               {/* Result */}
-              {!generating && generatedHtml && (
+              {!isGenerating && generatedHtml && (
                 <motion.div
                   key="result"
                   initial={{ opacity: 0, y: 20 }}
@@ -429,7 +449,6 @@ export default function WebsitePage() {
                     <button
                       type="button"
                       onClick={handleGenerate}
-                      disabled={generating}
                       className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass border border-white/10 hover:bg-white/10 text-xs font-semibold transition-colors"
                     >
                       <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> Régénérer

@@ -1,16 +1,18 @@
 // AfriLaunch AI — Dashboard Layout (sidebar + header)
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Rocket, LayoutDashboard, Palette, Globe, PenSquare, Share2,
   Bot, Megaphone, CreditCard, BarChart3, Users, Settings,
-  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic,
+  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic, Loader2, Check, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useOrganization } from '@/hooks/use-organization';
+import { useBackgroundJobs } from '@/hooks/use-background-jobs';
 import { AICoworker } from '@/components/dashboard/ai-coworker';
 
 const navSections = [
@@ -58,6 +60,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { organization, isLoading: orgLoading } = useOrganization();
+  const { activeJobs } = useBackgroundJobs();
 
   const orgName = organization?.name ?? 'Mon organisation';
   const initials = (orgName || 'MO')
@@ -194,8 +197,77 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
+      {/* Background jobs indicator (floating, bottom-right) */}
+      {activeJobs.length > 0 && <BackgroundJobsIndicator jobs={activeJobs} />}
+
       {/* AI Coworker — flottant sur toutes les pages dashboard */}
       <AICoworker />
+    </div>
+  );
+}
+
+// ─── Background Jobs Indicator ─────────────────────────────────────────
+function BackgroundJobsIndicator({ jobs }: { jobs: any[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const label = jobs.length === 1
+    ? (jobs[0].type === 'website' ? 'Génération site web'
+      : jobs[0].type === 'identity' ? 'Génération identité'
+      : 'Génération contenu')
+    : `${jobs.length} générations en cours`;
+
+  return (
+    <div className="fixed bottom-4 right-4 z-40 lg:bottom-6 lg:right-6">
+      <div className="glass rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-white/5 transition-colors w-full"
+          aria-expanded={expanded}
+        >
+          <div className="relative w-6 h-6 flex items-center justify-center">
+            <Loader2 className="w-5 h-5 animate-spin text-violet-400" aria-hidden="true" />
+          </div>
+          <div className="text-left flex-1 min-w-0">
+            <p className="text-xs font-semibold truncate">{label}</p>
+            <p className="text-[10px] text-gray-500">
+              {jobs.length === 1 && jobs[0].elapsed
+                ? `${jobs[0].elapsed}s écoulées${jobs[0].partialLength ? ` · ${jobs[0].partialLength.toLocaleString('fr-FR')} car.` : ''}`
+                : 'Travail en arrière-plan'}
+            </p>
+          </div>
+          {expanded ? <X className="w-3.5 h-3.5 text-gray-500" aria-hidden="true" /> : null}
+        </button>
+        {expanded && (
+          <div className="border-t border-white/5 p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+            {jobs.map((job) => {
+              const target = job.type === 'website' ? '/dashboard/website'
+                : job.type === 'identity' ? '/dashboard/identity'
+                : '/dashboard/content';
+              const jobLabel = job.type === 'website' ? 'Site web'
+                : job.type === 'identity' ? 'Identité de marque'
+                : 'Contenu';
+              return (
+                <Link
+                  key={job.jobId}
+                  href={target}
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 text-xs"
+                >
+                  <Loader2 className="w-3 h-3 animate-spin text-violet-400 flex-shrink-0" aria-hidden="true" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{jobLabel}</p>
+                    {job.partialLength ? (
+                      <p className="text-[10px] text-gray-500">
+                        {job.partialLength.toLocaleString('fr-FR')} caractères générés
+                      </p>
+                    ) : null}
+                  </div>
+                  {job.elapsed ? <span className="text-[10px] text-gray-500">{job.elapsed}s</span> : null}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
