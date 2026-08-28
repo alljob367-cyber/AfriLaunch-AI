@@ -11,6 +11,7 @@ import {
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { useToast } from '@/components/providers/toast-provider';
 import { useAuth } from '@/components/providers/auth-provider';
+import { BrandKitGallery } from '@/components/dashboard/brand-kit-gallery';
 import { cn } from '@/lib/utils';
 
 interface BrandKit {
@@ -193,6 +194,9 @@ export default function IdentityPage() {
             )
           }
         />
+
+        {/* Visual brand kit gallery (logo + banners + favicon) */}
+        <BrandKitGallery />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}

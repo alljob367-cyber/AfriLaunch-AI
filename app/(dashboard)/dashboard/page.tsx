@@ -17,6 +17,7 @@ import { AIRecommendations, type Recommendation } from '@/components/dashboard/a
 import { QuickActions } from '@/components/dashboard/quick-actions';
 import { SocialAccountsWidget } from '@/components/dashboard/social-accounts-widget';
 import { ContentCalendar } from '@/components/dashboard/content-calendar';
+import { RecentDeliverables } from '@/components/dashboard/recent-deliverables';
 import { OnboardingBanner } from '@/components/dashboard/onboarding-banner';
 import { EmptyState } from '@/components/dashboard/empty-state';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -250,6 +251,21 @@ export default function DashboardPage() {
                     </h2>
                   </div>
                   <RecentActivity items={recentActivity} />
+                </div>
+              </motion.section>
+
+              <motion.section variants={itemVariants} className="col-span-12">
+                <div className="card-premium">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-violet-500" aria-hidden="true" />
+                      Livrables récents
+                    </h2>
+                    <Link href="/dashboard/identity" className="text-xs text-gray-400 hover:text-white">
+                      Tout voir →
+                    </Link>
+                  </div>
+                  <RecentDeliverables />
                 </div>
               </motion.section>
 

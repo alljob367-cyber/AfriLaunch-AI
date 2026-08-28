@@ -34,6 +34,22 @@ const MODULE_KEYWORDS: Record<string, { module: string; description: string }> =
   'analytic|statistique|stat|performance|métrique': { module: 'analytics', description: 'Analytics' },
 };
 
+// Intent detection for "create a logo / brand kit" — triggers real image generation
+const BRAND_KIT_INTENT_PATTERNS = [
+  /cr[ée]{1,2}[a-z\s]*logo/i,
+  /cr[ée]{1,2}[a-z\s]*(kit|identité|charte)/i,
+  /g[ée]n[èe]r[ée][a-z\s]*(logo|kit|charte|identité)/i,
+  /fais[a-z\s]*(logo|kit|charte|identité)/i,
+  /logo\s+pro/i,
+  /kit\s+m[ée]dia/i,
+  /kit\s+de\s+marque/i,
+  /banni[èe]re\s+(r[ée]seau|facebook|instagram|linkedin)/i,
+];
+
+function isBrandKitIntent(text: string): boolean {
+  return BRAND_KIT_INTENT_PATTERNS.some((p) => p.test(text));
+}
+
 function routeToModule(text: string): string | null {
   const lower = text.toLowerCase();
   for (const [keywords, info] of Object.entries(MODULE_KEYWORDS)) {
@@ -146,6 +162,67 @@ export function AICoworker() {
     setLoading(true);
 
     try {
+      // ── Special intent: brand kit generation (logo + banners) ──────
+      if (isBrandKitIntent(message)) {
+        // Acknowledge immediately
+        const ackMsg: Message = {
+          role: 'assistant',
+          content: '🎨 Je lance la génération de votre kit de marque complet (logo + bannières + favicon). Cela prend 2-3 minutes. Vous pouvez suivre la progression sur la page Identité de marque.',
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, ackMsg]);
+        speakResponse(ackMsg.content);
+
+        // Trigger the generation in the background
+        try {
+          const res = await fetch('/api/brand-kit/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({}), // pre-fills from organization server-side
+          });
+          const data = await res.json();
+          if (data.ok) {
+            const successMsg: Message = {
+              role: 'assistant',
+              content: `✅ Génération démarrée ! ${data.creditsUsed} crédits débités. ${data.creditsRemaining} crédits restants.\n\n👉 Suivez les livrables en temps réel sur /dashboard/identity`,
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, successMsg]);
+            speakResponse('Génération démarrée. Suivez les livrables sur la page identité de marque.');
+          } else if (data.paymentRequired) {
+            const errMsg: Message = {
+              role: 'assistant',
+              content: '🔒 Abonnement requis. Souscrivez un plan dans /dashboard/subscription pour générer votre kit de marque.',
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, errMsg]);
+          } else if (data.insufficientCredits) {
+            const errMsg: Message = {
+              role: 'assistant',
+              content: `⚠️ Crédits insuffisants. La génération d'un kit coûte 15 crédits. Il vous reste ${data.creditsRemaining ?? 0} crédits.`,
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, errMsg]);
+          } else {
+            const errMsg: Message = {
+              role: 'assistant',
+              content: `⚠️ Échec: ${data.error || 'erreur inconnue'}`,
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, errMsg]);
+          }
+        } catch (err) {
+          const errMsg: Message = {
+            role: 'assistant',
+            content: '⚠️ Erreur réseau lors du démarrage. Réessayez.',
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, errMsg]);
+        }
+        return;
+      }
+
       // Route to the appropriate module
       const moduleRoute = routeToModule(message);
 
