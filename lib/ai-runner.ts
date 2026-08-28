@@ -35,10 +35,10 @@ export { resetHealth, getHealthSnapshot, type ProviderName };
 //   - long-form (≤3000):   minimax m3 free (good quality/price ratio)
 //   - website (≤6000):     minimax m3 free (needs longer context)
 const PLAN_MODELS_FAST: Record<PlanId, string> = {
-  starter: 'minimax/minimax-m3:free',
-  pro: 'minimax/minimax-m3:free',
-  business: 'minimax/minimax-m3:free',
-  enterprise: 'minimax/minimax-m3:free',
+  starter: 'meta-llama/llama-3.1-8b-instruct:free',
+  pro: 'meta-llama/llama-3.1-8b-instruct:free',
+  business: 'meta-llama/llama-3.1-8b-instruct:free',
+  enterprise: 'meta-llama/llama-3.1-8b-instruct:free',
 };
 
 const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
@@ -56,14 +56,14 @@ const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
 // fast chat and quality long-form on OpenRouter — Groq provides the speed.
 const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
   openrouter: 'minimax/minimax-m3:free',     // tested OK with streaming
-  cerebras: 'llama3.1-8b',                   // Cerebras free tier, ultra-fast (1000+ tok/s)
+  groq: 'llama-3.3-70b-versatile',           // free, 30 req/min, ~6x faster than OR
   mistral: 'mistral-small-latest',            // free tier, decent speed
 };
 
 // Per-provider quality models (used by long-form generation: identity/website)
 const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
   openrouter: 'minimax/minimax-m3:free',     // same — only free model that works
-  cerebras: 'llama-3.3-70b',                 // Cerebras 70B for quality
+  groq: 'llama-3.3-70b-versatile',           // Groq doesn't have minimax, use llama-70b
   mistral: 'mistral-large-latest',            // better quality
 };
 
@@ -166,8 +166,8 @@ function getEndpoint(provider: ProviderName, providerConfig: any): string {
   if (provider === 'openrouter') {
     return (providerConfig.endpoint || 'https://openrouter.ai/api/v1') + '/chat/completions';
   }
-  if (provider === 'cerebras') {
-    return (providerConfig.endpoint || 'https://api.cerebras.ai/v1') + '/chat/completions';
+  if (provider === 'groq') {
+    return (providerConfig.endpoint || 'https://api.groq.com/openai/v1') + '/chat/completions';
   }
   if (provider === 'mistral') {
     return (providerConfig.endpoint || 'https://api.mistral.ai/v1') + '/chat/completions';
