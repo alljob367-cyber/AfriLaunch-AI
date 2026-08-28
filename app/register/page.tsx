@@ -44,11 +44,11 @@ function RegisterForm() {
       toast({
         title: 'Compte créé ! 🎉',
         description: referredBy
-          ? 'Bienvenue ! 1 mois Starter offert + 100 crédits bonus de parrainage.'
-          : 'Bienvenue ! 1 mois Starter offert (500 crédits IA). Activez votre abonnement pour continuer après l\'essai.',
+          ? 'Bienvenue ! + 100 crédits bonus de parrainage. Activez votre abonnement pour débloquer la plateforme.'
+          : 'Bienvenue ! Activez votre abonnement (dès 5 000 FCFA/mois) pour débloquer la plateforme.',
         variant: 'success',
       });
-      setTimeout(() => router.push('/dashboard'), 800);
+      setTimeout(() => router.push('/dashboard/subscription'), 800);
     } catch (err) {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
       setSubmitting(false);
@@ -69,11 +69,11 @@ function RegisterForm() {
         </Link>
 
         <div className="glass rounded-3xl p-8 border border-white/10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 mb-4">
-            <span className="text-xs font-bold text-green-400">✓ 1 mois Starter offert · 500 crédits IA</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 mb-4">
+            <span className="text-xs font-bold text-indigo-300">Dès 5 000 FCFA / mois · Mobile Money</span>
           </div>
           <h1 className="text-2xl font-bold mb-2">Lancez votre business 🚀</h1>
-          <p className="text-sm text-gray-400 mb-8">Essai gratuit 30 jours · Sans engagement</p>
+          <p className="text-sm text-gray-400 mb-8">Créez votre compte · Activez votre abonnement · Démarrez en 24h</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -153,7 +153,7 @@ function RegisterForm() {
               {submitting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Création...</>
               ) : (
-                <>Créer mon compte gratuit <ArrowRight className="w-4 h-4" aria-hidden="true" /></>
+                <>Créer mon compte <ArrowRight className="w-4 h-4" aria-hidden="true" /></>
               )}
             </button>
           </form>

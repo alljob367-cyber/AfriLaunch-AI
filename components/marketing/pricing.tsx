@@ -83,7 +83,7 @@ export function PricingSection() {
             Payez en FCFA par Mobile Money ou virement bancaire.
           </p>
           <p className="text-gray-500 text-sm max-w-2xl mx-auto mb-10">
-            Essai gratuit 30 jours sur le plan Starter. Annulez quand vous voulez.
+            Annulez quand vous voulez. Activation en 24h après paiement Mobile Money.
           </p>
 
           {/* Toggle */}
@@ -112,7 +112,7 @@ export function PricingSection() {
             >
               Annuel
               <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
-                2 mois offerts
+                -20%
               </span>
             </button>
           </div>

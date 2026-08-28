@@ -121,7 +121,7 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     hero_subtitle: 'AfriLaunch AI centralise branding, site web, contenu, réseaux sociaux et paiements Mobile Money. 13 agents IA travaillent 24/7 pendant que vous scalez.',
     hero_cta_primary: 'Démarrer maintenant',
     hero_cta_secondary: 'Voir la démo',
-    hero_note: 'Aucune carte requise · Paiement Mobile Money · Activation en 24h',
+    hero_note: 'Paiement Mobile Money · Activation en 24h · Sans engagement',
 
     stats_users: 'Entrepreneurs actifs',
     stats_countries: 'Pays africains',
@@ -187,7 +187,7 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     pricing_popular: 'Le plus populaire',
     pricing_plans: [
       { name: 'Starter', price: '5 000', desc: 'Pour démarrer', features: ['13 agents IA', 'Site web basique', '2 réseaux sociaux', '500 crédits IA/mois', 'Support email 48h'], cta: 'Commencer' },
-      { name: 'Pro', price: '15 000', desc: 'Pour grow', popular: true, features: ['13 agents IA', 'Site web premium + domaine', '5 réseaux sociaux', '5 000 crédits IA/mois', 'WhatsApp Agent IA', 'Analytics avancés', 'Support prioritaire 24h'], cta: 'Démarrer l\'essai' },
+      { name: 'Pro', price: '15 000', desc: 'Pour grow', popular: true, features: ['13 agents IA', 'Site web premium + domaine', '5 réseaux sociaux', '5 000 crédits IA/mois', 'WhatsApp Agent IA', 'Analytics avancés', 'Support prioritaire 24h'], cta: 'Choisir Pro' },
       { name: 'Business', price: '40 000', desc: 'Pour scale', features: ['13 agents IA', 'Site e-commerce + publication', '6 réseaux sociaux', '50 000 crédits IA/mois', 'Multi-utilisateurs (20)', 'API complète', 'Account manager dédié'], cta: 'Choisir Business' },
       { name: 'Enterprise', price: '150 000', desc: 'Sur-mesure', features: ['Agents illimités', 'Infrastructure dédiée', 'Crédits illimités', 'SLA 99.99%', 'Intégrations sur-mesure', 'SSO & sécurité avancée', 'Support 24/7 dédié'], cta: 'Nous contacter' },
     ],
@@ -208,7 +208,7 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     faq_subtitle: 'Tout ce que vous devez savoir avant de commencer.',
     faq_items: [
       { q: 'Comment fonctionne le paiement ?', a: 'Vous payez en FCFA via Mobile Money (MTN MoMo, Orange Money, Wave) ou virement bancaire. Téléversez votre preuve de paiement, notre équipe active votre compte sous 24h.' },
-      { q: 'Y a-t-il un essai gratuit ?', a: 'Non — AfriLaunch AI est un service premium. Vous devez souscrire un abonnement pour utiliser la plateforme. Le plan Starter à 5 000 FCFA/mois est le point d\'entrée le plus accessible.' },
+      { q: 'Y a-t-il un essai gratuit ?', a: 'Non — AfriLaunch AI est un service premium. Vous devez souscrire un abonnement pour utiliser la plateforme. Le plan Starter à 5 000 FCFA/mois est le point d\'entrée le plus accessible. Activation en 24h via Mobile Money.' },
       { q: 'L\'IA comprend-elle le contexte africain ?', a: 'Oui. Nos 13 agents IA sont formés sur les réalités du marché africain : habitudes d\'achat (Mobile Money, paiement à la livraison), langues locales (wolof, swahili, yoruba), références culturelles et benchmarks par pays.' },
       { q: 'Mes données sont-elles sécurisées ?', a: 'Vos données sont stockées sur Supabase (PostgreSQL) avec chiffrement et RLS (Row-Level Security). Vos conversations avec les agents IA sont privées et ne sont jamais partagées. Conforme RGPD.' },
       { q: 'Puis-je changer de plan ou résilier ?', a: 'Oui, à tout moment depuis votre dashboard. Vous pouvez upgrader, downgrader ou résilier en 1 clic. Les crédits déjà payés restent disponibles jusqu\'à la fin de la période en cours.' },
@@ -244,7 +244,7 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     hero_subtitle: 'AfriLaunch AI centralizes branding, website, content, social media and Mobile Money payments. 13 AI agents work 24/7 while you scale.',
     hero_cta_primary: 'Start now',
     hero_cta_secondary: 'See demo',
-    hero_note: 'No card required · Mobile Money payment · Activation in 24h',
+    hero_note: 'Mobile Money payment · Activation in 24h · No commitment',
 
     stats_users: 'Active entrepreneurs',
     stats_countries: 'African countries',
@@ -310,7 +310,7 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     pricing_popular: 'Most popular',
     pricing_plans: [
       { name: 'Starter', price: '5,000', desc: 'To get started', features: ['13 AI agents', 'Basic website', '2 social networks', '500 AI credits/month', 'Email support 48h'], cta: 'Start' },
-      { name: 'Pro', price: '15,000', desc: 'To grow', popular: true, features: ['13 AI agents', 'Premium website + domain', '5 social networks', '5,000 AI credits/month', 'WhatsApp AI Agent', 'Advanced analytics', 'Priority support 24h'], cta: 'Start trial' },
+      { name: 'Pro', price: '15,000', desc: 'To grow', popular: true, features: ['13 AI agents', 'Premium website + domain', '5 social networks', '5,000 AI credits/month', 'WhatsApp AI Agent', 'Advanced analytics', 'Priority support 24h'], cta: 'Choose Pro' },
       { name: 'Business', price: '40,000', desc: 'To scale', features: ['13 AI agents', 'E-commerce website + publishing', '6 social networks', '50,000 AI credits/month', 'Multi-user (20)', 'Full API access', 'Dedicated account manager'], cta: 'Choose Business' },
       { name: 'Enterprise', price: '150,000', desc: 'Custom', features: ['Unlimited agents', 'Dedicated infrastructure', 'Unlimited credits', '99.99% SLA', 'Custom integrations', 'SSO & advanced security', 'Dedicated 24/7 support'], cta: 'Contact us' },
     ],

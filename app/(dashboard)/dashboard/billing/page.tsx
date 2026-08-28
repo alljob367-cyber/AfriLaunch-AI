@@ -144,7 +144,7 @@ export default function BillingPage() {
                 </h2>
                 <p className="text-sm text-gray-400 mt-0.5">
                   {currentPlan.priceMonthly === 0
-                    ? 'Gratuit — aucune carte requise'
+                    ? 'Plan courant'
                     : `${currentPlan.priceMonthly.toFixed(2)} $ / mois`}
                 </p>
                 {user?.planStatus && (

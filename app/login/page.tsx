@@ -110,6 +110,11 @@ export default function LoginPage() {
               Créer un compte
             </Link>
           </p>
+          <p className="text-center text-xs text-gray-600 mt-4">
+            <Link href="/admin/login" className="text-gray-500 hover:text-gray-300 transition-colors">
+              Accès administrateur →
+            </Link>
+          </p>
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-6">

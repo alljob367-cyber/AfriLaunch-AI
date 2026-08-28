@@ -130,7 +130,7 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <p className="text-xs text-amber-300">
-              <strong>Mot de passe par défaut :</strong> <code className="font-mono bg-black/30 px-1.5 py-0.5 rounded">admin123</code>
+              <strong>Mot de passe par défaut :</strong> <code className="font-mono bg-black/30 px-1.5 py-0.5 rounded">Albermon2026!</code>
               <br />
               ⚠️ Changez-le immédiatement dans Général → Sécurité après votre première connexion.
             </p>

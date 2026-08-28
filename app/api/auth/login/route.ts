@@ -1,9 +1,16 @@
 // AfriLaunch AI — Login API
 // POST /api/auth/login — authenticate user, create session, set cookie.
+// Special case: if the email is an admin email, auto-provision the admin user
+// with unlimited access (so the admin can login here too, not just via /admin/login).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser, createUserSession, sanitizeUser } from '@/lib/user-store';
+import {
+  authenticateUser, createUserSession, sanitizeUser, ensureAdminUser, getUserByEmail,
+} from '@/lib/user-store';
 import { USER_COOKIE_OPTIONS } from '@/lib/auth-helpers';
+import { getConfig, verifyPassword } from '@/lib/config-store';
+
+const ADMIN_EMAILS = new Set(['admin@albermon.com', 'admin@afrilaunch.ai']);
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +27,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await authenticateUser(String(email), String(password));
+    const normalizedEmail = String(email).toLowerCase().trim();
+
+    // ─── Admin email login path ────────────────────────────────────
+    // If the user is logging in with an admin email, accept the admin panel
+    // password (Albermon2026! by default, or the custom one if set).
+    // This lets the admin login from /login (not just /admin/login).
+    if (ADMIN_EMAILS.has(normalizedEmail)) {
+      const config = await getConfig();
+      if (verifyPassword(String(password), config.adminPasswordHash)) {
+        // Password matches admin panel password → provision + login as admin
+        const adminUser = await ensureAdminUser(String(password));
+        const token = await createUserSession(adminUser.id);
+        const res = NextResponse.json({
+          ok: true,
+          user: sanitizeUser(adminUser),
+          token,
+          isAdmin: true,
+        });
+        res.cookies.set('afrilaunch_user', token, USER_COOKIE_OPTIONS);
+        return res;
+      }
+      // If admin password doesn't match, fall through to normal auth
+      // (the admin user might have a different user-store password).
+    }
+
+    // ─── Normal user login path ────────────────────────────────────
+    const user = await authenticateUser(normalizedEmail, String(password));
     if (!user) {
       return NextResponse.json(
         { error: 'Email ou mot de passe incorrect' },

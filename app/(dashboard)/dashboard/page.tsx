@@ -300,7 +300,7 @@ function WhatsAppBanner() {
           <p className="font-bold text-sm">WhatsApp Agent IA disponible ! 🤖</p>
           <p className="text-xs text-gray-400 mt-0.5">
             {waStatus.freeForAll
-              ? 'Gratuit pour tous — envoyez un message et l\'IA vous répond instantanément.'
+              ? 'Disponible pour tous — envoyez un message et l\'IA vous répond instantanément.'
               : 'Discutez avec l\'IA directement sur WhatsApp.'
             }
             {waStatus.userCount ? ` · ${waStatus.userCount} utilisateurs actifs` : ''}
