@@ -1,0 +1,26 @@
+{
+  "name": "AfriLaunch AI",
+  "short_name": "AfriLaunch",
+  "description": "Plateforme IA tout-en-un pour entrepreneurs africains",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050508",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "fr",
+  "dir": "ltr"
+}
