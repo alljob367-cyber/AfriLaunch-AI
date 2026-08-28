@@ -1,12 +1,22 @@
 // AfriLaunch AI — Twilio WhatsApp webhook
 // POST /api/whatsapp-agent/webhook — receives WhatsApp messages from Twilio
 // Forwards to AI, sends response back via Twilio
-// NO CONFIGURATION NEEDED BY USERS — they just send a WhatsApp message
+//
+// Per-user routing: looks up the AfriLaunch user who connected this WhatsApp
+// number (in social-store). If found, uses THEIR agent config (custom prompt,
+// business context, FAQ, tone, business hours). If not found, falls back to
+// admin defaults.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
-import { processWhatsAppWithElevenLabs, sendWhatsAppMessage } from '@/lib/elevenlabs-agent';
+import { sendWhatsAppMessage } from '@/lib/elevenlabs-agent';
 import { kvGet, kvSet } from '@/lib/db';
+import {
+  getConfigByWhatsAppNumber,
+  buildSystemPrompt,
+  isWithinBusinessHours,
+} from '@/lib/whatsapp-agent-store';
+import { runAIForPlanFast } from '@/lib/ai-runner';
 
 interface WhatsAppUser {
   phoneNumber: string;
@@ -14,6 +24,8 @@ interface WhatsAppUser {
   firstMessageAt: string;
   lastMessageAt: string;
   messageCount: number;
+  // Track which AfriLaunch user (if any) owns this WhatsApp number
+  linkedUserId?: string;
 }
 
 async function readWhatsAppUsers(): Promise<WhatsAppUser[]> {
@@ -69,34 +81,93 @@ export async function POST(req: NextRequest) {
   }
   await writeWhatsAppUsers(waUsers);
 
-  // If freeForAll is enabled, skip credit checks entirely
-  // If not, we would check if the user has an AfriLaunch account + credits
-  // For now, we default to freeForAll = true so EVERYONE can use it
+  // ── Per-user routing ──────────────────────────────────────────────
+  // Look up the AfriLaunch user who connected this WhatsApp number.
+  // If found, use THEIR agent config. Otherwise, use admin defaults.
+  const userConfig = await getConfigByWhatsAppNumber(from);
+
+  // Determine the welcome message (per-user or admin default)
+  const welcomeMessage = userConfig?.firstMessage
+    ? userConfig.firstMessage.replace(/\{businessName\}/g, userConfig.businessName || 'notre entreprise')
+    : config.twilio.welcomeMessage;
 
   // Send welcome message to new users
-  if (isNewUser && config.twilio.welcomeMessage) {
+  if (isNewUser && welcomeMessage) {
     await sendWhatsAppMessage({
       to: from,
-      body: config.twilio.welcomeMessage,
+      body: welcomeMessage,
     });
-    // Small delay before processing the actual message
     await new Promise((r) => setTimeout(r, 1000));
   }
 
-  // Process the message with AI
-  const result = await processWhatsAppWithElevenLabs(body, profileName);
-
-  if (!result.ok || !result.response) {
+  // ── Auto-respond toggle ──────────────────────────────────────────
+  // If the user disabled auto-respond, just acknowledge and stop.
+  if (userConfig && !userConfig.autoRespond) {
     await sendWhatsAppMessage({
       to: from,
-      body: `⚠️ Désolé, je n'ai pas pu traiter votre message. Réessayez dans un instant.`,
+      body: '✅ Merci pour votre message ! Nous l\'avons bien reçu et vous répondrons manuellement prochainement.',
     });
-  } else {
-    await sendWhatsAppMessage({
-      to: from,
-      body: result.response,
+    return new NextResponse('<Response></Response>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/xml' },
     });
   }
+
+  // ── Business hours check ─────────────────────────────────────────
+  if (userConfig && !isWithinBusinessHours(userConfig)) {
+    const outsideMsg = userConfig.businessHours.outsideHoursMessage || 'Nous sommes actuellement fermés. Nous vous répondrons à notre retour. 🌙';
+    await sendWhatsAppMessage({
+      to: from,
+      body: outsideMsg,
+    });
+    return new NextResponse('<Response></Response>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/xml' },
+    });
+  }
+
+  // ── Build system prompt ──────────────────────────────────────────
+  let systemPrompt: string;
+  let maxTokens = 500;
+
+  if (userConfig && userConfig.enabled) {
+    // Use the user's custom config
+    systemPrompt = buildSystemPrompt(userConfig);
+    maxTokens = Math.min(800, Math.ceil(userConfig.maxResponseLength / 2));
+  } else {
+    // Fallback: admin defaults (legacy behavior)
+    systemPrompt = `Tu es l'assistant WhatsApp d'AfriLaunch AI. Réponds en français, de façon concise (max 1000 caractères). Tu aides les entrepreneurs africains. Tu es expert en business africain. Sois chaleureux, professionnel et actionnable. Si l'utilisateur demande de l'aide spécifique (marketing, branding, etc.), donne des conseils concrets.`;
+  }
+
+  // ── Generate AI response ─────────────────────────────────────────
+  let response = '';
+  try {
+    const result = await runAIForPlanFast({
+      systemPrompt,
+      userMessage: body,
+      maxTokens,
+    }, 'starter');
+
+    if (result.ok && result.reply) {
+      response = result.reply;
+    } else {
+      console.error('WhatsApp AI error:', result.error);
+      response = '⚠️ Désolé, je rencontre un problème technique. Réessayez dans un instant.';
+    }
+  } catch (err) {
+    console.error('WhatsApp AI exception:', err);
+    response = '⚠️ Désolé, je rencontre un problème technique. Réessayez dans un instant.';
+  }
+
+  // Enforce max length (safety net)
+  if (userConfig && response.length > userConfig.maxResponseLength) {
+    response = response.slice(0, userConfig.maxResponseLength - 3) + '...';
+  }
+
+  await sendWhatsAppMessage({
+    to: from,
+    body: response,
+  });
 
   return new NextResponse('<Response></Response>', {
     status: 200,

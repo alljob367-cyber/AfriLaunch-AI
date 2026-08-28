@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import {
   Rocket, LayoutDashboard, Palette, Globe, PenSquare, Share2,
   Bot, Megaphone, CreditCard, BarChart3, Users, Settings,
-  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic, Loader2, Check, X,
+  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic, Loader2, Check, X, MessageCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -45,6 +45,7 @@ const navSections = [
     label: 'Business',
     items: [
       { href: '/dashboard/agents', label: 'Agents IA', icon: Bot },
+      { href: '/dashboard/whatsapp-agent', label: 'Agent WhatsApp', icon: MessageCircle, color: 'text-green-400' },
       { href: '/dashboard/payments', label: 'Paiements', icon: CreditCard },
       { href: '/dashboard/payment-manual', label: 'Paiement manuel', icon: Wallet },
       { href: '/dashboard/team', label: 'Équipe', icon: Users },
