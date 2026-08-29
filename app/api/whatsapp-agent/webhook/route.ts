@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
-import { sendWhatsAppMessage, sendWhatsAppMedia } from '@/lib/elevenlabs-agent';
+import { sendWhatsAppMessage, sendWhatsAppMedia, transcribeWhatsAppAudio, generateVoiceResponse } from '@/lib/elevenlabs-agent';
 import { kvGet, kvSet } from '@/lib/db';
 import {
   getConfigByWhatsAppNumber,
@@ -53,8 +53,35 @@ export async function POST(req: NextRequest) {
   const from = formData.get('From') as string; // whatsapp:+1234567890
   const body = (formData.get('Body') as string) || '';
   const profileName = (formData.get('ProfileName') as string) || 'Utilisateur';
+  const numMedia = parseInt(formData.get('NumMedia') as string || '0', 10);
+  const mediaUrl0 = formData.get('MediaUrl0') as string | null;
+  const mediaContentType0 = formData.get('MediaContentType0') as string | null;
 
-  if (!body.trim()) {
+  // ── Handle voice messages (audio) via ElevenLabs STT ──────────────
+  let messageText = body;
+  let isVoiceMessage = false;
+  if (numMedia > 0 && mediaUrl0 && mediaContentType0?.startsWith('audio/')) {
+    isVoiceMessage = true;
+    // Transcribe the voice message using ElevenLabs Scribe
+    const sttResult = await transcribeWhatsAppAudio(mediaUrl0);
+    if (sttResult.ok && sttResult.text) {
+      messageText = sttResult.text;
+      // Acknowledge to the user that we transcribed their voice
+      // (don't send a separate message — just process the text)
+    } else {
+      // STT failed — tell the user
+      await sendWhatsAppMessage({
+        to: from,
+        body: '⚠️ Je n\'ai pas pu transcrire votre message vocal. Pouvez-vous l\'envoyer en texte ?',
+      });
+      return new NextResponse('<Response></Response>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/xml' },
+      });
+    }
+  }
+
+  if (!messageText.trim()) {
     return new NextResponse('<Response></Response>', {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
@@ -148,15 +175,15 @@ export async function POST(req: NextRequest) {
   try {
     if (aiProvider === 'mistral') {
       // Force Mistral provider (skip load balancer)
-      response = await callMistralDirectly(systemPrompt, body, maxTokens);
+      response = await callMistralDirectly(systemPrompt, messageText, maxTokens);
     } else if (aiProvider === 'openrouter') {
       // Force OpenRouter provider
-      response = await callOpenRouterDirectly(systemPrompt, body, maxTokens);
+      response = await callOpenRouterDirectly(systemPrompt, messageText, maxTokens);
     } else {
       // 'auto' → use load balancer (OpenRouter → Mistral → Groq)
       const result = await runAIForPlanFast({
         systemPrompt,
-        userMessage: body,
+        userMessage: messageText,
         maxTokens,
       }, 'starter');
 
@@ -181,6 +208,33 @@ export async function POST(req: NextRequest) {
     to: from,
     body: response,
   });
+
+  // ── Voice response (TTS) — if the user sent a voice message ──────
+  // When the incoming message was a voice note, we also send the response
+  // as a voice message (audio MP3) using ElevenLabs TTS.
+  if (isVoiceMessage && config.elevenlabs?.apiKey) {
+    try {
+      const ttsResult = await generateVoiceResponse(response);
+      if (ttsResult.ok && ttsResult.audioDataUrl) {
+        // Store the audio temporarily and send via media endpoint
+        // We need a public URL — store in KV and serve via /api/whatsapp-agent/media
+        const audioId = 'voice_' + Date.now().toString(36);
+        await kvSet(`whatsapp-voice-${audioId}`, {
+          dataUrl: ttsResult.audioDataUrl,
+          createdAt: Date.now(),
+        });
+        const appUrl = config.appUrl || `https://${req.headers.get('host') || 'afrilaunchia.vercel.app'}`;
+        const voiceUrl = `${appUrl}/api/whatsapp-agent/voice/${audioId}`;
+        await sendWhatsAppMedia({
+          to: from,
+          mediaUrl: voiceUrl,
+        });
+      }
+    } catch (err) {
+      console.error('TTS voice response failed:', err);
+      // Silent fail — text response already sent
+    }
+  }
 
   // ── Send product images if the response mentions catalog products ──
   // After sending the text response, we check if any product from the
