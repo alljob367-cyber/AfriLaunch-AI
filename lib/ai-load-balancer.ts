@@ -14,7 +14,7 @@
 // transient state and resets on cold start, which is fine because provider
 // state varies between Vercel serverless invocations anyway).
 
-export type ProviderName = 'openrouter' | 'groq' | 'mistral';
+export type ProviderName = 'openrouter' | 'cerebras' | 'mistral';
 
 interface ProviderHealth {
   name: ProviderName;
@@ -40,8 +40,8 @@ const HEALTH: Record<ProviderName, ProviderHealth> = {
     consecutiveErrors: 0, lastErrorAt: null, lastErrorKind: null,
     cooldownUntil: null, totalRequests: 0, totalSuccesses: 0, totalErrors: 0,
   },
-  groq: {
-    name: 'groq', enabled: false, apiKey: false, priority: 2,
+  cerebras: {
+    name: 'cerebras', enabled: false, apiKey: false, priority: 2,
     consecutiveErrors: 0, lastErrorAt: null, lastErrorKind: null,
     cooldownUntil: null, totalRequests: 0, totalSuccesses: 0, totalErrors: 0,
   },

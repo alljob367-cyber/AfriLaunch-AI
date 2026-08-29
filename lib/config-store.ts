@@ -35,7 +35,7 @@ export interface AppConfig {
   };
   // AI Providers
   ai: {
-    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'openrouter' | 'custom';
+    primary: 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'cerebras' | 'openrouter' | 'custom';
     providers: {
       openai: { apiKey: string; model: string; enabled: boolean };
       anthropic: { apiKey: string; model: string; enabled: boolean };
@@ -43,6 +43,7 @@ export interface AppConfig {
       zai: { apiKey: string; model: string; enabled: boolean };
       mistral: { apiKey: string; model: string; endpoint: string; enabled: boolean };
       groq: { apiKey: string; model: string; endpoint: string; enabled: boolean };
+      cerebras: { apiKey: string; model: string; endpoint: string; enabled: boolean };
       openrouter: { apiKey: string; model: string; endpoint: string; enabled: boolean; appName: string; siteUrl: string };
       custom: { baseUrl: string; apiKey: string; model: string; enabled: boolean };
     };
@@ -242,6 +243,7 @@ export function getDefaultConfig(): AppConfig {
         zai: { apiKey: '', model: 'glm-4.6', enabled: false },
         mistral: { apiKey: '', model: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1', enabled: false },
         groq: { apiKey: '', model: 'llama-3.3-70b-versatile', endpoint: 'https://api.groq.com/openai/v1', enabled: false },
+        cerebras: { apiKey: 'csk-63wkc28r34m35rcpwvht8pmywndexykky44epe6f22f94fwv', model: 'llama3.1-8b', endpoint: 'https://api.cerebras.ai/v1', enabled: true },
         openrouter: {
           apiKey: '',
           model: 'anthropic/claude-3.5-sonnet',

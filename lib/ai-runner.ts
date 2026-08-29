@@ -56,14 +56,14 @@ const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
 // fast chat and quality long-form on OpenRouter — Groq provides the speed.
 const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
   openrouter: 'minimax/minimax-m3:free',     // tested OK with streaming
-  groq: 'llama-3.3-70b-versatile',           // free, 30 req/min, ~6x faster than OR
+  cerebras: 'llama3.1-8b',                   // Cerebras free tier, ultra-fast (1000+ tok/s)
   mistral: 'mistral-small-latest',            // free tier, decent speed
 };
 
 // Per-provider quality models (used by long-form generation: identity/website)
 const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
   openrouter: 'minimax/minimax-m3:free',     // same — only free model that works
-  groq: 'llama-3.3-70b-versatile',           // Groq doesn't have minimax, use llama-70b
+  cerebras: 'llama-3.3-70b',                 // Cerebras 70B for quality
   mistral: 'mistral-large-latest',            // better quality
 };
 
@@ -166,8 +166,8 @@ function getEndpoint(provider: ProviderName, providerConfig: any): string {
   if (provider === 'openrouter') {
     return (providerConfig.endpoint || 'https://openrouter.ai/api/v1') + '/chat/completions';
   }
-  if (provider === 'groq') {
-    return (providerConfig.endpoint || 'https://api.groq.com/openai/v1') + '/chat/completions';
+  if (provider === 'cerebras') {
+    return (providerConfig.endpoint || 'https://api.cerebras.ai/v1') + '/chat/completions';
   }
   if (provider === 'mistral') {
     return (providerConfig.endpoint || 'https://api.mistral.ai/v1') + '/chat/completions';

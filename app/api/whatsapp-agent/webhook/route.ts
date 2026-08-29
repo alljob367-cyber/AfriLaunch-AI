@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
       // Force OpenRouter provider
       response = await callOpenRouterDirectly(systemPrompt, messageText, maxTokens);
     } else {
-      // 'auto' → use streaming load balancer (OpenRouter → Mistral → Groq with fallback)
+      // 'auto' → use streaming load balancer (OpenRouter → Cerebras → Mistral with fallback)
       // Collect the full response from the stream
       let fullReply = '';
       let streamError: string | null = null;
