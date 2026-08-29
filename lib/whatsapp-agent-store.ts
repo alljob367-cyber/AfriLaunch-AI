@@ -54,8 +54,24 @@ export interface WhatsAppAgentConfig {
   autoRespond: boolean;         // if false, just store + notify
   businessHours: BusinessHours;
   faq: FAQEntry[];
+  // Visual product catalog — the agent can send product images + prices
+  // when a customer asks about products
+  catalog: CatalogProduct[];
+  // AI provider selection (override load balancer default)
+  aiProvider: 'auto' | 'openrouter' | 'mistral';
   // Stats
   updatedAt: number;
+}
+
+export interface CatalogProduct {
+  id: string;
+  name: string;           // e.g. "Chambre Double Deluxe"
+  description: string;    // short description
+  price: string;          // e.g. "25 000 FCFA/nuit" (free text — currency agnostic)
+  imageUrl?: string;      // data URL or external URL (optional)
+  category?: string;      // e.g. "Hébergement", "Restaurant", "Services"
+  inStock: boolean;
+  createdAt: number;
 }
 
 interface Store {
@@ -98,6 +114,8 @@ export function getDefaultConfig(userId: string): WhatsAppAgentConfig {
       outsideHoursMessage: 'Merci pour votre message ! Nous sommes actuellement fermés. Nous vous répondrons dès notre retour. 🌙',
     },
     faq: [],
+    catalog: [],
+    aiProvider: 'auto', // 'auto' = load balancer (OpenRouter → Mistral → Groq)
     updatedAt: Date.now(),
   };
 }
@@ -185,6 +203,22 @@ export function buildSystemPrompt(cfg: WhatsAppAgentConfig): string {
     for (const entry of cfg.faq) {
       parts.push(`Q: ${entry.question}\nR: ${entry.answer}`);
     }
+  }
+
+  // Product catalog (visual)
+  if (cfg.catalog.length > 0) {
+    parts.push(`\n── CATALOGUE PRODUITS ──`);
+    parts.push(`Si le client demande un produit, son prix, ou "quoi choisir", présente les produits pertinents ci-dessous. Format suggéré:`);
+    parts.push(`"📸 [Nom du produit]\n💰 [Prix]\n📝 [Description courte]\nDisponible: [oui/non]"`);
+    parts.push(``);
+    for (const product of cfg.catalog) {
+      parts.push(`• ${product.name} (${product.category || 'général'})`);
+      parts.push(`  Prix: ${product.price}`);
+      parts.push(`  Description: ${product.description}`);
+      parts.push(`  Disponible: ${product.inStock ? 'OUI' : 'NON (rupture)'}`);
+    }
+    parts.push(``);
+    parts.push(`IMPORTANT: Quand tu présentes un produit, mentionne son nom exact et son prix. Si le client veut voir l'image ou commander, dis-lui que tu vas lui envoyer la photo du produit.`);
   }
 
   // Custom instructions (free text — highest priority)

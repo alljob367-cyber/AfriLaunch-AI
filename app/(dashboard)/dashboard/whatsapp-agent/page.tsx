@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import {
   MessageCircle, Sparkles, Loader2, Save, Send, Plus, Trash2, Clock,
   Bot, Building2, Phone, Languages, Volume2, AlertCircle, Check, Info,
+  Package, Image as ImageIcon, Cpu,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { useToast } from '@/components/providers/toast-provider';
@@ -38,6 +39,17 @@ interface WhatsAppAgentConfig {
     outsideHoursMessage: string;
   };
   faq: Array<{ id: string; question: string; answer: string }>;
+  catalog: Array<{
+    id: string;
+    name: string;
+    description: string;
+    price: string;
+    imageUrl?: string;
+    category?: string;
+    inStock: boolean;
+    createdAt: number;
+  }>;
+  aiProvider: 'auto' | 'openrouter' | 'mistral';
   updatedAt: number;
 }
 
@@ -633,6 +645,180 @@ export default function WhatsAppAgentConfigPage() {
             {!config.businessHours.enabled && (
               <p className="text-xs text-gray-500">L'agent répondra 24/7. Activez pour limiter aux heures d'ouverture.</p>
             )}
+          </section>
+
+          {/* Catalogue produits visuel */}
+          <section className="glass rounded-2xl p-5 border border-white/5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-base flex items-center gap-2">
+                <Package className="w-5 h-5 text-orange-400" aria-hidden="true" />
+                Catalogue produits
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!config) return;
+                  update({
+                    catalog: [...config.catalog, {
+                      id: `prod_${Date.now()}`,
+                      name: '',
+                      description: '',
+                      price: '',
+                      category: '',
+                      inStock: true,
+                      createdAt: Date.now(),
+                    }],
+                  });
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold glass border border-white/10 hover:bg-white/10"
+              >
+                <Plus className="w-3 h-3" aria-hidden="true" /> Ajouter un produit
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">
+              L'agent présentera ces produits (avec prix + photo) quand un client demande un produit ou "quoi choisir".
+            </p>
+            {config.catalog.length === 0 ? (
+              <p className="text-xs text-gray-600 text-center py-6">Aucun produit. Cliquez « Ajouter un produit » pour créer votre catalogue.</p>
+            ) : (
+              <div className="space-y-3">
+                {config.catalog.map((product) => (
+                  <div key={product.id} className="glass rounded-xl p-3 border border-white/5 space-y-3">
+                    <div className="flex items-start gap-3">
+                      {/* Product image preview */}
+                      <div className="w-16 h-16 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {product.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="text"
+                          value={product.name}
+                          onChange={(e) => update({
+                            catalog: config.catalog.map((p) => p.id === product.id ? { ...p, name: e.target.value } : p),
+                          })}
+                          placeholder="Nom du produit (ex: Chambre Double Deluxe)"
+                          className="w-full glass rounded-lg px-3 py-1.5 border border-white/5 outline-none text-sm font-semibold"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={product.price}
+                            onChange={(e) => update({
+                              catalog: config.catalog.map((p) => p.id === product.id ? { ...p, price: e.target.value } : p),
+                            })}
+                            placeholder="Prix (ex: 25 000 FCFA/nuit)"
+                            className="glass rounded-lg px-3 py-1.5 border border-white/5 outline-none text-xs"
+                          />
+                          <input
+                            type="text"
+                            value={product.category || ''}
+                            onChange={(e) => update({
+                              catalog: config.catalog.map((p) => p.id === product.id ? { ...p, category: e.target.value } : p),
+                            })}
+                            placeholder="Catégorie (ex: Hébergement)"
+                            className="glass rounded-lg px-3 py-1.5 border border-white/5 outline-none text-xs"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => update({ catalog: config.catalog.filter((p) => p.id !== product.id) })}
+                        aria-label="Supprimer"
+                        className="p-2 rounded-lg text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                    <textarea
+                      value={product.description}
+                      onChange={(e) => update({
+                        catalog: config.catalog.map((p) => p.id === product.id ? { ...p, description: e.target.value } : p),
+                      })}
+                      rows={2}
+                      placeholder="Description courte (ex: Chambre climatisée avec TV, WiFi, petit-déjeuner inclus)"
+                      className="w-full glass rounded-lg px-3 py-1.5 border border-white/5 outline-none text-xs resize-none"
+                    />
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              update({
+                                catalog: config.catalog.map((p) =>
+                                  p.id === product.id ? { ...p, imageUrl: reader.result as string } : p,
+                                ),
+                              });
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg glass border border-white/10 hover:bg-white/10 text-[11px]">
+                          <ImageIcon className="w-3 h-3" aria-hidden="true" />
+                          {product.imageUrl ? 'Changer l\'image' : 'Ajouter une image'}
+                        </span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                        <input
+                          type="checkbox"
+                          checked={product.inStock}
+                          onChange={(e) => update({
+                            catalog: config.catalog.map((p) =>
+                              p.id === product.id ? { ...p, inStock: e.target.checked } : p,
+                            ),
+                          })}
+                          className="accent-orange-500"
+                        />
+                        <span className="text-gray-400">En stock</span>
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* AI Provider selection */}
+          <section className="glass rounded-2xl p-5 border border-white/5">
+            <h2 className="font-bold text-base mb-4 flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-cyan-400" aria-hidden="true" />
+              Provider IA
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Choisissez quel moteur d'IA génère les réponses de l'agent WhatsApp. « Auto » utilise le load balancer (OpenRouter → Mistral → Groq avec fallback automatique).
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {[
+                { value: 'auto', label: 'Auto (load balancer)', desc: 'OpenRouter → Mistral → Groq' },
+                { value: 'mistral', label: 'Mistral', desc: 'Français natif, rapide' },
+                { value: 'openrouter', label: 'OpenRouter', desc: 'minimax-m3:free, multilingue' },
+              ].map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => update({ aiProvider: p.value as any })}
+                  className={cn(
+                    'p-3 rounded-xl border text-left transition-all',
+                    config.aiProvider === p.value
+                      ? 'border-cyan-500 bg-cyan-500/10'
+                      : 'border-white/5 glass hover:bg-white/5',
+                  )}
+                >
+                  <p className="text-sm font-semibold">{p.label}</p>
+                  <p className="text-[10px] text-gray-500">{p.desc}</p>
+                </button>
+              ))}
+            </div>
           </section>
 
           {/* Test */}

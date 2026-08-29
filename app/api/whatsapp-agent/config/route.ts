@@ -55,6 +55,7 @@ export async function PUT(req: NextRequest) {
     'enabled', 'agentName', 'systemPrompt', 'tone', 'language', 'firstMessage',
     'maxResponseLength', 'businessName', 'industry', 'country', 'services',
     'pricing', 'contactInfo', 'autoRespond', 'businessHours', 'faq',
+    'catalog', 'aiProvider',
   ] as const;
   const updates: Record<string, any> = {};
   for (const key of allowed) {
@@ -76,6 +77,27 @@ export async function PUT(req: NextRequest) {
         answer: String(f.answer || '').slice(0, 1000),
       })).filter((f: any) => f.question && f.answer);
     }
+  }
+  // Validate catalog
+  if (updates.catalog) {
+    if (!Array.isArray(updates.catalog)) {
+      updates.catalog = [];
+    } else {
+      updates.catalog = updates.catalog.map((p: any, i: number) => ({
+        id: p.id || `prod_${Date.now()}_${i}`,
+        name: String(p.name || '').slice(0, 120),
+        description: String(p.description || '').slice(0, 500),
+        price: String(p.price || '').slice(0, 100),
+        imageUrl: p.imageUrl ? String(p.imageUrl).slice(0, 500000) : undefined, // data URLs can be large
+        category: p.category ? String(p.category).slice(0, 80) : undefined,
+        inStock: p.inStock !== false, // default true
+        createdAt: p.createdAt || Date.now(),
+      })).filter((p: any) => p.name);
+    }
+  }
+  // Validate aiProvider
+  if (updates.aiProvider && !['auto', 'openrouter', 'mistral'].includes(updates.aiProvider)) {
+    updates.aiProvider = 'auto';
   }
   if (updates.maxResponseLength) {
     updates.maxResponseLength = Math.min(2000, Math.max(300, Number(updates.maxResponseLength) || 1000));
