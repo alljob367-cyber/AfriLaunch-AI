@@ -141,12 +141,19 @@ export function BrandKitGallery() {
       const data = await res.json();
       if (data.ok) {
         toast({
-          title: 'Génération démarrée ! 🎨',
-          description: `${data.creditsUsed} crédits débités. Suivez la progression ci-dessous.`,
+          title: 'Kit créé ! 🎨',
+          description: `${data.creditsUsed} crédits débités. Génération des images en cours...`,
           variant: 'success',
         });
         try { refresh(); } catch { /* ignore */ }
         await fetchKits();
+
+        // Auto-select the new kit and start generating assets
+        if (data.kitId) {
+          await fetchFullKit(data.kitId);
+          // Generate assets sequentially (client-driven, avoids Vercel timeout)
+          generateAssetsSequentially(data.kitId);
+        }
       } else if (data.paymentRequired) {
         toast({
           title: 'Abonnement requis 🔒',
@@ -156,8 +163,14 @@ export function BrandKitGallery() {
       } else if (data.insufficientCredits) {
         toast({
           title: 'Crédits insuffisants',
-          description: `La génération d'un kit coûte 15 crédits. Il vous reste ${data.creditsRemaining ?? 0} crédits.`,
+          description: data.error,
           variant: 'error',
+        });
+      } else if (data.quotaExceeded) {
+        toast({
+          title: 'Quota mensuel atteint',
+          description: data.error,
+          variant: 'warning',
         });
       } else {
         toast({ title: 'Échec', description: data.error, variant: 'error' });
@@ -167,6 +180,32 @@ export function BrandKitGallery() {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // Generate assets one by one (client-driven, avoids Vercel background timeout)
+  async function generateAssetsSequentially(kitId: string) {
+    const assetTypes = ['logo', 'logo_dark', 'banner_facebook', 'banner_instagram', 'banner_linkedin', 'banner_youtube', 'favicon'];
+    for (const assetType of assetTypes) {
+      try {
+        const res = await fetch(`/api/brand-kit/${kitId}/generate-asset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ assetType }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          // Refresh the kit to show the new image
+          await fetchFullKit(kitId);
+        } else {
+          console.error(`Asset ${assetType} failed:`, data.error);
+        }
+      } catch (err) {
+        console.error(`Asset ${assetType} error:`, err);
+      }
+    }
+    // Final refresh
+    await fetchKits();
   }
 
   async function handleDelete(kitId: string) {

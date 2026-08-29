@@ -95,12 +95,17 @@ export default function MediaKitPage() {
       const data = await res.json();
       if (data.ok) {
         toast({
-          title: `Kit ${kitType === 'ads' ? 'publicitaire' : 'réseaux sociaux'} démarré ! 🎨`,
-          description: `${data.creditsUsed} crédits débités. Suivez la progression ci-dessous.`,
+          title: `Kit créé ! 🎨`,
+          description: `${data.creditsUsed} crédits débités. Génération des images en cours...`,
           variant: 'success',
         });
         try { refresh(); } catch { /* ignore */ }
         await fetchKits();
+
+        // Generate assets sequentially (client-driven)
+        if (data.kitId) {
+          generateMediaAssetsSequentially(data.kitId);
+        }
       } else {
         toast({ title: 'Échec', description: data.error, variant: 'error' });
       }
@@ -108,6 +113,36 @@ export default function MediaKitPage() {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
     } finally {
       setGenerating(false);
+    }
+  }
+
+  // Generate assets one by one (client-driven, avoids Vercel background timeout)
+  async function generateMediaAssetsSequentially(kitId: string) {
+    // First fetch the kit to get asset types
+    try {
+      const listRes = await fetch('/api/media-kit/list', { credentials: 'include' });
+      const listData = await listRes.json();
+      const kit = listData.kits?.find((k: any) => k.id === kitId);
+      if (!kit?.assets) return;
+
+      for (const asset of kit.assets) {
+        try {
+          const res = await fetch(`/api/media-kit/${kitId}/generate-asset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ assetType: asset.type }),
+          });
+          const data = await res.json();
+          if (data.ok) {
+            await fetchKits();
+          }
+        } catch (err) {
+          console.error(`Asset ${asset.type} error:`, err);
+        }
+      }
+    } catch (err) {
+      console.error('Sequential generation error:', err);
     }
   }
 
