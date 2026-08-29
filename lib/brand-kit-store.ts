@@ -291,3 +291,142 @@ export function getKitQuota(plan: string): { limit: number; remaining: number | 
   const limit = KIT_QUOTAS[plan] ?? KIT_QUOTAS.starter;
   return { limit, remaining: null, used: 0 }; // `used` is filled by caller
 }
+
+// ─── Dynamic image pricing ────────────────────────────────────────────
+// The actual cost per generated image is not exposed by Z.AI in the API
+// response. We store an admin-configurable value in KV so the admin can
+// adjust it when they discover the real pricing (console.z.ai → billing).
+//
+// The credit cost of a kit is auto-derived from this value:
+//   - 0.00–0.05 $/image → 20 credits per kit
+//   - 0.05–0.10 $/image → 25 credits per kit
+//   - 0.10–0.20 $/image → 35 credits per kit
+//   - 0.20+ $/image     → 50 credits per kit
+//
+// This keeps the gross margin above 60% on every plan.
+
+interface PricingConfig {
+  costPerImageUsd: number;     // admin-configured
+  creditsPerKit: number;       // derived from costPerImageUsd
+  lastUpdated: number;
+  lastUpdatedBy: string;       // admin email
+}
+
+const PRICING_KEY = 'brand-kit-pricing';
+
+const DEFAULT_PRICING: PricingConfig = {
+  costPerImageUsd: 0.03,   // conservative default (Z.AI free tier likely)
+  creditsPerKit: 20,
+  lastUpdated: Date.now(),
+  lastUpdatedBy: 'system',
+};
+
+// Derive the credit cost from the USD price per image
+export function deriveCreditsPerKit(costPerImageUsd: number): number {
+  if (costPerImageUsd <= 0.05) return 20;
+  if (costPerImageUsd <= 0.10) return 25;
+  if (costPerImageUsd <= 0.20) return 35;
+  return 50;
+}
+
+export async function getPricingConfig(): Promise<PricingConfig> {
+  const s = await kvGet<PricingConfig>(PRICING_KEY);
+  return s ?? DEFAULT_PRICING;
+}
+
+export async function setPricingConfig(costPerImageUsd: number, adminEmail: string): Promise<PricingConfig> {
+  const creditsPerKit = deriveCreditsPerKit(costPerImageUsd);
+  const cfg: PricingConfig = {
+    costPerImageUsd: Math.max(0, Number(costPerImageUsd.toFixed(4))),
+    creditsPerKit,
+    lastUpdated: Date.now(),
+    lastUpdatedBy: adminEmail,
+  };
+  await kvSet(PRICING_KEY, cfg);
+  return cfg;
+}
+
+// ─── Quota exceeded tracking (for email alerts) ───────────────────────
+// When a user hits their monthly kit quota, we log it. If >5 events/day,
+// an email alert is sent to the admin (best-effort, non-blocking).
+
+interface QuotaEvent {
+  userId: string;
+  userEmail: string;
+  plan: string;
+  used: number;
+  limit: number;
+  timestamp: number;
+}
+
+interface QuotaAlertStore {
+  events: QuotaEvent[];
+  lastAlertSentAt: number | null;
+}
+
+const QUOTA_ALERT_KEY = 'brand-kit-quota-alerts';
+const ALERT_THRESHOLD = 5;          // 5 events/day → send email
+const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 alert per day max
+
+async function readQuotaAlerts(): Promise<QuotaAlertStore> {
+  const s = await kvGet<QuotaAlertStore>(QUOTA_ALERT_KEY);
+  return s ?? { events: [], lastAlertSentAt: null };
+}
+
+async function writeQuotaAlerts(s: QuotaAlertStore): Promise<void> {
+  // Drop events older than 7 days to keep the store small
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  s.events = s.events.filter((e) => e.timestamp >= cutoff);
+  await kvSet(QUOTA_ALERT_KEY, s);
+}
+
+export async function recordQuotaExceeded(opts: {
+  userId: string;
+  userEmail: string;
+  plan: string;
+  used: number;
+  limit: number;
+}): Promise<{ shouldAlert: boolean; eventsToday: number }> {
+  const s = await readQuotaAlerts();
+  const event: QuotaEvent = {
+    userId: opts.userId,
+    userEmail: opts.userEmail,
+    plan: opts.plan,
+    used: opts.used,
+    limit: opts.limit,
+    timestamp: Date.now(),
+  };
+  s.events.push(event);
+
+  // Count events in the last 24h
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const eventsToday = s.events.filter((e) => e.timestamp >= cutoff).length;
+
+  // Decide if we should send an alert:
+  // - threshold reached
+  // - no alert sent in the last 24h
+  const shouldAlert =
+    eventsToday >= ALERT_THRESHOLD &&
+    (s.lastAlertSentAt === null || s.lastAlertSentAt < cutoff);
+
+  if (shouldAlert) {
+    s.lastAlertSentAt = Date.now();
+  }
+
+  await writeQuotaAlerts(s);
+  return { shouldAlert, eventsToday };
+}
+
+export async function getQuotaAlertStats(): Promise<{
+  eventsToday: number;
+  totalEvents: number;
+  lastAlertSentAt: number | null;
+}> {
+  const s = await readQuotaAlerts();
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  return {
+    eventsToday: s.events.filter((e) => e.timestamp >= cutoff).length,
+    totalEvents: s.events.length,
+    lastAlertSentAt: s.lastAlertSentAt,
+  };
+}

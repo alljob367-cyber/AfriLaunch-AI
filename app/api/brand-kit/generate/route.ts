@@ -21,9 +21,12 @@ import { runAIForPlanStream } from '@/lib/ai-runner';
 import {
   createBrandKit, updateBrandKitIdentity, updateBrandAsset,
   getCachedImage, setCachedImage, countKitsThisMonth, KIT_QUOTAS,
+  getPricingConfig, recordQuotaExceeded,
   type BrandAsset, type AssetType,
 } from '@/lib/brand-kit-store';
 import { getOrganizationByUserId } from '@/lib/org-store';
+import { getConfig } from '@/lib/config-store';
+import { sendEmail } from '@/lib/email-sender';
 import type { PlanId } from '@/lib/user-types';
 import ZAI from 'z-ai-web-dev-sdk';
 
@@ -32,7 +35,8 @@ export const dynamic = 'force-dynamic';
 // Long-running generation — Vercel Hobby allows up to 60s, Pro 300s
 export const maxDuration = 300;
 
-const CREDIT_COST = 20; // brand kit generation costs 20 credits (covers ~7 images with cache)
+// Credit cost is now DYNAMIC — derived from the admin-configured costPerImageUsd.
+// See lib/brand-kit-store.ts → getPricingConfig() + deriveCreditsPerKit().
 
 // All the visual assets we generate for a complete kit
 const ASSET_DEFS: Array<{ type: AssetType; size: string; promptBuilder: (ctx: AssetPromptCtx) => string }> = [
@@ -97,6 +101,40 @@ export async function POST(req: NextRequest) {
     if (quota > 0) {
       const usedThisMonth = await countKitsThisMonth(user.id);
       if (usedThisMonth >= quota) {
+        // ── Record quota exceeded event (for email alert) ──────────
+        const alertInfo = await recordQuotaExceeded({
+          userId: user.id,
+          userEmail: user.email,
+          plan,
+          used: usedThisMonth,
+          limit: quota,
+        });
+
+        // ── Send email alert if threshold reached (>5 events/day) ──
+        if (alertInfo.shouldAlert) {
+          const config = await getConfig();
+          const adminEmail = config.adminEmail || 'admin@afrilaunch.ai';
+          // Fire-and-forget — don't block the response
+          sendEmail({
+            to: adminEmail,
+            subject: `🚨 Alerte Quota — ${alertInfo.eventsToday} dépassements aujourd'hui`,
+            html: `
+              <h2>🚨 Alerte : seuil de quota atteint</h2>
+              <p><strong>${alertInfo.eventsToday} utilisateurs</strong> ont dépassé leur quota de kits de marque aujourd'hui.</p>
+              <p>Cela peut indiquer :</p>
+              <ul>
+                <li>Une forte adoption (bon signe — pensez à upgrader l'infrastructure)</li>
+                <li>Un abuse potentiel (vérifiez les utilisateurs concernés dans /admin/users)</li>
+                <li>Des quotas trop restrictifs (ajustez KIT_QUOTAS si besoin)</li>
+              </ul>
+              <p>Consultez <a href="${config.appUrl}/admin/metrics">le panneau métriques</a> pour analyser.</p>
+              <hr>
+              <p style="color:#666;font-size:12px;">Email automatique — AfriLaunch AI</p>
+            `,
+            text: `Alerte: ${alertInfo.eventsToday} utilisateurs ont dépassé leur quota de kits aujourd'hui. Consultez /admin/metrics.`,
+          }).catch(() => { /* ignore — best-effort */ });
+        }
+
         return NextResponse.json({
           ok: false,
           error: `Quota mensuel atteint : ${quota} kit(s) par mois sur le plan ${plan}. Passez à un plan supérieur ou attendez le mois prochain.`,
@@ -106,6 +144,10 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  // ── Dynamic credit cost (admin-configurable) ──────────────────────
+  const pricing = await getPricingConfig();
+  const CREDIT_COST = pricing.creditsPerKit;
 
   // Pre-fill from organization if missing
   let businessName = (body.businessName || '').trim();

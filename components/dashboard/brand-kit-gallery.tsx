@@ -1,6 +1,10 @@
 // AfriLaunch AI — Brand Kit Gallery component
 // Shows the user's brand kits (logo + banners + favicon) with live progress
 // and download/share actions. Used in /dashboard/identity.
+//
+// Client-side cache: when a user downloads an asset, we store the dataUrl in
+// localStorage so re-downloading (or viewing offline) doesn't require a new
+// API call. Cache key: `afrilaunch.kit-asset.<kitId>.<assetType>`.
 
 'use client';
 
@@ -176,6 +180,7 @@ export function BrandKitGallery() {
       const data = await res.json();
       if (data.ok) {
         if (activeKit?.id === kitId) setActiveKit(null);
+        clearCachedKit(kitId); // clear client-side cache
         await fetchKits();
         toast({ title: 'Kit supprimé', variant: 'warning' });
       } else {
@@ -188,16 +193,77 @@ export function BrandKitGallery() {
     }
   }
 
-  function downloadAsset(asset: BrandAsset, businessName: string) {
-    if (!asset.dataUrl) return;
+  // ── Client-side cache (localStorage) ────────────────────────────────
+  // Stores downloaded asset dataUrls so re-downloading or offline viewing
+  // doesn't require a new API call. Cache is keyed by kitId + assetType
+  // and expires after 30 days (matches the server-side kit retention).
+  const CACHE_PREFIX = 'afrilaunch.kit-asset.';
+  const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+  function getCachedAsset(kitId: string, assetType: string): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const key = CACHE_PREFIX + kitId + '.' + assetType;
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.savedAt > CACHE_TTL_MS) {
+        window.localStorage.removeItem(key);
+        return null;
+      }
+      return parsed.dataUrl;
+    } catch { return null; }
+  }
+
+  function setCachedAsset(kitId: string, assetType: string, dataUrl: string) {
+    if (typeof window === 'undefined') return;
+    try {
+      const key = CACHE_PREFIX + kitId + '.' + assetType;
+      // localStorage has a ~5MB limit per origin — store only if the image
+      // is small enough (dataUrl < 2MB to be safe)
+      if (dataUrl.length > 2 * 1024 * 1024) return;
+      window.localStorage.setItem(key, JSON.stringify({
+        dataUrl,
+        savedAt: Date.now(),
+      }));
+    } catch { /* quota exceeded — ignore */ }
+  }
+
+  function clearCachedKit(kitId: string) {
+    if (typeof window === 'undefined') return;
+    try {
+      const keys = Object.keys(window.localStorage).filter((k) => k.startsWith(CACHE_PREFIX + kitId + '.'));
+      keys.forEach((k) => window.localStorage.removeItem(k));
+    } catch { /* ignore */ }
+  }
+
+  function downloadAsset(asset: BrandAsset, businessName: string, kitId?: string) {
+    if (!asset.dataUrl) {
+      // Try client-side cache fallback
+      if (kitId) {
+        const cached = getCachedAsset(kitId, asset.type);
+        if (cached) {
+          triggerDownload(cached, asset.type, businessName);
+          toast({ title: 'Téléchargement (cache local)', description: `${asset.type} restauré depuis le cache hors-ligne.`, variant: 'success' });
+          return;
+        }
+      }
+      return;
+    }
+    // Save to client cache for offline reuse
+    if (kitId) setCachedAsset(kitId, asset.type, asset.dataUrl);
+    triggerDownload(asset.dataUrl, asset.type, businessName);
+  }
+
+  function triggerDownload(dataUrl: string, assetType: string, businessName: string) {
     const safeName = (businessName || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const a = document.createElement('a');
-    a.href = asset.dataUrl;
-    a.download = `${safeName}-${asset.type}.png`;
+    a.href = dataUrl;
+    a.download = `${safeName}-${assetType}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    toast({ title: 'Téléchargement', description: `${safeName}-${asset.type}.png`, variant: 'success' });
+    toast({ title: 'Téléchargement', description: `${safeName}-${assetType}.png`, variant: 'success' });
   }
 
   async function shareAsset(asset: BrandAsset, businessName: string) {
@@ -214,7 +280,7 @@ export function BrandKitGallery() {
       } catch { /* user cancelled — fall through */ }
     }
     // Fallback: download
-    downloadAsset(asset, businessName);
+    downloadAsset(asset, businessName, activeKit?.id);
   }
 
   if (loading) {
@@ -389,7 +455,7 @@ export function BrandKitGallery() {
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
                           <button
                             type="button"
-                            onClick={() => downloadAsset(asset, activeKit.businessName)}
+                            onClick={() => downloadAsset(asset, activeKit.businessName, activeKit.id)}
                             aria-label="Télécharger"
                             className="p-1.5 rounded-lg glass border border-white/20 hover:bg-white/20"
                           >
