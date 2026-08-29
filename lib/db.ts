@@ -15,7 +15,7 @@ export const isSupabaseConfigured = !!supabase;
 
 // ─── Generic KV store ────────────────────────────────────────────────
 // In Supabase: stored in `kv_store` table (key TEXT PK, value JSONB)
-// In local dev: stored in /home/z/my-project/data/{key}.json
+// In local dev: stored in ./data/{key}.json
 
 export async function kvGet<T = any>(key: string): Promise<T | null> {
   if (supabase) {
@@ -28,12 +28,13 @@ export async function kvGet<T = any>(key: string): Promise<T | null> {
     return data.value as T;
   }
 
-  // Fallback: JSON file (local dev only)
+  // Fallback: JSON file (local dev only — not available on Vercel serverless)
+  if (process.env.VERCEL) return null; // Skip on Vercel to avoid fs warnings
   try {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await (eval('import') as any)('fs/promises');
+    const path = await (eval('import') as any)('path');
     const raw = await fs.readFile(
-      path.join('/home/z/my-project/data', `${key}.json`),
+      path.join(process.cwd(), 'data', `${key}.json`),
       'utf-8',
     );
     return JSON.parse(raw) as T;
@@ -58,11 +59,12 @@ export async function kvSet(key: string, value: any): Promise<void> {
     return;
   }
 
-  // Fallback: JSON file (local dev only)
+  // Fallback: JSON file (local dev only — not available on Vercel serverless)
+  if (process.env.VERCEL) return; // Skip on Vercel to avoid fs warnings
   try {
-    const fs = await import('fs/promises');
-    const path = await import('path');
-    const dir = '/home/z/my-project/data';
+    const fs = await (eval('import') as any)('fs/promises');
+    const path = await (eval('import') as any)('path');
+    const dir = path.join(process.cwd(), 'data');
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(
       path.join(dir, `${key}.json`),
@@ -77,7 +79,7 @@ export async function kvSet(key: string, value: any): Promise<void> {
 
 // ─── File storage (for payment proofs, uploads) ──────────────────────
 // In Supabase: stored as base64 in kv_store
-// In local dev: stored in /home/z/my-project/data/payment-proofs/
+// In local dev: stored in ./data/payment-proofs/
 
 export async function storeFile(key: string, fileBuffer: Buffer, mimeType: string): Promise<string> {
   if (supabase) {
@@ -87,11 +89,12 @@ export async function storeFile(key: string, fileBuffer: Buffer, mimeType: strin
     return key; // Return the key as the "file path"
   }
 
-  // Fallback: local file
+  // Fallback: local file (local dev only — not available on Vercel)
+  if (process.env.VERCEL) throw new Error('File storage not available on Vercel');
   try {
-    const fs = await import('fs/promises');
-    const path = await import('path');
-    const dir = '/home/z/my-project/data/payment-proofs';
+    const fs = await (eval('import') as any)('fs/promises');
+    const path = await (eval('import') as any)('path');
+    const dir = path.join(process.cwd(), 'data', 'payment-proofs');
     await fs.mkdir(dir, { recursive: true });
     const filePath = path.join(dir, key);
     await fs.writeFile(filePath, fileBuffer);
@@ -111,11 +114,12 @@ export async function getFile(key: string): Promise<{ data: Buffer; mimeType: st
     };
   }
 
-  // Fallback: local file
+  // Fallback: local file (local dev only — not available on Vercel)
+  if (process.env.VERCEL) return null;
   try {
-    const fs = await import('fs/promises');
-    const path = await import('path');
-    const filePath = path.join('/home/z/my-project/data/payment-proofs', key);
+    const fs = await (eval('import') as any)('fs/promises');
+    const path = await (eval('import') as any)('path');
+    const filePath = path.join(process.cwd(), 'data', 'payment-proofs', key);
     const data = await fs.readFile(filePath);
     // Guess mime from extension
     const ext = path.extname(key).toLowerCase();
