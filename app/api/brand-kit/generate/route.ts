@@ -52,7 +52,7 @@ const ASSET_DEFS: Array<{ type: AssetType; size: string; promptBuilder: (ctx: As
   },
   {
     type: 'banner_facebook',
-    size: '1440x720',
+    size: '1440x768',
     promptBuilder: (c) => `Facebook cover banner, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, professional marketing banner, clean layout, high quality`,
   },
   {
@@ -62,12 +62,12 @@ const ASSET_DEFS: Array<{ type: AssetType; size: string; promptBuilder: (ctx: As
   },
   {
     type: 'banner_linkedin',
-    size: '1440x720',
+    size: '1440x768',
     promptBuilder: (c) => `LinkedIn cover banner, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, professional corporate banner, clean, high quality`,
   },
   {
     type: 'banner_youtube',
-    size: '1440x720',
+    size: '1440x768',
     promptBuilder: (c) => `YouTube channel banner, ${c.industry || 'business'} industry, ${c.style} style, ${c.paletteDesc}, vibrant banner, modern, high quality`,
   },
   {
@@ -301,7 +301,7 @@ Réponds UNIQUEMENT avec le JSON.`;
     try {
       const response = await zai.images.generations.create({
         prompt,
-        size: def.size,
+        size: def.size as any,
       });
       const base64 = response.data?.[0]?.base64;
       if (!base64) throw new Error('Réponse image vide');

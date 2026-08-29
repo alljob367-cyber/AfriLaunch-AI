@@ -33,7 +33,7 @@ const TEMPLATES: TemplateOption[] = [
   { id: 'business', name: 'Business', description: 'Site vitrine pro', icon: Building2 },
 ];
 
-// Sanitize the AI-generated HTML (force visible, close tags, etc.)
+// Sanitize the AI-generated HTML (force visible + inject missing JS)
 function sanitizeHtml(content: string): string {
   let html = content.replace(/^```html?\s*/i, '').replace(/```\s*$/, '').trim();
   html = html.replace(/\.slide-in\s*\{[^}]*opacity:\s*0[^}]*\}/gi, (match: string) =>
@@ -46,6 +46,8 @@ function sanitizeHtml(content: string): string {
     .slide-in, .fade-in, .fade-up, .reveal { opacity: 1 !important; transform: none !important; }
     [style*="opacity: 0"], [style*="opacity:0"] { opacity: 1 !important; }
     [style*="display: none"], [style*="display:none"] { display: block !important; }
+    html { scroll-behavior: smooth; }
+    body { background: #0a0a0f; }
   </style>`;
   if (html.includes('</head>')) {
     html = html.replace('</head>', forceVisibleCSS + '\n</head>');
@@ -54,6 +56,127 @@ function sanitizeHtml(content: string): string {
   } else {
     html = forceVisibleCSS + html;
   }
+
+  // Inject functional JavaScript if not present
+  const hasMobileMenu = /hamburger|mobile.?menu|nav.?toggle|menu.?btn/i.test(html);
+  const hasSmoothScroll = /scrollIntoView|scroll-behavior|smooth/i.test(html);
+  const hasContactForm = /contact.?form|form.?contact|id="contact"/i.test(html);
+
+  const functionalJS = `
+<script>
+// === AfriLaunch AI — Functional JavaScript Injection ===
+(function() {
+  'use strict';
+
+  // 1. Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      var href = this.getAttribute('href');
+      if (href === '#' || href.length < 2) return;
+      var target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // 2. Mobile menu toggle (auto-detect nav)
+  var nav = document.querySelector('nav') || document.querySelector('header');
+  if (nav) {
+    var navLinks = nav.querySelector('ul') || nav.querySelector('.nav-links') || nav.querySelector('.menu');
+    if (navLinks && window.innerWidth < 768) {
+      // Create hamburger button if not present
+      var existingBtn = nav.querySelector('button');
+      if (!existingBtn || !/menu|hamburger/i.test(existingBtn.textContent || '')) {
+        var hamburger = document.createElement('button');
+        hamburger.innerHTML = '&#9776;';
+        hamburger.style.cssText = 'background:none;border:none;color:white;font-size:24px;cursor:pointer;display:block;';
+        hamburger.className = 'md:hidden';
+        nav.appendChild(hamburger);
+        if (navLinks) {
+          navLinks.classList.add('hidden');
+          navLinks.className += ' md:flex md:items-center';
+          hamburger.addEventListener('click', function() {
+            navLinks.classList.toggle('hidden');
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Contact form — redirect to WhatsApp
+  var forms = document.querySelectorAll('form');
+  forms.forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var inputs = form.querySelectorAll('input, textarea, select');
+      var message = '';
+      inputs.forEach(function(input) {
+        if (input.value && input.type !== 'submit' && input.type !== 'button') {
+          var label = input.placeholder || input.name || 'Champ';
+          message += label + ': ' + input.value + '\\n';
+        }
+      });
+      if (!message.trim()) return;
+
+      // Try WhatsApp first (if a phone number is in the page)
+      var phoneMatch = document.body.innerHTML.match(/(?:\\+?237|\\+?221|\\+?225|\\+?233|\\+?254|\\+?234)\\s?\\d{8,}/);
+      if (phoneMatch) {
+        var phone = phoneMatch[0].replace(/[^0-9]/g, '');
+        window.location.href = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
+      } else {
+        // Fallback: mailto
+        var emailMatch = document.body.innerHTML.match(/[\\w.+-]+@[\\w-]+\\.[\\w.-]+/);
+        var email = emailMatch ? emailMatch[0] : 'contact@example.com';
+        window.location.href = 'mailto:' + email + '?subject=Contact depuis le site&body=' + encodeURIComponent(message);
+      }
+
+      // Show success message
+      var successDiv = document.createElement('div');
+      successDiv.style.cssText = 'padding:16px;margin-top:16px;background:#10b981;color:white;border-radius:12px;text-align:center;font-size:14px;';
+      successDiv.textContent = '✓ Message envoyé ! Nous vous répondrons rapidement.';
+      form.appendChild(successDiv);
+      form.reset();
+      setTimeout(function() { successDiv.remove(); }, 5000);
+    });
+  });
+
+  // 4. Active nav link highlight on scroll
+  var sections = document.querySelectorAll('section[id]');
+  var navItems = document.querySelectorAll('nav a[href^="#"]');
+  if (sections.length > 0 && navItems.length > 0) {
+    window.addEventListener('scroll', function() {
+      var current = '';
+      sections.forEach(function(section) {
+        var top = section.offsetTop - 100;
+        if (window.scrollY >= top) current = section.getAttribute('id');
+      });
+      navItems.forEach(function(item) {
+        item.classList.remove('text-white', 'font-bold');
+        item.classList.add('text-gray-400');
+        if (item.getAttribute('href') === '#' + current) {
+          item.classList.remove('text-gray-400');
+          item.classList.add('text-white', 'font-bold');
+        }
+      });
+    });
+  }
+
+  console.log('AfriLaunch AI — Site fonctionnel initialisé ✓');
+})();
+</script>`;
+
+  // Inject JS before </body> if not already present
+  if (!html.includes('AfriLaunch AI')) {
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', functionalJS + '\n</body>');
+    } else {
+      html += functionalJS;
+    }
+  }
+
+  // Auto-close HTML if truncated
   if (!html.includes('</body>')) html += '\n</body>';
   if (!html.includes('</html>')) html += '\n</html>';
   return html;

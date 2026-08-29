@@ -41,7 +41,7 @@ async function main() {
     try {
       const response = await zai.images.generations.create({
         prompt: asset.prompt,
-        size: asset.size,
+        size: asset.size as any,
       });
       const base64 = response.data?.[0]?.base64;
       if (!base64) throw new Error('Empty response');

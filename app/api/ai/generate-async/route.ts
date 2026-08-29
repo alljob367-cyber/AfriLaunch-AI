@@ -117,29 +117,66 @@ Réponse = objet JSON valide (sans markdown, sans backticks):
 Réponds UNIQUEMENT avec le JSON.`;
       userPrompt = `Crée une identité pour:\n- Nom: ${body.businessName || '(proposer)'}\n- Industrie: ${body.industry || ''}\n- Pays: ${body.country || 'Afrique'}\n- Style: ${body.style || 'moderne'}`;
     } else if (body.type === 'website') {
-      systemPrompt = `Tu es un expert développeur web pour le marché africain. Génère une page HTML moderne, responsive, RICHE EN CONTENU.
+      const bizName = body.businessName || 'Mon Business';
+      const bizIndustry = body.industry || 'général';
+      const bizColor = body.primaryColor || '#6366f1';
+      systemPrompt = `Tu es un expert développeur web pour le marché africain. Génère une page HTML COMPLÈTE, MODERNE, RESPONSIVE et TOTALEMENT FONCTIONNELLE.
 
-RÈGLES:
-1. HTML5 complet: <html><head><body></body></html>
+⚠️ RÈGLES ABSOLUES (non-négociiables):
+
+1. HTML5 COMPLET: <!DOCTYPE html><html lang="fr"><head>...</head><body>...</body></html>
 2. Tailwind CDN: <script src="https://cdn.tailwindcss.com"></script>
-3. CSS minimal (max 30 lignes)
-4. Dark theme + gradients
-5. Tout en français
-6. JS minimal (smooth scroll + menu mobile)
+3. Dark theme + gradients (${bizColor} comme couleur principale)
+4. TOUT le texte en français, contenu RÉEL et PERTINENT pour ${bizName} (${bizIndustry})
+5. AUCUNE animation opacity:0, fade-in, slide-in — opacity:1 partout
+6. JavaScript FONCTIONNEL inclus dans <script> à la fin du body:
 
-VISIBILITÉ: opacity:1 partout. PAS de opacity:0, slide-in, fade-in.
-Le site doit s'afficher sans JavaScript.
+   a) MENU MOBILE: bouton hamburger qui toggle une classe 'hidden' sur le menu nav
+   b) SMOOTH SCROLL: tous les liens d'ancrage (#section) défilent en douceur
+   c) FORMULAIRE CONTACT: empêche le rechargement, affiche un message de succès,
+      et ouvre WhatsApp avec le message pré-rempli:
+      window.location.href = 'https://wa.me/NUMERO?text=' + encodeURIComponent(message)
+   d) SCROLL REVEAL (optionnel): IntersectionObserver pour révéler les sections
+      MAIS avec opacity:1 par défaut (pas de contenu caché si JS désactivé)
 
-6 SECTIONS MINIMUM:
-1. <nav> logo + liens + CTA
-2. <section id="hero"> h1 + sous-titre + 2 boutons + stats
-3. <section id="services"> 3-6 cartes avec emojis + h3
-4. <section id="about"> texte + emoji géant
-5. <section id="pricing"> ou témoignages
-6. <section id="contact"> formulaire + coordonnées + footer
+7. SEO COMPLET dans <head>:
+   - <meta name="description" content="...">
+   - <meta property="og:title" content="...">
+   - <meta property="og:description" content="...">
+   - <meta property="og:type" content="website">
+   - <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   - <title>${bizName} — ...</title>
 
-Réponds UNIQUEMENT avec le HTML. Pas de markdown.`;
-      userPrompt = `Crée un site pour:\n- Business: ${body.businessName || 'Mon Business'}\n- Industrie: ${body.industry || 'général'}\n- Couleur: ${body.primaryColor || '#6366f1'}`;
+8. 8 SECTIONS MINIMUM avec du VRAI CONTENU:
+   a) <nav> — Logo texte + liens (Accueil, Services, À propos, Tarifs, Contact) + bouton CTA + hamburger mobile
+   b) <section id="hero"> — h1 accrocheur + sous-titre + 2 boutons (Découvrir, Contact) + 3 stats
+   c) <section id="services"> — 4-6 cartes avec emoji + h3 + description DÉTAILLÉE
+   d) <section id="about"> — Texte sur l'entreprise (min 100 mots) + points forts
+   e) <section id="pricing"> — 3 plans tarifaires avec prix en FCFA + features + bouton
+   f) <section id="testimonials"> — 3 témoignages clients avec nom + note étoiles
+   g) <section id="contact"> — Formulaire (nom, email, téléphone, message) + coordonnées (téléphone, email, adresse) + map embed optionnel
+   h) <footer> — Logo + liens + copyright + réseaux sociaux (icônes SVG)
+
+9. STYLES:
+   - Background: #0a0a0f ou similaire (dark)
+   - Cards: bg-white/5 backdrop-blur rounded-2xl border border-white/10
+   - Boutons: gradient ${bizColor} → violet, rounded-xl, hover:scale-105
+   - Texte: text-gray-100 (titres), text-gray-400 (corps)
+   - Espacement généreux: py-16 md:py-24 par section
+
+10. CONTENT SPECIFIC to ${bizIndustry}:
+   - Services adaptés à l'industrie (pas génériques)
+   - Prix réalistes en FCFA pour le marché africain
+   - Témoignages avec des noms africains (Aïcha, Mamadou, Fatou...)
+   - Références culturelles locales si pertinent
+
+Réponds UNIQUEMENT avec le HTML complet. PAS de markdown, PAS de backticks, PAS d'explication.`;
+      userPrompt = `Crée un site web complet et fonctionnel pour:
+- Business: ${bizName}
+- Industrie: ${bizIndustry}
+- Couleur principale: ${bizColor}
+- Le formulaire de contact doit ouvrir WhatsApp avec un message pré-rempli.
+- Inclure 8 sections minimum avec du VRAI contenu adapté au business.`;
     } else if (body.type === 'content') {
       const formats: Record<string, string> = {
         'instagram-post': 'Post Instagram (caption + emojis + hashtags, max 2200 chars)',

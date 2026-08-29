@@ -54,18 +54,18 @@ interface MediaKit {
 
 const SOCIAL_ASSETS: Array<{ type: string; label: string; size: string; promptTpl: string }> = [
   { type: 'profile_pic', label: 'Photo de profil', size: '1024x1024', promptTpl: 'Professional profile picture logo for {industry} business, {style} style, clean, modern, high quality' },
-  { type: 'cover_facebook', label: 'Cover Facebook', size: '1440x720', promptTpl: 'Facebook cover banner for {industry} business, {style} style, professional, clean layout, high quality' },
+  { type: 'cover_facebook', label: 'Cover Facebook', size: '1440x768', promptTpl: 'Facebook cover banner for {industry} business, {style} style, professional, clean layout, high quality' },
   { type: 'story_instagram', label: 'Story Instagram', size: '768x1344', promptTpl: 'Instagram story template for {industry} business, {style} style, vertical, engaging, high quality' },
   { type: 'post_template', label: 'Template post', size: '1024x1024', promptTpl: 'Instagram post template for {industry} business, {style} style, square, modern design, space for text, high quality' },
-  { type: 'banner_linkedin', label: 'Bannière LinkedIn', size: '1440x720', promptTpl: 'LinkedIn banner for {industry} business, {style} style, corporate, professional, high quality' },
+  { type: 'banner_linkedin', label: 'Bannière LinkedIn', size: '1440x768', promptTpl: 'LinkedIn banner for {industry} business, {style} style, corporate, professional, high quality' },
 ];
 
 const ADS_ASSETS: Array<{ type: string; label: string; size: string; promptTpl: string }> = [
-  { type: 'ad_facebook', label: 'Créative pub Facebook', size: '1440x720', promptTpl: 'Facebook ad creative for {industry} business, {style} style, eye-catching, promotional, high quality' },
+  { type: 'ad_facebook', label: 'Créative pub Facebook', size: '1440x768', promptTpl: 'Facebook ad creative for {industry} business, {style} style, eye-catching, promotional, high quality' },
   { type: 'ad_instagram', label: 'Créative pub Instagram', size: '1024x1024', promptTpl: 'Instagram ad creative for {industry} business, {style} style, square, vibrant, promotional, high quality' },
   { type: 'ad_story', label: 'Pub Story (vertical)', size: '768x1344', promptTpl: 'Instagram story ad for {industry} business, {style} style, vertical, immersive, promotional, high quality' },
   { type: 'ad_display', label: 'Bannière display', size: '1344x768', promptTpl: 'Display ad banner for {industry} business, {style} style, landscape, clean, promotional, high quality' },
-  { type: 'ad_google', label: 'Bannière Google Ads', size: '1440x720', promptTpl: 'Google display ad banner for {industry} business, {style} style, professional, clean, high quality' },
+  { type: 'ad_google', label: 'Bannière Google Ads', size: '1440x768', promptTpl: 'Google display ad banner for {industry} business, {style} style, professional, clean, high quality' },
 ];
 
 export async function POST(req: NextRequest) {
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     id: 'ma_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     type: def.type,
     label: def.label,
-    size: def.size,
+    size: def.size as any,
     status: 'pending',
     prompt: '',
   }));
@@ -232,7 +232,7 @@ Réponds UNIQUEMENT avec le JSON.`;
     }
 
     try {
-      const response = await zai.images.generations.create({ prompt, size: def.size });
+      const response = await zai.images.generations.create({ prompt, size: def.size as any });
       const base64 = response.data?.[0]?.base64;
       if (!base64) throw new Error('Réponse vide');
 
