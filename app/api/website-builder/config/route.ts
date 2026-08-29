@@ -31,14 +31,17 @@ export async function POST(req: NextRequest) {
   // Create new or update existing
   let config;
   if (body.id) {
-    // Update existing
-    const { upsertConfig } = await import('@/lib/website-builder');
+    // Try to find existing config by ID
     const { getConfig } = await import('@/lib/website-builder');
     const existing = await getConfig(body.id);
-    if (!existing || existing.userId !== user.id) {
-      return NextResponse.json({ error: 'Config introuvable' }, { status: 404 });
+    if (existing && existing.userId === user.id) {
+      // Update existing
+      config = { ...existing, ...body, userId: user.id };
+    } else {
+      // ID was generated client-side but not saved yet → treat as new
+      config = getDefaultConfig(user.id);
+      Object.assign(config, body, { userId: user.id });
     }
-    config = { ...existing, ...body, userId: user.id };
   } else {
     // Create new
     config = getDefaultConfig(user.id);
