@@ -16,6 +16,11 @@ import {
 import { STRINGS, type Lang } from '@/lib/landing-i18n';
 import { Logo } from '@/components/logo';
 import { Footer } from '@/components/footer';
+import { MobileMockup } from '@/components/landing/mobile-mockup';
+import { DashboardPreview } from '@/components/landing/dashboard-preview';
+import { FloatingModules } from '@/components/landing/floating-modules';
+import { Particles } from '@/components/landing/particles';
+import { PlansMarquee } from '@/components/landing/plans-marquee';
 
 /* ─── Static data (icons + colors, language-agnostic) ──────────── */
 
@@ -139,78 +144,170 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ═══════════════ 1. Hero ═══════════════ */}
-      <section id="main-content" ref={heroRef} className="relative min-h-screen flex items-center pt-24 pb-12 mesh-bg">
+      {/* ═══════════════ 1. Hero V2 — vivant avec mockup mobile + dashboard + modules flottants ═══════════════ */}
+      <section id="main-content" ref={heroRef} className="relative min-h-screen flex items-center pt-28 pb-16 mesh-bg overflow-hidden">
+        {/* Particules qui montent */}
+        <Particles count={18} />
+
+        {/* Blobs aurora */}
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-indigo-500/20 to-violet-500/20 blur-3xl animate-aurora" />
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-cyan-500/10 to-blue-500/10 blur-3xl animate-aurora delay-300" />
+          <div className="absolute top-1/3 left-0 w-[400px] h-[400px] rounded-full bg-gradient-to-r from-fuchsia-500/10 to-pink-500/10 blur-3xl animate-aurora delay-500" />
         </motion.div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center w-full">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-indigo-500/30 mb-8"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" aria-hidden="true" />
-            <span className="text-xs font-semibold text-indigo-300">{t.hero_badge}</span>
-          </motion.div>
+        {/* Modules flottants autour du hero (desktop only) */}
+        <FloatingModules />
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
-          >
-            {t.hero_title_1}<br />
-            <span className="gradient-text">{t.hero_title_2}</span>
-          </motion.h1>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-10 items-center">
+          {/* Colonne gauche : texte + CTAs */}
+          <div className="text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-indigo-500/30 mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" aria-hidden="true" />
+              <span className="text-xs font-semibold text-indigo-300">{t.hero_badge}</span>
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">LIVE</span>
+            </motion.div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed"
-          >
-            {t.hero_subtitle}
-          </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
+            >
+              {t.hero_title_1}<br />
+              <span className="text-shimmer animate-gradient-shift">{t.hero_title_2}</span>
+            </motion.h1>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
-          >
-            <Link href="/register"
-              className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 transition-all duration-300 hover:scale-105 shadow-xl shadow-indigo-500/30 font-semibold">
-              {t.hero_cta_primary}
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
-            <button type="button"
-              className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl glass border border-white/10 hover:bg-white/10 transition-all duration-300 font-semibold">
-              <Play className="w-4 h-4 text-indigo-400" aria-hidden="true" />
-              {t.hero_cta_secondary}
-            </button>
-          </motion.div>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-base md:text-lg text-gray-400 max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed"
+            >
+              {t.hero_subtitle}
+            </motion.p>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xs text-gray-500"
-          >
-            {t.hero_note}
-          </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mb-6"
+            >
+              <Link href="/register"
+                className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 transition-all duration-300 hover:scale-105 shadow-xl shadow-indigo-500/30 font-semibold animate-glow-pulse">
+                {t.hero_cta_primary}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 animate-shake-arrow" aria-hidden="true" />
+              </Link>
+              <button type="button"
+                className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-xl glass border border-white/10 hover:bg-white/10 transition-all duration-300 font-semibold">
+                <Play className="w-4 h-4 text-indigo-400 animate-bounce-subtle" aria-hidden="true" />
+                {t.hero_cta_secondary}
+              </button>
+            </motion.div>
+
+            {/* Trust badges animés */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs text-gray-400"
+            >
+              <span className="flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-400" /> Aucune carte requise
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-400" /> Installation en 1 minute
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-400" /> Support 24/7
+              </span>
+            </motion.div>
+
+            {/* Social proof inline */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+              className="mt-8 flex items-center justify-center lg:justify-start gap-3"
+            >
+              <div className="flex -space-x-2">
+                {['AK', 'MO', 'ND', 'BM', 'JS'].map((initials, i) => (
+                  <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 border-2 border-[#050508] flex items-center justify-center text-[9px] font-bold text-white">
+                    {initials}
+                  </div>
+                ))}
+                <div className="w-7 h-7 rounded-full bg-white/10 border-2 border-[#050508] flex items-center justify-center text-[9px] font-bold text-white">
+                  +2k
+                </div>
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} className="w-3 h-3 text-amber-400 fill-amber-400" />
+                  ))}
+                  <span className="ml-1 text-xs font-bold text-white">4.8/5</span>
+                </div>
+                <p className="text-[10px] text-gray-500">Rejoignez les entrepreneurs africains</p>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Colonne droite : Dashboard preview desktop + Mockup mobile flottant par-dessus */}
+          <div className="relative hidden lg:block">
+            <DashboardPreview />
+            {/* Mockup mobile flottant en overlap */}
+            <div className="absolute -bottom-16 -right-4 z-20 scale-90 origin-bottom-right">
+              <MobileMockup />
+            </div>
+          </div>
+
+          {/* Mobile : mockup mobile seul (visible sur petits écrans) */}
+          <div className="lg:hidden flex justify-center mt-4">
+            <MobileMockup />
+          </div>
         </div>
+
+        {/* Indicateur scroll */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-gray-500"
+        >
+          <span className="text-[10px] uppercase tracking-widest">Scroll</span>
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="w-4 h-6 rounded-full border border-gray-600 flex justify-center pt-1"
+          >
+            <div className="w-1 h-1.5 rounded-full bg-gray-500" />
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* ═══════════════ 2. Stats strip ═══════════════ */}
-      <section className="relative py-16 border-y border-white/5 glass">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="relative py-16 border-y border-white/5 glass overflow-hidden">
+        {/* Effet de fond animé */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/3 w-96 h-96 rounded-full bg-violet-500/5 blur-3xl animate-aurora" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {statsData.map((s, i) => (
-            <motion.div key={s.key} custom={i} variants={fadeUp} initial="hidden" whileInView="show" viewport={{ once: true }} className="text-center">
-              <p className="text-4xl md:text-5xl font-bold gradient-text mb-2">{s.value}</p>
+            <motion.div
+              key={s.key}
+              custom={i}
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="text-center group"
+            >
+              <p className="text-4xl md:text-5xl font-bold gradient-text mb-2 group-hover:scale-110 transition-transform">{s.value}</p>
               <p className="text-xs text-gray-500 uppercase tracking-widest">{(t as any)[s.key]}</p>
             </motion.div>
           ))}
@@ -218,7 +315,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════ 3. Press logos ═══════════════ */}
-      <section className="py-12">
+      <section className="py-12 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <p className="text-xs text-gray-600 uppercase tracking-widest mb-6">{t.press_title}</p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
@@ -543,6 +640,9 @@ export default function LandingPage() {
           <p className="text-center text-xs text-gray-500 mt-8">{t.pricing_note}</p>
         </div>
       </section>
+
+      {/* ═══════════════ 9bis. Plans Marquee (bande défilante infinie) ═══════════════ */}
+      <PlansMarquee />
 
       {/* ═══════════════ 10. Social proof ═══════════════ */}
       <section className="py-24 border-t border-white/5">

@@ -267,6 +267,109 @@
     66% { opacity: 0.9; transform: translate(-20px, 10px) scale(0.95); }
   }
 
+  /* ─── V2 — Landing page "vivante" ─── */
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-marquee { animation: marquee 30s linear infinite; }
+  .animate-marquee-fast { animation: marquee 18s linear infinite; }
+  .animate-marquee-reverse { animation: marquee 35s linear infinite reverse; }
+  .marquee-pause:hover { animation-play-state: paused; }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 6s ease infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 24px 4px rgba(99, 102, 241, 0.3), 0 0 60px 12px rgba(139, 92, 246, 0.2); }
+    50% { box-shadow: 0 0 36px 8px rgba(99, 102, 241, 0.5), 0 0 90px 20px rgba(139, 92, 246, 0.35); }
+  }
+  .animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
+
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    25% { transform: translateY(-14px) translateX(8px) rotate(2deg); }
+    50% { transform: translateY(-22px) translateX(-4px) rotate(-2deg); }
+    75% { transform: translateY(-10px) translateX(-10px) rotate(1deg); }
+  }
+  .animate-float-slow { animation: float-slow 9s ease-in-out infinite; }
+
+  @keyframes float-medium {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-16px) rotate(-3deg); }
+  }
+  .animate-float-medium { animation: float-medium 5s ease-in-out infinite; }
+
+  @keyframes orbit {
+    from { transform: rotate(0deg) translateX(var(--orbit-r, 120px)) rotate(0deg); }
+    to { transform: rotate(360deg) translateX(var(--orbit-r, 120px)) rotate(-360deg); }
+  }
+  .animate-orbit { animation: orbit var(--orbit-d, 24s) linear infinite; }
+
+  @keyframes shimmer-text {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .text-shimmer {
+    background: linear-gradient(90deg, #6366f1 0%, #a855f7 25%, #22d3ee 50%, #a855f7 75%, #6366f1 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer-text 4s linear infinite;
+  }
+
+  @keyframes particle-rise {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+  }
+  .animate-particle-rise { animation: particle-rise 12s linear infinite; }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+  .animate-pulse-ring { animation: pulse-ring 2.5s ease-out infinite; }
+
+  @keyframes tilt-3d {
+    0%, 100% { transform: perspective(800px) rotateY(-8deg) rotateX(4deg) translateY(0); }
+    50% { transform: perspective(800px) rotateY(-12deg) rotateX(2deg) translateY(-10px); }
+  }
+  .animate-tilt-3d { animation: tilt-3d 8s ease-in-out infinite; }
+
+  @keyframes blob {
+    0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  }
+  .animate-blob { animation: blob 12s ease-in-out infinite; }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .animate-bounce-subtle { animation: bounce-subtle 2.4s ease-in-out infinite; }
+
+  @keyframes shake-arrow {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+  }
+  .animate-shake-arrow { animation: shake-arrow 1.4s ease-in-out infinite; }
+
+  @keyframes count-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-count-up { animation: count-up 0.5s var(--ease-spring) forwards; }
+
   .animate-float { animation: float 3s ease-in-out infinite; }
   .animate-spin-slow { animation: spin-slow 10s linear infinite; }
   .animate-fade-in-up { animation: fade-in-up 0.6s var(--ease-smooth) forwards; }
@@ -280,6 +383,10 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+  .delay-700 { animation-delay: 700ms; }
+  .delay-1000 { animation-delay: 1s; }
+  .delay-1500 { animation-delay: 1.5s; }
+  .delay-2000 { animation-delay: 2s; }
 }
 
 /* ─── Reduced motion: respect user's OS-level preference ─────────── */
