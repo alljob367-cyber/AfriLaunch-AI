@@ -10,6 +10,7 @@ import { requireUser } from '@/lib/auth-helpers';
 import { getBrandKit, updateBrandAsset, getCachedImage, setCachedImage, type AssetType } from '@/lib/brand-kit-store';
 import { runAIForPlanStream } from '@/lib/ai-runner';
 import ZAI from 'z-ai-web-dev-sdk';
+import { ensureZaiConfig } from '@/lib/zai-init';
 import type { PlanId } from '@/lib/user-types';
 
 export const runtime = 'nodejs';
@@ -76,6 +77,7 @@ export async function POST(
 
   // Generate via Z.AI
   try {
+    await ensureZaiConfig();
     const zai = await ZAI.create();
     const response = await zai.images.generations.create({
       prompt,

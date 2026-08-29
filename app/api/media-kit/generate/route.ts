@@ -15,6 +15,7 @@ import { getOrganizationByUserId } from '@/lib/org-store';
 import { kvGet, kvSet } from '@/lib/db';
 import type { PlanId } from '@/lib/user-types';
 import ZAI from 'z-ai-web-dev-sdk';
+import { ensureZaiConfig } from '@/lib/zai-init';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -195,6 +196,7 @@ Réponds UNIQUEMENT avec le JSON.`;
 
   // Step 2: Generate images
   let zai: any = null;
+  await ensureZaiConfig();
   try {
     zai = await ZAI.create();
   } catch (err) {

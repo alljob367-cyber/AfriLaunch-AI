@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-helpers';
 import { kvGet, kvSet } from '@/lib/db';
 import ZAI from 'z-ai-web-dev-sdk';
+import { ensureZaiConfig } from '@/lib/zai-init';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,7 @@ export async function POST(
   await kvSet('media-kits', store);
 
   try {
+    await ensureZaiConfig();
     const zai = await ZAI.create();
     const response = await zai.images.generations.create({
       prompt: asset.prompt || `Professional design for ${kit.industry} business, ${kit.style} style, high quality`,

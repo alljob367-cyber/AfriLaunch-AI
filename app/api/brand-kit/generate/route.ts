@@ -29,6 +29,7 @@ import { getConfig } from '@/lib/config-store';
 import { sendEmail } from '@/lib/email-sender';
 import type { PlanId } from '@/lib/user-types';
 import ZAI from 'z-ai-web-dev-sdk';
+import { ensureZaiConfig } from '@/lib/zai-init';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -259,6 +260,7 @@ Réponds UNIQUEMENT avec le JSON.`;
 
   // ── Step 2: Generate each visual asset (with cache) ──────────────
   let zai: any = null;
+  await ensureZaiConfig();
   let zaiInitFailed = false;
 
   for (const def of ASSET_DEFS) {
