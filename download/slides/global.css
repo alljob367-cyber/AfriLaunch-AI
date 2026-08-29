@@ -1,46 +1,37 @@
-/* AfriLaunch AI — Rapport de test (style dark tech) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* AfriLaunch AI — Facebook Ads Carrousel — Dark Premium */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 :root {
   --bg: #050508;
-  --bg-card: #0d0d14;
+  --bg-card: rgba(255,255,255,0.04);
   --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --accent: #8b5cf6;
-  --accent-2: #22d3ee;
-  --text: #ffffff;
+  --secondary: #8b5cf6;
+  --accent: #a855f7;
+  --text: #f0f0f5;
   --text-muted: #9ca3af;
-  --text-dim: #6b7280;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --font-heading: 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-num: 'JetBrains Mono', monospace;
-  --fs-display: 48px;
-  --fs-h1: 36px;
-  --fs-h2: 28px;
+  --border: rgba(255,255,255,0.08);
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --fs-display: 52px;
+  --fs-h1: 40px;
+  --fs-h2: 30px;
   --fs-h3: 22px;
   --fs-body: 16px;
   --fs-small: 13px;
   --fs-micro: 11px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 .slide {
-  width: 1280px;
-  min-height: 720px;
-  max-height: 720px;
+  width: 1080px;
+  height: 1080px;
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  font-size: var(--fs-body);
   position: relative;
 }
-
-.slide-pad { padding: 56px 64px; }
 
 .gradient-text {
   background: linear-gradient(135deg, var(--primary), var(--accent));
@@ -49,64 +40,45 @@
   background-clip: text;
 }
 
-.gradient-text-cyan {
-  background: linear-gradient(135deg, var(--accent-2), var(--primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-}
-
-.card {
   background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  padding: 20px;
-}
-
-.card-accent {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.04));
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 14px;
-  padding: 20px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  font-size: var(--fs-micro);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.badge-success { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
-.badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-.badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-.badge-info { background: rgba(99, 102, 241, 0.15); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.3); }
-
-.stat-num {
-  font-family: var(--font-num);
-  font-weight: 700;
-  font-size: 42px;
-  line-height: 1;
-}
-
-.aurora {
+.glow-orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.15;
   pointer-events: none;
 }
-.aurora-1 { top: -100px; right: -50px; width: 400px; height: 400px; background: var(--primary); }
-.aurora-2 { bottom: -80px; left: -40px; width: 300px; height: 300px; background: var(--accent); }
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 36px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  border-radius: 16px;
+  text-decoration: none;
+  box-shadow: 0 8px 32px rgba(99,102,241,0.3);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 100px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: #a5b4fc;
+}

@@ -2,98 +2,178 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>AfriLaunch AI — Couverture</title>
+<title>AfriLaunch AI — 1 plateforme. 0 friction.</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <link rel="stylesheet" href="global.css">
 <style>
   html, body { background: #050508; }
-  .cover-grid {
-    background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
-    background-size: 48px 48px;
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .slide { font-family: 'Inter', sans-serif; }
+  .font-heading { font-family: 'Space Grotesk', sans-serif; }
+  .display-hero {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 168px;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
   }
-  .title-glow { text-shadow: 0 0 60px rgba(99,102,241,0.35); }
-  .ring-dot::before {
-    content:''; position:absolute; inset:0; border-radius:50%;
-    border:1px solid rgba(99,102,241,0.4);
+  .display-zero {
+    font-size: 168px;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+  .feature-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 26px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    backdrop-filter: blur(16px);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: #f0f0f5;
+  }
+  .feature-pill .material-icons {
+    font-size: 26px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .top-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    background: rgba(99,102,241,0.10);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 100px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: #c7d2fe;
+    letter-spacing: 0.01em;
+  }
+  .grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .ring-deco {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(168,85,247,0.15);
+    pointer-events: none;
+  }
+  .cta-button {
+    padding: 22px 48px;
+    font-size: 22px;
+    border-radius: 18px;
+    box-shadow: 0 12px 40px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .cta-button .material-icons {
+    font-size: 24px;
+  }
+  .corner-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    box-shadow: 0 0 12px rgba(168,85,247,0.6);
   }
 </style>
 </head>
 <body>
-<div class="slide slide-pad cover-grid relative flex flex-col justify-between">
+<div class="slide relative overflow-hidden">
 
-  <!-- Aurora blobs -->
-  <div class="aurora aurora-1"></div>
-  <div class="aurora aurora-2"></div>
-  <div class="aurora" style="top:40%; left:45%; width:260px; height:260px; background:#22d3ee; opacity:0.08;"></div>
+  <!-- Decorative background -->
+  <div class="grid-overlay" data-decor aria-hidden="true"></div>
+  <div class="glow-orb" data-decor aria-hidden="true" style="width: 560px; height: 560px; background: #a855f7; top: -180px; right: -160px; opacity: 0.22;"></div>
+  <div class="glow-orb" data-decor aria-hidden="true" style="width: 520px; height: 520px; background: #6366f1; bottom: -180px; left: -160px; opacity: 0.25;"></div>
+  <div class="ring-deco" data-decor aria-hidden="true" style="width: 900px; height: 900px; top: -260px; right: -260px;"></div>
+  <div class="ring-deco" data-decor aria-hidden="true" style="width: 1200px; height: 1200px; top: -410px; right: -410px; border-color: rgba(99,102,241,0.08);"></div>
 
   <!-- Top bar -->
-  <div class="relative z-10 flex items-center justify-between">
+  <div class="absolute top-0 left-0 right-0 flex items-center justify-between" style="padding: 56px 64px 0;">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#6366f1,#8b5cf6); box-shadow:0 0 30px rgba(99,102,241,0.5);">
-        <span class="material-icons" style="font-size:22px; color:#fff;">rocket_launch</span>
+      <div class="flex items-center justify-center" style="width: 44px; height: 44px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 12px; box-shadow: 0 8px 24px rgba(99,102,241,0.4);">
+        <span class="material-icons" style="color: white; font-size: 26px;">auto_awesome</span>
       </div>
-      <div class="font-mono text-xs tracking-widest text-gray-400">AFRILAUNCH · REPORT</div>
+      <span class="font-heading font-bold text-white" style="font-size: 26px; letter-spacing: -0.01em;">
+        AfriLaunch <span class="gradient-text">AI</span>
+      </span>
     </div>
-    <span class="badge badge-success"><span class="material-icons" style="font-size:13px;">verified</span>PRODUCTION</span>
+    <div class="flex items-center gap-2 text-gray-500" style="font-size: 14px;">
+      <span class="corner-dot" data-decor aria-hidden="true"></span>
+      <span class="font-heading tracking-widest uppercase" style="font-size: 12px; color: #6b7280;">Plateforme · 01 / 05</span>
+    </div>
   </div>
 
-  <!-- Hero -->
-  <div class="relative z-10 flex flex-col items-center text-center">
-    <div class="flex items-center gap-2 mb-5">
-      <span class="h-px w-12 bg-gradient-to-r from-transparent to-indigo-500"></span>
-      <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">RAPPORT DE TEST</span>
-      <span class="h-px w-12 bg-gradient-to-l from-transparent to-indigo-500"></span>
+  <!-- Main content -->
+  <div class="absolute inset-0 flex flex-col items-center justify-center" style="padding: 120px 80px;">
+
+    <!-- Badge -->
+    <div class="top-badge mb-10">
+      <span class="material-icons" style="font-size: 20px; color: #a855f7;">rocket_launch</span>
+      Plateforme tout-en-un pour entrepreneurs africains
     </div>
 
-    <h1 class="gradient-text title-glow font-black tracking-tight" style="font-size:108px; line-height:0.95; letter-spacing:-0.04em;">
-      AfriLaunch AI
+    <!-- Hero headline -->
+    <h1 class="text-center text-white font-heading display-hero mb-2">
+      1 plateforme.
+    </h1>
+    <h1 class="text-center font-heading display-hero gradient-text mb-8">
+      0 friction.
     </h1>
 
-    <p class="mt-6 text-2xl font-light text-gray-200">Rapport de Test — <span class="text-white font-medium">Tous Modules</span></p>
+    <!-- Sub-headline -->
+    <p class="text-center text-gray-300 mb-12" style="font-size: 26px; line-height: 1.45; max-width: 880px; font-weight: 400;">
+      Branding + Site web + Contenu + Réseaux + Paiements Mobile Money — gérés par l'IA.
+    </p>
 
-    <div class="mt-7 flex items-center gap-6">
-      <div class="flex items-center gap-2 text-gray-400">
-        <span class="material-icons text-indigo-400" style="font-size:18px;">calendar_today</span>
-        <span class="font-mono text-sm">27 Août 2026</span>
+    <!-- 4 feature pills -->
+    <div class="flex items-center justify-center flex-wrap gap-4 mb-14" style="max-width: 940px;">
+      <div class="feature-pill">
+        <span class="material-icons">palette</span>
+        Branding
       </div>
-      <span class="w-1 h-1 rounded-full bg-gray-600"></span>
-      <div class="flex items-center gap-2 text-gray-400">
-        <span class="material-icons text-violet-400" style="font-size:18px;">language</span>
-        <span class="font-mono text-sm text-gray-300">afrilaunchia.vercel.app</span>
+      <div class="feature-pill">
+        <span class="material-icons">language</span>
+        Site web
+      </div>
+      <div class="feature-pill">
+        <span class="material-icons">edit_note</span>
+        Contenu
+      </div>
+      <div class="feature-pill">
+        <span class="material-icons">payments</span>
+        Mobile Money
       </div>
     </div>
+
+    <!-- CTA -->
+    <a href="#" class="cta-button">
+      Démarrer maintenant
+      <span class="material-icons">arrow_forward</span>
+    </a>
+    <p class="mt-5 font-heading text-gray-500" style="font-size: 18px; letter-spacing: 0.04em;">afrilaunch.ai</p>
+
   </div>
 
-  <!-- Stats -->
-  <div class="relative z-10 grid grid-cols-3 gap-4">
-    <div class="glass p-5 flex items-center gap-4">
-      <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25);">
-        <span class="material-icons text-green-400" style="font-size:22px;">description</span>
-      </div>
-      <div>
-        <div class="stat-num text-white" style="font-size:26px;">26/26</div>
-        <div class="text-xs text-gray-400 mt-0.5">Pages ✅</div>
-      </div>
+  <!-- Bottom corners deco -->
+  <div class="absolute bottom-0 left-0 right-0 flex items-center justify-between" style="padding: 0 64px 56px;">
+    <div class="flex items-center gap-2">
+      <span class="corner-dot" data-decor aria-hidden="true"></span>
+      <span class="font-heading tracking-widest uppercase" style="font-size: 12px; color: #6b7280;">Dark Premium · Linear-grade</span>
     </div>
-    <div class="glass p-5 flex items-center gap-4">
-      <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.25);">
-        <span class="material-icons text-indigo-400" style="font-size:22px;">api</span>
-      </div>
-      <div>
-        <div class="stat-num text-white" style="font-size:26px;">10/10</div>
-        <div class="text-xs text-gray-400 mt-0.5">API Modules ✅</div>
-      </div>
-    </div>
-    <div class="glass p-5 flex items-center gap-4">
-      <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.25);">
-        <span class="material-icons text-violet-400" style="font-size:22px;">grid_view</span>
-      </div>
-      <div>
-        <div class="stat-num text-white" style="font-size:26px;">26</div>
-        <div class="text-xs text-gray-400 mt-0.5">Modules Testés</div>
-      </div>
+    <div class="flex items-center gap-3 text-gray-600">
+      <span class="material-icons" style="font-size: 18px;">bolt</span>
+      <span class="font-heading" style="font-size: 13px; letter-spacing: 0.05em;">5 MIN POUR DÉMARRER</span>
     </div>
   </div>
 

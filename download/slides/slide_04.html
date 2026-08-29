@@ -2,160 +2,188 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>AfriLaunch AI — IA & Génération de Contenu</title>
+<title>AfriLaunch AI — Slide 4</title>
+<link rel="stylesheet" href="global.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<link rel="stylesheet" href="global.css">
 <style>
-  html, body { background: #050508; }
-  .grid-bg {
-    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-  .code-chip {
-    background: rgba(99,102,241,0.08);
-    border: 1px solid rgba(99,102,241,0.25);
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: #c7d2fe;
-  }
-  .preview-quote {
-    border-left: 3px solid #8b5cf6;
-  }
-  .pulse-dot {
-    width:8px; height:8px; border-radius:50%; background:#22c55e;
-    box-shadow:0 0 0 0 rgba(34,197,94,0.7);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
-    70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-  }
+  body { background:#050508; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .slide-04 { width:1080px; height:1080px; overflow:hidden; background:#050508; color:#f0f0f5; font-family:'Inter',sans-serif; position:relative; }
+  .font-heading { font-family:'Space Grotesk',sans-serif; }
+  .col-card { background:rgba(255,255,255,0.04); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.08); border-radius:24px; }
+  .platform-chip { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); border-radius:14px; }
+  .feat-row { background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.18); border-radius:12px; }
+  .check-ico { color:#34d399; }
 </style>
 </head>
 <body>
-<div class="slide slide-pad grid-bg relative flex flex-col">
+<div class="slide-04">
 
-  <div class="aurora aurora-1"></div>
-  <div class="aurora aurora-2"></div>
+  <!-- Decorative glow orbs -->
+  <div class="glow-orb" style="width:520px;height:520px;background:#10b981;left:-180px;top:280px;opacity:0.18;" data-decor aria-hidden="true"></div>
+  <div class="glow-orb" style="width:560px;height:560px;background:#a855f7;right:-200px;top:380px;opacity:0.22;" data-decor aria-hidden="true"></div>
+  <div class="glow-orb" style="width:380px;height:380px;background:#6366f1;left:50%;top:-160px;transform:translateX(-50%);opacity:0.15;" data-decor aria-hidden="true"></div>
 
-  <!-- Header -->
-  <div class="relative z-10 flex items-end justify-between mb-6">
-    <div>
-      <div class="flex items-center gap-2 mb-2">
-        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">04 · KEY MESSAGE</span>
-      </div>
-      <h1 class="text-white font-bold tracking-tight" style="font-size:36px; line-height:1.05;">Génération <span class="gradient-text">IA</span> — OpenRouter</h1>
-    </div>
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25);">
-        <div class="pulse-dot"></div>
-        <span class="text-[11px] text-green-400 font-mono tracking-wider">LIVE</span>
-      </div>
-      <span class="badge badge-info"><span class="material-icons" style="font-size:13px;">bolt</span>OPENROUTER ACTIF</span>
-    </div>
-  </div>
+  <!-- Subtle grid background -->
+  <div data-decor aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;opacity:0.6;"></div>
 
-  <!-- Main 2-col body -->
-  <div class="relative z-10 grid grid-cols-[1.05fr_0.95fr] gap-5 flex-1">
+  <div class="relative h-full flex flex-col" style="padding:64px 72px;">
 
-    <!-- LEFT: Big result encadré -->
-    <div class="card-accent relative overflow-hidden flex flex-col">
-      <div class="absolute -top-16 -right-16 w-40 h-40 rounded-full" style="background:radial-gradient(circle, rgba(139,92,246,0.25), transparent 70%);"></div>
-
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
-          <span class="material-icons text-white" style="font-size:20px;">auto_awesome</span>
+    <!-- Header row -->
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-3 mb-5">
+          <span class="font-heading text-[64px] leading-none font-bold gradient-text">04</span>
+          <div class="flex flex-col">
+            <span class="text-[11px] uppercase tracking-[0.25em] text-gray-500 font-semibold">Slide 04 / 05</span>
+            <span class="text-[13px] text-gray-400 mt-1">Distribution & Monetization</span>
+          </div>
         </div>
-        <div>
-          <div class="text-[11px] font-mono tracking-widest text-indigo-300">RÉSULTAT DU TEST</div>
-          <h3 class="text-white font-semibold text-base">Pipeline de génération</h3>
+        <div class="badge">
+          <i class="material-icons" style="font-size:16px;">share</i>
+          <span>📱 Réseaux + 💰 Paiements</span>
         </div>
       </div>
-
-      <!-- 5 check rows -->
-      <div class="grid grid-cols-1 gap-2.5">
-        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
-          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
-          <span class="text-sm text-gray-200">Job async créé</span>
-          <span class="ml-auto code-chip">jobId=job_mtbzmqvuab4004</span>
-        </div>
-        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
-          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
-          <span class="text-sm text-gray-200">Génération réussie</span>
-          <span class="ml-auto code-chip">~10s</span>
-        </div>
-        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
-          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
-          <span class="text-sm text-gray-200">1001 caractères générés</span>
-          <span class="ml-auto font-mono text-[13px] text-violet-300 font-semibold">1001</span>
-        </div>
-        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
-          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
-          <span class="text-sm text-gray-200">Model</span>
-          <span class="ml-auto code-chip">minimax/minimax-m3:free</span>
-        </div>
-        <div class="flex items-center gap-3 rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
-          <span class="material-icons text-green-400" style="font-size:18px;">check_circle</span>
-          <span class="text-sm text-gray-200">Provider</span>
-          <span class="ml-auto code-chip">openrouter</span>
-        </div>
-      </div>
-
-      <!-- Coût -->
-      <div class="mt-auto pt-4 flex items-center justify-between rounded-xl px-4 py-3" style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25);">
-        <div class="flex items-center gap-2">
-          <span class="material-icons text-green-400" style="font-size:18px;">savings</span>
-          <span class="text-sm text-gray-200">Coût de génération</span>
-        </div>
-        <div class="flex items-baseline gap-1">
-          <span class="font-mono font-bold text-2xl text-green-400">0$</span>
-          <span class="text-[11px] text-gray-400">modèle gratuit</span>
-        </div>
+      <div class="text-right">
+        <div class="font-heading text-[22px] font-bold text-white">AfriLaunch <span class="gradient-text">AI</span></div>
+        <div class="text-[12px] text-gray-500 mt-1">Plateforme tout-en-un</div>
       </div>
     </div>
 
-    <!-- RIGHT: Content preview -->
-    <div class="card relative overflow-hidden flex flex-col">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2">
-          <span class="material-icons text-violet-400" style="font-size:18px;">format_quote</span>
-          <span class="text-[11px] font-mono tracking-widest text-violet-300">APERÇU DU CONTENU GÉNÉRÉ</span>
-        </div>
-        <span class="badge badge-info text-[9px]">1001 CHARS</span>
-      </div>
+    <!-- Headline -->
+    <div class="mt-6">
+      <h1 class="font-heading font-bold text-white leading-[1.05]" style="font-size:68px;letter-spacing:-1.5px;">
+        Publiez. Vendez.<br>
+        <span class="gradient-text">Encaissez.</span>
+      </h1>
+    </div>
 
-      <div class="preview-quote pl-4 py-1 flex-1 flex flex-col justify-center">
-        <p class="text-gray-100 text-[15px] leading-relaxed font-light italic">
-          <span class="text-2xl">🎉</span> <span class="text-white font-medium">PROMO EXCEPTIONNELLE</span> <span class="text-2xl">🎉</span><br>
-          Salut la communauté AfriLaunch ! <span class="text-2xl">👋</span><br>
-          On a une offre qui va vous faire vibrer...
+    <!-- Two columns -->
+    <div class="grid grid-cols-2 gap-6 mt-8 flex-1">
+
+      <!-- LEFT — Réseaux sociaux -->
+      <div class="col-card p-7 flex flex-col">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(99,102,241,0.25),rgba(168,85,247,0.25));border:1px solid rgba(99,102,241,0.3);">
+            <i class="material-icons" style="font-size:26px;color:#a5b4fc;">hub</i>
+          </div>
+          <div>
+            <div class="text-[11px] uppercase tracking-widest text-indigo-300/70 font-semibold">Colonne 01</div>
+            <h2 class="font-heading text-[26px] font-bold text-white leading-tight">Réseaux sociaux</h2>
+          </div>
+        </div>
+
+        <!-- Platform chips -->
+        <div class="grid grid-cols-5 gap-2 mb-5">
+          <div class="platform-chip py-2 flex flex-col items-center gap-1">
+            <i class="material-icons" style="font-size:22px;color:#f472b6;">photo_camera</i>
+            <span class="text-[10px] text-gray-300 font-medium">Instagram</span>
+          </div>
+          <div class="platform-chip py-2 flex flex-col items-center gap-1">
+            <i class="material-icons" style="font-size:22px;color:#a855f7;">music_note</i>
+            <span class="text-[10px] text-gray-300 font-medium">TikTok</span>
+          </div>
+          <div class="platform-chip py-2 flex flex-col items-center gap-1">
+            <i class="material-icons" style="font-size:22px;color:#60a5fa;">group</i>
+            <span class="text-[10px] text-gray-300 font-medium">Facebook</span>
+          </div>
+          <div class="platform-chip py-2 flex flex-col items-center gap-1">
+            <i class="material-icons" style="font-size:22px;color:#34d399;">chat</i>
+            <span class="text-[10px] text-gray-300 font-medium">WhatsApp</span>
+          </div>
+          <div class="platform-chip py-2 flex flex-col items-center gap-1">
+            <i class="material-icons" style="font-size:22px;color:#38bdf8;">work</i>
+            <span class="text-[10px] text-gray-300 font-medium">LinkedIn</span>
+          </div>
+        </div>
+
+        <p class="text-[15px] leading-relaxed text-gray-300 mb-5">
+          Connectez vos comptes en 1 clic. L'IA publie, planifie et répond aux messages automatiquement.
         </p>
+
+        <div class="flex flex-col gap-2.5 mt-auto">
+          <div class="feat-row flex items-center gap-3 px-4 py-3">
+            <i class="material-icons check-ico" style="font-size:18px;">check_circle</i>
+            <span class="text-[14px] text-gray-100 font-medium">Publication multi-plateformes</span>
+          </div>
+          <div class="feat-row flex items-center gap-3 px-4 py-3">
+            <i class="material-icons check-ico" style="font-size:18px;">check_circle</i>
+            <span class="text-[14px] text-gray-100 font-medium">Calendrier auto</span>
+          </div>
+          <div class="feat-row flex items-center gap-3 px-4 py-3">
+            <i class="material-icons check-ico" style="font-size:18px;">check_circle</i>
+            <span class="text-[14px] text-gray-100 font-medium">Agent WhatsApp IA 24/7</span>
+          </div>
+        </div>
       </div>
 
-      <!-- meta footer -->
-      <div class="mt-4 grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
-        <div>
-          <div class="text-[10px] text-gray-500 uppercase tracking-wider">Status</div>
-          <div class="text-sm text-green-400 font-semibold mt-0.5">Completed</div>
+      <!-- RIGHT — Paiements Mobile Money -->
+      <div class="col-card p-7 flex flex-col" style="border:1px solid rgba(168,85,247,0.25);box-shadow:0 0 40px rgba(168,85,247,0.08);">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:linear-gradient(135deg,rgba(168,85,247,0.30),rgba(99,102,241,0.25));border:1px solid rgba(168,85,247,0.4);">
+            <i class="material-icons" style="font-size:26px;color:#d8b4fe;">payments</i>
+          </div>
+          <div>
+            <div class="text-[11px] uppercase tracking-widest text-purple-300/80 font-semibold">Colonne 02</div>
+            <h2 class="font-heading text-[26px] font-bold text-white leading-tight">Paiements Mobile Money</h2>
+          </div>
         </div>
-        <div>
-          <div class="text-[10px] text-gray-500 uppercase tracking-wider">Latence</div>
-          <div class="text-sm text-white font-mono mt-0.5">~10s</div>
+
+        <!-- Payment chips -->
+        <div class="grid grid-cols-3 gap-2 mb-5">
+          <div class="platform-chip py-3 flex flex-col items-center gap-1.5">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-[12px]" style="background:#ffcc00;color:#000;">MTN</div>
+            <span class="text-[10px] text-gray-300 font-medium">MTN MoMo</span>
+          </div>
+          <div class="platform-chip py-3 flex flex-col items-center gap-1.5">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-[12px]" style="background:#ff7900;">OM</div>
+            <span class="text-[10px] text-gray-300 font-medium">Orange Money</span>
+          </div>
+          <div class="platform-chip py-3 flex flex-col items-center gap-1.5">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-[12px]" style="background:linear-gradient(135deg,#1dc8ff,#0050ff);">W</div>
+            <span class="text-[10px] text-gray-300 font-medium">Wave</span>
+          </div>
         </div>
-        <div>
-          <div class="text-[10px] text-gray-500 uppercase tracking-wider">Provider</div>
-          <div class="text-sm text-indigo-300 font-mono mt-0.5">openrouter</div>
+
+        <p class="text-[15px] leading-relaxed text-gray-300 mb-5">
+          Acceptez les paiements en FCFA. Activation en 24h, sans carte bancaire.
+        </p>
+
+        <div class="flex flex-col gap-2.5 mt-auto">
+          <div class="feat-row flex items-center gap-3 px-4 py-3" style="background:rgba(168,85,247,0.06);border-color:rgba(168,85,247,0.20);">
+            <i class="material-icons check-ico" style="font-size:18px;">check_circle</i>
+            <span class="text-[14px] text-gray-100 font-medium">MTN MoMo</span>
+          </div>
+          <div class="feat-row flex items-center gap-3 px-4 py-3" style="background:rgba(168,85,247,0.06);border-color:rgba(168,85,247,0.20);">
+            <i class="material-icons check-ico" style="font-size:18px;">check_circle</i>
+            <span class="text-[14px] text-gray-100 font-medium">Orange Money</span>
+          </div>
+          <div class="feat-row flex items-center gap-3 px-4 py-3" style="background:rgba(168,85,247,0.06);border-color:rgba(168,85,247,0.20);">
+            <i class="material-icons check-ico" style="font-size:18px;">check_circle</i>
+            <span class="text-[14px] text-gray-100 font-medium">Wave + Virement</span>
+          </div>
         </div>
       </div>
+
+    </div>
+
+    <!-- Footer price + CTA -->
+    <div class="flex items-center justify-between mt-7 pt-6" style="border-top:1px solid rgba(255,255,255,0.08);">
+      <div class="flex flex-col">
+        <span class="text-[11px] uppercase tracking-widest text-gray-500 font-semibold mb-1">Tarif d'entrée</span>
+        <div class="flex items-baseline gap-2">
+          <span class="text-[14px] text-gray-400">À partir de</span>
+          <span class="font-heading text-[28px] font-bold gradient-text">5 000 FCFA</span>
+          <span class="text-[14px] text-gray-400">/ mois</span>
+        </div>
+      </div>
+      <a href="#" class="cta-button">
+        <span>Démarrer maintenant</span>
+        <i class="material-icons" style="font-size:22px;">arrow_forward</i>
+      </a>
     </div>
 
   </div>
-
 </div>
 </body>
 </html>

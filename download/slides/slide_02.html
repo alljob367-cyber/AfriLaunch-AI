@@ -2,117 +2,243 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>AfriLaunch AI — Résumé Exécutif</title>
+<title>AfriLaunch AI — 13 Agents IA spécialisés</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <link rel="stylesheet" href="global.css">
 <style>
   html, body { background: #050508; }
-  .grid-bg {
-    background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .slide { font-family: 'Inter', sans-serif; }
+  .font-heading { font-family: 'Space Grotesk', sans-serif; }
+
+  .top-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 22px;
+    background: rgba(99,102,241,0.10);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 100px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: #c7d2fe;
   }
-  .stat-card { transition: transform .3s ease; }
-  .spark {
-    background-image: linear-gradient(90deg, rgba(99,102,241,0.35), rgba(34,211,238,0.15));
+
+  .agent-card {
+    background: rgba(255,255,255,0.035);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all .2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .agent-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.0));
+    pointer-events: none;
+  }
+  .agent-card .icon-wrap {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(168,85,247,0.18));
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 12px;
+  }
+  .agent-card .material-icons {
+    font-size: 26px;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .agent-card .name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: #f0f0f5;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .agent-card .num {
+    position: absolute;
+    top: 8px; right: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    font-weight: 600;
+  }
+
+  .grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  .cta-button {
+    padding: 18px 40px;
+    font-size: 19px;
+    border-radius: 16px;
+    box-shadow: 0 10px 36px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .cta-button .material-icons { font-size: 22px; }
+
+  .corner-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    box-shadow: 0 0 12px rgba(168,85,247,0.6);
   }
 </style>
 </head>
 <body>
-<div class="slide slide-pad grid-bg relative flex flex-col">
+<div class="slide relative overflow-hidden">
 
-  <div class="aurora aurora-1"></div>
-  <div class="aurora aurora-2"></div>
+  <!-- Decor -->
+  <div class="grid-overlay" data-decor aria-hidden="true"></div>
+  <div class="glow-orb" data-decor aria-hidden="true" style="width: 520px; height: 520px; background: #a855f7; top: -180px; right: -160px; opacity: 0.22;"></div>
+  <div class="glow-orb" data-decor aria-hidden="true" style="width: 420px; height: 420px; background: #6366f1; bottom: -160px; left: -140px; opacity: 0.18;"></div>
 
-  <!-- Header -->
-  <div class="relative z-10 flex items-end justify-between mb-7">
-    <div>
-      <div class="flex items-center gap-2 mb-2">
-        <span class="font-mono text-[11px] tracking-[0.3em] text-indigo-300">02 · OVERVIEW</span>
+  <!-- Top header bar -->
+  <div class="absolute top-0 left-0 right-0 flex items-start justify-between" style="padding: 48px 64px 0;">
+    <div class="flex items-end gap-5">
+      <div class="font-heading font-bold gradient-text" style="font-size: 88px; line-height: 0.85; letter-spacing: -0.04em;">02</div>
+      <div class="pb-3">
+        <div class="font-heading tracking-widest uppercase text-gray-500" style="font-size: 11px;">Section</div>
+        <div class="font-heading text-gray-300" style="font-size: 16px; font-weight: 600;">Agents IA</div>
       </div>
-      <h1 class="text-white font-bold tracking-tight" style="font-size:40px; line-height:1.05;">Résumé <span class="gradient-text">Exécutif</span></h1>
     </div>
-    <span class="badge badge-success"><span class="material-icons" style="font-size:13px;">cloud_done</span>DÉPLOYÉ</span>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="corner-dot" data-decor aria-hidden="true"></span>
+        <span class="font-heading tracking-widest uppercase" style="font-size: 11px; color: #6b7280;">02 / 05</span>
+      </div>
+    </div>
   </div>
 
-  <!-- 2x2 stat grid -->
-  <div class="relative z-10 grid grid-cols-2 gap-4 mb-6">
+  <!-- Content -->
+  <div class="absolute inset-0 flex flex-col" style="padding: 200px 64px 60px;">
 
-    <!-- Stat 1 -->
-    <div class="card stat-card relative overflow-hidden">
-      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
-      <div class="flex items-start justify-between">
-        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.25);">
-          <span class="material-icons text-indigo-400" style="font-size:22px;">description</span>
-        </div>
-        <span class="badge badge-success text-[10px]">HTTP 200</span>
+    <!-- Badge + Headline -->
+    <div class="mb-5">
+      <div class="top-badge mb-6">
+        <span class="material-icons" style="font-size: 18px; color: #a855f7;">smart_toy</span>
+        13 agents IA spécialisés
       </div>
-      <div class="mt-5">
-        <div class="stat-num gradient-text" style="font-size:54px;">26/26</div>
-        <div class="text-sm text-gray-300 mt-1.5 font-medium">Pages HTTP 200</div>
-        <div class="text-xs text-gray-500 mt-0.5">Toutes les routes Vercel répondent</div>
-      </div>
+      <h1 class="font-heading font-bold text-white" style="font-size: 56px; line-height: 1.05; letter-spacing: -0.025em;">
+        Votre équipe d'experts IA,<br>
+        <span class="gradient-text">24/7.</span>
+      </h1>
     </div>
 
-    <!-- Stat 2 -->
-    <div class="card stat-card relative overflow-hidden">
-      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
-      <div class="flex items-start justify-between">
-        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.25);">
-          <span class="material-icons text-violet-400" style="font-size:22px;">hub</span>
-        </div>
-        <span class="badge badge-success text-[10px]">FONCTIONNEL</span>
-      </div>
-      <div class="mt-5">
-        <div class="stat-num gradient-text" style="font-size:54px;">10/10</div>
-        <div class="text-sm text-gray-300 mt-1.5 font-medium">Modules API fonctionnels</div>
-        <div class="text-xs text-gray-500 mt-0.5">Endpoints validés en production</div>
-      </div>
-    </div>
-
-    <!-- Stat 3 -->
-    <div class="card stat-card relative overflow-hidden">
-      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
-      <div class="flex items-start justify-between">
-        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.25);">
-          <span class="material-icons" style="font-size:22px; color:#22d3ee;">auto_awesome</span>
-        </div>
-        <span class="badge badge-info text-[10px]">OPENROUTER</span>
-      </div>
-      <div class="mt-5">
-        <div class="stat-num gradient-text" style="font-size:54px;">1001</div>
-        <div class="text-sm text-gray-300 mt-1.5 font-medium">Caractères générés par l'IA</div>
-        <div class="text-xs text-gray-500 mt-0.5">Génération async réussie en ~10s</div>
-      </div>
-    </div>
-
-    <!-- Stat 4 -->
-    <div class="card stat-card relative overflow-hidden">
-      <div class="spark absolute left-0 top-0 h-1 w-full"></div>
-      <div class="flex items-start justify-between">
-        <div class="w-11 h-11 rounded-lg flex items-center justify-center" style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25);">
-          <span class="material-icons text-green-400" style="font-size:22px;">trending_up</span>
-        </div>
-        <span class="badge badge-success text-[10px]">RENTABLE</span>
-      </div>
-      <div class="mt-5">
-        <div class="stat-num gradient-text" style="font-size:54px;">100%</div>
-        <div class="text-sm text-gray-300 mt-1.5 font-medium">Marge brute</div>
-        <div class="text-xs text-gray-500 mt-0.5">Coût IA négligeable (modèle free)</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Footer message -->
-  <div class="relative z-10 card-accent flex items-center gap-4 mt-auto">
-    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(99,102,241,0.2);">
-      <span class="material-icons text-indigo-300" style="font-size:20px;">check_circle</span>
-    </div>
-    <p class="text-[15px] text-gray-200 leading-snug">
-      Déploiement <span class="text-white font-semibold">Vercel</span> + <span class="text-white font-semibold">Supabase</span> réussi. Tous les modules sont opérationnels sur la production.
+    <!-- Body text -->
+    <p class="text-gray-300 mb-7" style="font-size: 17px; line-height: 1.55; max-width: 920px;">
+      Branding, Content, SEO, Ads, Support, Analytics, E-commerce, Email, Video, Localization, Dev, Legal, Growth. Chaque agent connaît votre business et répond instantanément. Ils se souviennent de ce qu'ils ont créé et restent cohérents.
     </p>
+
+    <!-- 13 agent grid (4 cols × 4 rows; last row centered) -->
+    <div class="grid grid-cols-4 gap-3" style="grid-auto-rows: 1fr;">
+      <!-- Row 1 -->
+      <div class="agent-card">
+        <span class="num">01</span>
+        <div class="icon-wrap"><span class="material-icons">palette</span></div>
+        <div class="name">Branding</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">02</span>
+        <div class="icon-wrap"><span class="material-icons">edit_note</span></div>
+        <div class="name">Content</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">03</span>
+        <div class="icon-wrap"><span class="material-icons">search</span></div>
+        <div class="name">SEO</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">04</span>
+        <div class="icon-wrap"><span class="material-icons">campaign</span></div>
+        <div class="name">Ads</div>
+      </div>
+      <!-- Row 2 -->
+      <div class="agent-card">
+        <span class="num">05</span>
+        <div class="icon-wrap"><span class="material-icons">headset_mic</span></div>
+        <div class="name">Support</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">06</span>
+        <div class="icon-wrap"><span class="material-icons">analytics</span></div>
+        <div class="name">Analytics</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">07</span>
+        <div class="icon-wrap"><span class="material-icons">shopping_cart</span></div>
+        <div class="name">E-commerce</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">08</span>
+        <div class="icon-wrap"><span class="material-icons">email</span></div>
+        <div class="name">Email</div>
+      </div>
+      <!-- Row 3 -->
+      <div class="agent-card">
+        <span class="num">09</span>
+        <div class="icon-wrap"><span class="material-icons">movie</span></div>
+        <div class="name">Video</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">10</span>
+        <div class="icon-wrap"><span class="material-icons">public</span></div>
+        <div class="name">Localization</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">11</span>
+        <div class="icon-wrap"><span class="material-icons">code</span></div>
+        <div class="name">Dev</div>
+      </div>
+      <div class="agent-card">
+        <span class="num">12</span>
+        <div class="icon-wrap"><span class="material-icons">gavel</span></div>
+        <div class="name">Legal</div>
+      </div>
+      <!-- Row 4 (1 centered card spanning, with 3 ghost placeholders for visual balance) -->
+      <div class="agent-card col-start-2" style="background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.12)); border-color: rgba(168,85,247,0.35);">
+        <span class="num">13</span>
+        <div class="icon-wrap" style="background: linear-gradient(135deg, rgba(99,102,241,0.35), rgba(168,85,247,0.35)); border-color: rgba(168,85,247,0.5);"><span class="material-icons">trending_up</span></div>
+        <div class="name gradient-text" style="-webkit-text-fill-color: transparent; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text;">Growth</div>
+      </div>
+      <div data-decor aria-hidden="true" style="background: rgba(255,255,255,0.015); border: 1px dashed rgba(255,255,255,0.06); border-radius: 18px; display:flex; align-items:center; justify-content:center;">
+        <span class="material-icons" style="font-size: 22px; color: rgba(255,255,255,0.18);">add</span>
+      </div>
+      <div data-decor aria-hidden="true" style="background: rgba(255,255,255,0.015); border: 1px dashed rgba(255,255,255,0.06); border-radius: 18px; display:flex; align-items:center; justify-content:center;">
+        <span class="font-heading tracking-widest uppercase" style="font-size: 11px; color: rgba(255,255,255,0.22);">Bientôt</span>
+      </div>
+    </div>
+
+    <!-- Footer CTA -->
+    <div class="mt-7 flex items-center justify-between">
+      <div class="flex items-center gap-3 text-gray-400">
+        <span class="material-icons" style="font-size: 20px; color: #a855f7;">all_inclusive</span>
+        <span style="font-size: 15px;">Tous les agents inclus dans chaque plan — sans surcoût.</span>
+      </div>
+      <a href="#" class="cta-button">
+        Démarrer maintenant
+        <span class="material-icons">arrow_forward</span>
+      </a>
+    </div>
+
   </div>
 
 </div>

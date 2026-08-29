@@ -1,10 +1,10 @@
 {
   "design": {
-    "title": "AfriLaunch AI — Rapport de Test",
-    "style_name": "Tech Dark",
-    "palette": {"background": "#050508", "primary": "#6366f1", "accent": "#8b5cf6"},
-    "typography": {"heading": "Inter", "body": "Inter", "numeric": "JetBrains Mono"},
-    "reference": "AfriLaunch AI dark theme"
+    "title": "AfriLaunch AI — Facebook Ads Carrousel",
+    "style_name": "Dark Premium",
+    "palette": {"background": "#050508", "primary": "#6366f1", "accent": "#a855f7"},
+    "typography": {"heading": "Space Grotesk", "body": "Inter", "numeric": "Space Grotesk"},
+    "reference": "Linear/Vercel dark premium with glassmorphism"
   },
   "global_css_path": "/home/z/my-project/download/slides/global.css",
   "slides_dir": "/home/z/my-project/download/slides",
@@ -12,58 +12,34 @@
   "speaker_notes": "none",
   "slides": [
     {
-      "title": "Couverture",
+      "title": "Slide 1 — Hook",
       "layout": "cover",
       "output_path": "/home/z/my-project/download/slides/slide_01.html",
-      "task_brief": "Slide de couverture. Titre principal: 'AfriLaunch AI' en grand avec gradient-text. Sous-titre: 'Rapport de Test — Tous Modules'. Date: '27 Août 2026'. Badge 'PRODUCTION' en badge-success. URL de production: 'afrilaunchia.vercel.app' en monospace gris. Trois stats en bas: '26/26 Pages ✅', '10/10 API Modules ✅', '26 Modules Testés'. Utiliser les aurora blobs en background."
+      "task_brief": "SLIDE 1/5 — HOOK (carrousel cover)\n\nCanvas: 1080x1080px, dark premium (#050508 bg).\n\nContent:\n- Badge en haut: '🚀 Plateforme tout-en-un pour entrepreneurs africains'\n- Headline géant (display size): '1 plateforme.\\n0 friction.'\n- Sous-headline: 'Branding + Site web + Contenu + Réseaux + Paiements Mobile Money — gérés par l'IA.'\n- 4 petites icônes badges en row: 🎨 Branding | 🌐 Site web | 📝 Contenu | 💰 Mobile Money\n- CTA button en bas: 'Démarrer maintenant →' (gradient indigo→violet)\n- Petit texte sous CTA: 'afrilaunch.ai'\n- Glow orbs: un violet en haut à droite, un indigo en bas à gauche\n- Logo AfriLaunch AI en texte en haut à gauche: 'AfriLaunch AI' avec 'AI' en gradient-text\n\nUse Material Icons for the 4 badges. Layout: centered, vertical stack, generous spacing."
     },
     {
-      "title": "Résumé Exécutif",
-      "layout": "stats",
-      "output_path": "/home/z/my-project/download/slides/slide_02.html",
-      "task_brief": "Slide résumé exécutif avec 4 grandes stats en grille 2x2: (1) '26/26' Pages HTTP 200, (2) '10/10' Modules API fonctionnels, (3) '1001' chars générés par l'IA, (4) '100%' Marge brute. Sous les stats, un texte: 'Déploiement Vercel + Supabase réussi. Tous les modules sont opérationnels sur la production.' Ajouter un badge 'DÉPLOYÉ' en badge-success."
-    },
-    {
-      "title": "Authentification & Organisation",
-      "layout": "split",
-      "output_path": "/home/z/my-project/download/slides/slide_03.html",
-      "task_brief": "Slide split 2 colonnes. Colonne gauche 'AUTHENTIFICATION' avec 3 résultats en liste: ✅ Register — TestFinal créé (plan=starter, credits=500), ✅ Login — Token session généré, ✅ Me — Profil récupéré (email=final@test.com). Colonne droite 'ORGANISATION' avec: ✅ Organisation créée — Hotel Albermon (Hôtellerie, Cameroun), ✅ Persistance Supabase confirmée, ✅ Synchronisation modules activée. Chaque item avec un badge-success."
-    },
-    {
-      "title": "IA & Génération de Contenu",
+      "title": "Slide 2 — 13 Agents IA",
       "layout": "key_message",
-      "output_path": "/home/z/my-project/download/slides/slide_04.html",
-      "task_brief": "Slide clé sur l'IA. Titre: 'Génération IA — OpenRouter'. Grand encadré avec le résultat du test: ✅ Job async créé (jobId=job_mtbzmqvuab4004), ✅ Génération réussie en ~10s, ✅ 1001 caractères générés, ✅ Model: minimax/minimax-m3:free, ✅ Provider: openrouter. Aperçu du contenu généré: '🎉 PROMO EXCEPTIONNELLE 🎉 Salut la communauté AfriLaunch ! 👋 On a une offre qui va vous faire vibrer...'. Badge 'OPENROUTER ACTIF' en badge-info. Coût: 0$ (modèle gratuit)."
+      "output_path": "/home/z/my-project/download/slides/slide_02.html",
+      "task_brief": "SLIDE 2/5 — 13 AGENTS IA\n\nCanvas: 1080x1080px, dark premium.\n\nContent:\n- Numéro de slide en haut à gauche: '02' (grand, gradient-text, font heading)\n- Badge: '🤖 13 agents IA spécialisés'\n- Headline: 'Votre équipe d'experts IA,\\n24/7.'\n- Body text (60-80 mots): 'Branding, Content, SEO, Ads, Support, Analytics, E-commerce, Email, Video, Localization, Dev, Legal, Growth. Chaque agent connaît votre business et répond instantanément. Ils se souviennent de ce qu'ils ont créé et restent cohérents.'\n- Grid 4×4 (ou 3×5) de petites cards glass avec icône + nom agent:\n  🎨 Branding | 📝 Content | 🔍 SEO | 📢 Ads\n  🎧 Support | 📊 Analytics | 🛒 E-commerce | 📧 Email\n  🎬 Video | 🌍 Localization | 💻 Dev | ⚖️ Legal\n  📈 Growth\n- CTA en bas: 'Démarrer maintenant →'\n- Glow orb violet en haut à droite\n\nUse Material Icons. Cards: glass, rounded-xl, p-3, flex-col, items-center."
     },
     {
-      "title": "Réseaux Sociaux & Marketplace",
-      "layout": "bento",
-      "output_path": "/home/z/my-project/download/slides/slide_05.html",
-      "task_brief": "Slide bento grid 3 colonnes. Card 1 'RÉSEAUX SOCIAUX': ✅ Instagram connecté @hotel_albermon, ✅ 1 compte connecté, ✅ API connect/disconnect fonctionnelle. Card 2 'MARKETPLACE': ✅ 6 agents premium disponibles, 🏠 Immobilier Sénégal (9.99$/mois), 🍽️ Restaurant Abidjan (7.99$/mois), 📦 Import-Export Maroc (14.99$/mois). Card 3 'PUBLICATION': ✅ API publish créée, ✅ 5 plateformes supportées (IG, FB, LinkedIn, X, WhatsApp), ✅ Programmation disponible."
+      "title": "Slide 3 — Site web + Branding",
+      "layout": "split_text_image",
+      "output_path": "/home/z/my-project/download/slides/slide_03.html",
+      "task_brief": "SLIDE 3/5 — SITE WEB + BRANDING\n\nCanvas: 1080x1080px, dark premium.\n\nContent:\n- Numéro slide: '03' (gradient-text)\n- Badge: '🎨 Identité + 🌐 Site web'\n- Headline: 'Logo, site web, bannières\\n— en 1 clic.'\n- Body (50-70 mots): 'Le Branding Agent génère votre logo, palette, typographie et charte graphique. Le site web est créé automatiquement avec 8 sections, SEO, formulaire WhatsApp et navigation mobile. Tout est prêt à publier.'\n- 3 feature cards en row (glass):\n  Card 1: icône 'palette' | 'Logo + Charte' | 'Logo, palette, typo, charte graphique en 30s'\n  Card 2: icône 'language' | 'Site web complet' | '8 sections, SEO, formulaire WhatsApp, mobile'\n  Card 3: icône 'auto_awesome' | 'Kit média' | 'Bannières FB/IG/LinkedIn, créatives pub, favicon'\n- CTA en bas: 'Démarrer maintenant →'\n- Glow orb indigo en bas à droite\n\nUse Material Icons. Cards: glass, rounded-2xl, p-5, flex-col."
     },
     {
-      "title": "Paiement & Monétisation",
+      "title": "Slide 4 — Réseaux + Paiements",
       "layout": "comparison",
-      "output_path": "/home/z/my-project/download/slides/slide_06.html",
-      "task_brief": "Slide comparaison 2 colonnes. Colonne gauche 'PAIEMENT MANUEL': ✅ Ordre créé — Plan Pro mensuel, ✅ 15 000 FCFA, ✅ MTN Mobile Money (Cameroun), ✅ 3 méthodes disponibles (MTN, Orange, Virement). Colonne droite 'PLANS & CRÉDITS': 4 plans affichés en mini-cards: Starter 5 000 FCFA (500 crédits), Pro 15 000 FCFA (5 000 crédits) ⭐, Business 40 000 FCFA (50 000 crédits), Enterprise 150 000 FCFA (illimité). Badge 'FCFA' en badge-info."
+      "output_path": "/home/z/my-project/download/slides/slide_04.html",
+      "task_brief": "SLIDE 4/5 — RÉSEAUX SOCIAUX + PAIEMENTS\n\nCanvas: 1080x1080px, dark premium.\n\nContent:\n- Numéro slide: '04' (gradient-text)\n- Badge: '📱 Réseaux + 💰 Paiements'\n- Headline: 'Publiez. Vendez.\\nEncaissez.'\n- Deux colonnes côte à côte (glass cards):\n\n  Colonne gauche (Réseaux sociaux):\n  - Titre: 'Réseaux sociaux'\n  - 5 logos/badges: Instagram, TikTok, Facebook, WhatsApp, LinkedIn\n  - Texte: 'Connectez vos comptes en 1 clic. L'IA publie, planifie et répond aux messages automatiquement.'\n  - Feature list: '✓ Publication multi-plateformes' | '✓ Calendrier auto' | '✓ Agent WhatsApp IA 24/7'\n\n  Colonne droite (Paiements):\n  - Titre: 'Paiements Mobile Money'\n  - 3 logos: MTN MoMo, Orange Money, Wave\n  - Texte: 'Acceptez les paiements en FCFA. Activation en 24h, sans carte bancaire.'\n  - Feature list: '✓ MTN MoMo' | '✓ Orange Money' | '✓ Wave + Virement'\n\n- Prix en bas: 'À partir de 5 000 FCFA / mois'\n- CTA: 'Démarrer maintenant →'\n- Glow orb vert à gauche, violet à droite\n\nUse Material Icons. Cards: glass, rounded-2xl, p-6."
     },
     {
-      "title": "WhatsApp Agent & Admin",
-      "layout": "split",
-      "output_path": "/home/z/my-project/download/slides/slide_07.html",
-      "task_brief": "Slide split 2 colonnes. Colonne gauche 'WHATSAPP AGENT': ✅ Webhook Twilio configuré, ✅ API status publique, ✅ Architecture: WhatsApp → Twilio → IA → Réponse, ⚠️ Twilio: enabled=False (à activer avec compte Twilio), ✅ freeForAll=True (gratuit pour tous). Colonne droite 'PANNEAU ADMIN': ✅ Login admin (admin123), ✅ 14 pages admin accessibles, ✅ Config OpenRouter active, ✅ Métriques: 2 users, MRR=10000$, marge=100%, ✅ Système de crédits avec bypass admin."
-    },
-    {
-      "title": "Métriques & Rentabilité",
-      "layout": "stats",
-      "output_path": "/home/z/my-project/download/slides/slide_08.html",
-      "task_brief": "Slide métriques financières. 4 stats en grille: (1) '2' Utilisateurs inscrits, (2) '10 000$' MRR projeté, (3) '0.1$' Coût IA/mois, (4) '100%' Marge brute. Sous les stats, tableau simple: Starter=2 users | Pro=0 | Business=0 | Enterprise=0. Note: 'Avec 100 utilisateurs (60 Starter + 25 Pro + 10 Business + 5 Enterprise): MRR=3 041$, marge=84.5%, bénéfice net=2 569$/mois'. Badge 'RENTABLE' en badge-success."
-    },
-    {
-      "title": "Conclusion & Prochaines Étapes",
+      "title": "Slide 5 — CTA final",
       "layout": "closing",
-      "output_path": "/home/z/my-project/download/slides/slide_09.html",
-      "task_brief": "Slide de conclusion. Titre: 'Conclusion'. Trois points avec checkmarks verts: ✅ 26/26 pages opérationnelles sur Vercel, ✅ Supabase configuré et persistant, ✅ IA OpenRouter active (génération en 10s). Section 'PROCHAINES ÉTAPES' avec 4 items: 1. Configurer Twilio + ElevenLabs pour WhatsApp voix, 2. Activer Stripe/Flutterwave pour paiements automatiques, 3. Créer le bot Telegram (@BotFather), 4. Lancer la campagne marketing. En bas: 'AfriLaunch AI — https://github.com/alljob367-cyber/AfriLaunch-AI' en monospace gris."
+      "output_path": "/home/z/my-project/download/slides/slide_05.html",
+      "task_brief": "SLIDE 5/5 — CTA FINAL\n\nCanvas: 1080x1080px, dark premium.\n\nContent:\n- Numéro slide: '05' (gradient-text)\n- Grand headline centré: 'Prêt à scaler\\nvotre business ?'\n- Sous-texte: 'Rejoignez les entrepreneurs africains qui utilisent l'IA pour gagner du temps, vendre plus et grandir plus vite.'\n- 3 stats en row (glass cards):\n  '13' / 'Agents IA' | '5 min' / 'Pour démarrer' | '5 000 FCFA' / '/mois'\n- CTA button géant: 'Créer mon compte →' (gradient, très visible, padding généreux)\n- Sous CTA: '✓ Activation en 24h ✓ Mobile Money ✓ Sans engagement'\n- URL en bas: 'afrilaunch.ai'\n- Logo AfriLaunch AI en haut (texte)\n- Glow orbs: violet centre, indigo haut, accent bas\n- Étoiles décoratives (petits points blancs opacité 0.3) comme le logo\n\nLayout: centered vertical stack, maximum impact."
     }
   ]
 }
