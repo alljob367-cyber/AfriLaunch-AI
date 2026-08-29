@@ -164,6 +164,52 @@ export async function sendWhatsAppMessage(opts: {
   }
 }
 
+// ─── Twilio WhatsApp media sending (images) ───────────────────────────
+// Twilio requires a PUBLIC HTTPS URL for MediaUrl — it fetches the image
+// from Twilio's servers, not the user's browser. Use our /api/whatsapp-agent/media
+// endpoint to serve product images stored as base64 in the whatsapp-agent-store.
+export async function sendWhatsAppMedia(opts: {
+  to: string;
+  mediaUrl: string;  // must be a public HTTPS URL
+  caption?: string;  // text caption sent with the image
+}): Promise<{ ok: boolean; error?: string }> {
+  const config = await getConfig();
+  const tw = config.twilio;
+
+  if (!tw.enabled || !tw.accountSid || !tw.authToken || !tw.whatsappNumber) {
+    return { ok: false, error: 'Twilio non configuré.' };
+  }
+
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${tw.accountSid}/Messages.json`;
+  const params = new URLSearchParams({
+    From: `whatsapp:${tw.whatsappNumber}`,
+    To: opts.to,
+    MediaUrl: opts.mediaUrl,
+  });
+  if (opts.caption) params.set('Body', opts.caption);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${tw.accountSid}:${tw.authToken}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params,
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      return { ok: false, error: `Twilio media: HTTP ${res.status} ${errBody.slice(0, 200)}` };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
 // ─── Process incoming WhatsApp message with ElevenLabs agent ──────────
 // This uses the ElevenLabs Conversational AI API to get a response from the agent
 export async function processWhatsAppWithElevenLabs(userMessage: string, fromNumber: string): Promise<{ ok: boolean; response?: string; error?: string }> {

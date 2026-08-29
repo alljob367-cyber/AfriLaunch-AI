@@ -9,12 +9,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config-store';
-import { sendWhatsAppMessage } from '@/lib/elevenlabs-agent';
+import { sendWhatsAppMessage, sendWhatsAppMedia } from '@/lib/elevenlabs-agent';
 import { kvGet, kvSet } from '@/lib/db';
 import {
   getConfigByWhatsAppNumber,
   buildSystemPrompt,
   isWithinBusinessHours,
+  type CatalogProduct,
 } from '@/lib/whatsapp-agent-store';
 import { runAIForPlanFast, runAIForPlanFastStream } from '@/lib/ai-runner';
 import { syncHealthFromConfig, pickProviderChain, markError, markSuccess, classifyError, type ProviderName } from '@/lib/ai-load-balancer';
@@ -181,10 +182,60 @@ export async function POST(req: NextRequest) {
     body: response,
   });
 
+  // ── Send product images if the response mentions catalog products ──
+  // After sending the text response, we check if any product from the
+  // user's catalog is mentioned in the response. If so, we send the
+  // product image as a separate WhatsApp media message.
+  if (userConfig && userConfig.catalog.length > 0) {
+    const mentionedProducts = findMentionedProducts(response, userConfig.catalog);
+    for (const product of mentionedProducts.slice(0, 3)) { // max 3 images per response
+      if (product.imageUrl) {
+        try {
+          // Build public URL for Twilio to fetch
+          // Twilio requires an HTTPS URL — use our media endpoint
+          const appUrl = config.appUrl || `https://${req.headers.get('host') || 'afrilaunchia.vercel.app'}`;
+          const mediaUrl = `${appUrl}/api/whatsapp-agent/media/${product.id}?userId=${userConfig.userId}`;
+          await sendWhatsAppMedia({
+            to: from,
+            mediaUrl,
+            caption: `📸 ${product.name}\n💰 ${product.price}${product.description ? `\n📝 ${product.description}` : ''}`,
+          });
+        } catch (err) {
+          console.error('Failed to send product image:', err);
+        }
+      }
+    }
+  }
+
   return new NextResponse('<Response></Response>', {
     status: 200,
     headers: { 'Content-Type': 'text/xml' },
   });
+}
+
+// ─── Detect which catalog products are mentioned in the AI response ────
+// We do a case-insensitive search for the product name (or a significant
+// part of it) in the response. This is intentionally simple — the AI is
+// instructed to use exact product names, so a substring match is reliable.
+function findMentionedProducts(response: string, catalog: CatalogProduct[]): CatalogProduct[] {
+  const lower = response.toLowerCase();
+  const mentioned: CatalogProduct[] = [];
+  for (const product of catalog) {
+    if (!product.name || product.name.length < 3) continue;
+    // Match the product name (case-insensitive)
+    if (lower.includes(product.name.toLowerCase())) {
+      mentioned.push(product);
+      continue;
+    }
+    // Also match significant words from the name (4+ chars, not common words)
+    const words = product.name.toLowerCase().split(/\s+/).filter((w) => w.length >= 4);
+    const commonWords = ['avec', 'pour', 'dans', 'sur', 'les', 'des', 'une', 'aux'];
+    const significantWords = words.filter((w) => !commonWords.includes(w));
+    if (significantWords.length > 0 && significantWords.every((w) => lower.includes(w))) {
+      mentioned.push(product);
+    }
+  }
+  return mentioned;
 }
 
 // ─── Direct provider calls (when user forces a specific provider) ─────
