@@ -69,7 +69,7 @@ export default function AdminAiPage() {
       });
       const data = await res.json();
       if (res.ok && data.ok && data.audioUrl) {
-        return { ok: true, message: 'Audio généré avec succès via ElevenLabs.' };
+        return { ok: true, message: `Audio généré ✓ — modèle: ${data.model}, voix: ${data.voiceId}` };
       }
       return { ok: false, message: data.error || `Erreur (${res.status})` };
     } catch (err) {

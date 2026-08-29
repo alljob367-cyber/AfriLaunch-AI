@@ -303,8 +303,8 @@ export function getDefaultConfig(): AppConfig {
     },
     elevenlabs: {
       apiKey: '',
-      voiceId: '21m00Tcm4TlvDq8ikWAM',
-      model: 'eleven_multilingual_v2',
+      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel — default voice
+      model: 'eleven_turbo_v2_5', // turbo model — works on free tier, faster + cheaper
       enabled: false,
       stability: 0.5,
       similarityBoost: 0.75,

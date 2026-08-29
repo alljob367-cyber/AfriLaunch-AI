@@ -1,14 +1,27 @@
 // AfriLaunch AI — ElevenLabs Voice generation API
 // POST /api/ai/voice — generate audio from text using ElevenLabs
 // Returns audio/mpeg directly
+//
+// Auth: accepts EITHER user session OR admin session (so the admin can test
+// from /admin/ai without needing a separate user login).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getConfig } from '@/lib/config-store';
+import { getConfig, validateSession } from '@/lib/config-store';
 import { requireUser } from '@/lib/auth-helpers';
 
-export async function POST(req: NextRequest) {
+async function requireUserOrAdmin(req: NextRequest): Promise<boolean> {
+  // Try user session first
   const user = await requireUser(req);
-  if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  if (user) return true;
+  // Fall back to admin session
+  const adminToken = req.cookies.get('afrilaunch_admin')?.value;
+  if (adminToken && await validateSession(adminToken)) return true;
+  return false;
+}
+
+export async function POST(req: NextRequest) {
+  const isAuthed = await requireUserOrAdmin(req);
+  if (!isAuthed) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
 
   const config = await getConfig();
   if (!config.elevenlabs.enabled || !config.elevenlabs.apiKey) {
@@ -50,8 +63,12 @@ export async function POST(req: NextRequest) {
       const errBody = await res.text().catch(() => '');
       let errMsg = `HTTP ${res.status}`;
       try { const j = JSON.parse(errBody); errMsg = j.detail?.message || j.message || errMsg; } catch { /* not JSON */ }
-      if (res.status === 401) return NextResponse.json({ error: 'Clé API ElevenLabs invalide' }, { status: 401 });
-      if (res.status === 422) return NextResponse.json({ error: `Voice ID invalide: ${voiceId}` }, { status: 422 });
+      if (res.status === 401) return NextResponse.json({ error: 'Clé API ElevenLabs invalide (401). Vérifiez votre clé sur elevenlabs.io' }, { status: 401 });
+      if (res.status === 403) return NextResponse.json({ error: 'Accès refusé (403). Votre plan ElevenLabs ne supporte peut-être pas ce modèle ou cette voix.' }, { status: 403 });
+      if (res.status === 404) return NextResponse.json({ error: `Voice ID invalide: ${voiceId} (404). Utilisez un voice ID de votre compte ElevenLabs.` }, { status: 404 });
+      if (res.status === 405) return NextResponse.json({ error: `ElevenLabs: méthode non autorisée (405). Le modèle "${config.elevenlabs.model}" ou le voice ID "${voiceId}" n'est pas accessible avec votre clé. Essayez le modèle "eleven_turbo_v2_5" et le voice ID "21m00Tcm4TlvDq8ikWAM" (Rachel).` }, { status: 500 });
+      if (res.status === 422) return NextResponse.json({ error: `Voice ID invalide: ${voiceId} (422)` }, { status: 422 });
+      if (res.status === 429) return NextResponse.json({ error: 'Quota ElevenLabs dépassé (429). Le free tier est limité à 10 000 caractères/mois.' }, { status: 429 });
       return NextResponse.json({ error: `ElevenLabs: ${errMsg}` }, { status: 500 });
     }
 
