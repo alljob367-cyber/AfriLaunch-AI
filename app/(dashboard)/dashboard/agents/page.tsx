@@ -2,6 +2,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+
+// Mark onboarding step as completed when user visits this page
+if (typeof window !== 'undefined') {
+  localStorage.setItem('afrilaunch.onboarding.agent', 'done');
+}
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Send, Loader2, Sparkles, ArrowLeft, Trash2, MessageSquare,

@@ -3,6 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+
+// Mark onboarding step as completed when user visits this page
+if (typeof window !== 'undefined') {
+  localStorage.setItem('afrilaunch.onboarding.content', 'done');
+}
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PenSquare, Sparkles, Loader2, Copy, RefreshCw, ImageIcon, Download,

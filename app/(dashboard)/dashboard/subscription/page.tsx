@@ -3,6 +3,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+
+// Mark onboarding step as completed when user visits this page
+if (typeof window !== 'undefined') {
+  localStorage.setItem('afrilaunch.onboarding.payment', 'done');
+}
 import { motion } from 'framer-motion';
 import {
   CreditCard, Loader2, Check, Sparkles, Zap, TrendingUp,
