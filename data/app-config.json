@@ -55,7 +55,7 @@
         "enabled": false
       },
       "mistral": {
-        "apiKey": "nmob0QUV45XHaHCVGYDusNUuqixzLcXf",
+        "apiKey": "",
         "model": "mistral-large-latest",
         "endpoint": "https://api.mistral.ai/v1",
         "enabled": true
@@ -67,7 +67,7 @@
         "enabled": false
       },
       "groq": {
-        "apiKey": "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",
+        "apiKey": "",
         "model": "llama-3.3-70b-versatile",
         "endpoint": "https://api.groq.com/openai/v1",
         "enabled": true
@@ -78,7 +78,7 @@
         "endpoint": "https://openrouter.ai/api/v1",
         "appName": "AfriLaunch AI",
         "siteUrl": "https://afrilaunch.ai",
-        "apiKey": "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"
+        "apiKey": ""
       }
     },
     "fallback": true,

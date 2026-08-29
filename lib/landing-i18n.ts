@@ -99,10 +99,68 @@ export interface LandingStrings {
 
   // Footer
   footer_tagline: string;
+  footer_slogan: string;
   footer_product: string;
+  footer_modules: string;
+  footer_resources: string;
   footer_company: string;
   footer_legal: string;
+  footer_newsletter_title: string;
+  footer_newsletter_desc: string;
+  footer_newsletter_placeholder: string;
+  footer_newsletter_button: string;
+  footer_newsletter_consent: string;
+  footer_newsletter_success: string;
+  footer_contact: string;
+  footer_follow_us: string;
+  footer_payments: string;
   footer_rights: string;
+  footer_made_in: string;
+  footer_back_to_top: string;
+  footer_lang: string;
+  footer_status: string;
+  footer_status_ok: string;
+
+  // Footer link labels (modules / resources / company / legal)
+  footer_l_features: string;
+  footer_l_agents: string;
+  footer_l_pricing: string;
+  footer_l_usecases: string;
+  footer_l_faq: string;
+  footer_l_demo: string;
+
+  footer_l_identity: string;
+  footer_l_brand_kit: string;
+  footer_l_website: string;
+  footer_l_content: string;
+  footer_l_social: string;
+  footer_l_whatsapp: string;
+  footer_l_voice: string;
+  footer_l_analytics: string;
+  footer_l_payments: string;
+  footer_l_my_agents: string;
+  footer_l_marketplace: string;
+
+  footer_l_blog: string;
+  footer_l_docs: string;
+  footer_l_api: string;
+  footer_l_help: string;
+  footer_l_community: string;
+  footer_l_changelog: string;
+  footer_l_status: string;
+  footer_l_webinars: string;
+
+  footer_l_about: string;
+  footer_l_careers: string;
+  footer_l_partners: string;
+  footer_l_press: string;
+  footer_l_contact: string;
+
+  footer_l_terms: string;
+  footer_l_privacy: string;
+  footer_l_security: string;
+  footer_l_rgpd: string;
+  footer_l_cookies: string;
 }
 
 export const STRINGS: Record<Lang, LandingStrings> = {
@@ -223,10 +281,67 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     cta_note: 'Activation en 24h · Paiement Mobile Money · Sans engagement',
 
     footer_tagline: 'L\'empire digital de votre business, géré par l\'IA.',
+    footer_slogan: 'LANCEZ. GÉREZ. DÉVELOPPEZ.',
     footer_product: 'Produit',
+    footer_modules: 'Modules',
+    footer_resources: 'Ressources',
     footer_company: 'Entreprise',
     footer_legal: 'Légal',
+    footer_newsletter_title: 'Restez à la pointe de l\'entrepreneuriat africain',
+    footer_newsletter_desc: 'Recevez nos guides, études de cas et nouveautés produit. 1 email par semaine, jamais de spam.',
+    footer_newsletter_placeholder: 'votre@email.com',
+    footer_newsletter_button: 'S\'abonner',
+    footer_newsletter_consent: 'En vous abonnant, vous acceptez notre politique de confidentialité.',
+    footer_newsletter_success: 'Merci ! Vérifiez votre boîte mail pour confirmer.',
+    footer_contact: 'Contact',
+    footer_follow_us: 'Suivez-nous',
+    footer_payments: 'Paiements acceptés',
     footer_rights: 'Tous droits réservés.',
+    footer_made_in: 'Conçu avec ❤️ en Afrique',
+    footer_back_to_top: 'Haut de page',
+    footer_lang: 'Langue',
+    footer_status: 'Statut système',
+    footer_status_ok: 'Opérationnel',
+
+    footer_l_features: 'Fonctionnalités',
+    footer_l_agents: 'Agents IA',
+    footer_l_pricing: 'Tarifs',
+    footer_l_usecases: 'Cas d\'usage',
+    footer_l_faq: 'FAQ',
+    footer_l_demo: 'Démo live',
+
+    footer_l_identity: 'Identité de marque',
+    footer_l_brand_kit: 'Brand Kit',
+    footer_l_website: 'Site web',
+    footer_l_content: 'Contenu',
+    footer_l_social: 'Réseaux sociaux',
+    footer_l_whatsapp: 'Agent WhatsApp',
+    footer_l_voice: 'Voix IA',
+    footer_l_analytics: 'Analytics',
+    footer_l_payments: 'Paiements',
+    footer_l_my_agents: 'Mes agents',
+    footer_l_marketplace: 'Marketplace',
+
+    footer_l_blog: 'Blog',
+    footer_l_docs: 'Documentation',
+    footer_l_api: 'API Docs',
+    footer_l_help: 'Centre d\'aide',
+    footer_l_community: 'Communauté',
+    footer_l_changelog: 'Changelog',
+    footer_l_status: 'Statut système',
+    footer_l_webinars: 'Webinaires',
+
+    footer_l_about: 'À propos',
+    footer_l_careers: 'Carrières',
+    footer_l_partners: 'Partenaires',
+    footer_l_press: 'Presse',
+    footer_l_contact: 'Nous contacter',
+
+    footer_l_terms: 'Conditions d\'utilisation',
+    footer_l_privacy: 'Confidentialité',
+    footer_l_security: 'Sécurité',
+    footer_l_rgpd: 'RGPD',
+    footer_l_cookies: 'Cookies',
   },
 
   en: {
@@ -346,9 +461,66 @@ export const STRINGS: Record<Lang, LandingStrings> = {
     cta_note: 'Activation in 24h · Mobile Money payment · No commitment',
 
     footer_tagline: 'Your business\'s digital empire, managed by AI.',
+    footer_slogan: 'LAUNCH. MANAGE. SCALE.',
     footer_product: 'Product',
+    footer_modules: 'Modules',
+    footer_resources: 'Resources',
     footer_company: 'Company',
     footer_legal: 'Legal',
+    footer_newsletter_title: 'Stay ahead in African entrepreneurship',
+    footer_newsletter_desc: 'Get our guides, case studies and product news. 1 email per week, never any spam.',
+    footer_newsletter_placeholder: 'your@email.com',
+    footer_newsletter_button: 'Subscribe',
+    footer_newsletter_consent: 'By subscribing, you agree to our privacy policy.',
+    footer_newsletter_success: 'Thank you! Check your inbox to confirm.',
+    footer_contact: 'Contact',
+    footer_follow_us: 'Follow us',
+    footer_payments: 'Accepted payments',
     footer_rights: 'All rights reserved.',
+    footer_made_in: 'Crafted with ❤️ in Africa',
+    footer_back_to_top: 'Back to top',
+    footer_lang: 'Language',
+    footer_status: 'System status',
+    footer_status_ok: 'Operational',
+
+    footer_l_features: 'Features',
+    footer_l_agents: 'AI Agents',
+    footer_l_pricing: 'Pricing',
+    footer_l_usecases: 'Use cases',
+    footer_l_faq: 'FAQ',
+    footer_l_demo: 'Live demo',
+
+    footer_l_identity: 'Brand identity',
+    footer_l_brand_kit: 'Brand Kit',
+    footer_l_website: 'Website',
+    footer_l_content: 'Content',
+    footer_l_social: 'Social media',
+    footer_l_whatsapp: 'WhatsApp Agent',
+    footer_l_voice: 'AI Voice',
+    footer_l_analytics: 'Analytics',
+    footer_l_payments: 'Payments',
+    footer_l_my_agents: 'My agents',
+    footer_l_marketplace: 'Marketplace',
+
+    footer_l_blog: 'Blog',
+    footer_l_docs: 'Documentation',
+    footer_l_api: 'API Docs',
+    footer_l_help: 'Help center',
+    footer_l_community: 'Community',
+    footer_l_changelog: 'Changelog',
+    footer_l_status: 'System status',
+    footer_l_webinars: 'Webinars',
+
+    footer_l_about: 'About',
+    footer_l_careers: 'Careers',
+    footer_l_partners: 'Partners',
+    footer_l_press: 'Press',
+    footer_l_contact: 'Contact us',
+
+    footer_l_terms: 'Terms of service',
+    footer_l_privacy: 'Privacy policy',
+    footer_l_security: 'Security',
+    footer_l_rgpd: 'GDPR',
+    footer_l_cookies: 'Cookies',
   },
 };

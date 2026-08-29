@@ -1,6 +1,11 @@
 // AfriLaunch AI — Database abstraction layer
 // Uses Supabase (PostgreSQL) in production, falls back to JSON files in local dev
 // This replaces all fs.readFile/writeFile calls across the codebase
+//
+// IMPORTANT: This module is SERVER-ONLY. The `fs`/`path` modules are loaded
+// lazily via `eval('require')` so webpack does NOT try to bundle them for the
+// browser. Calling kvGet/kvSet from a Client Component will still fail at
+// runtime — only call them from Server Components / API routes.
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -13,9 +18,31 @@ export const supabase: SupabaseClient | null = (supabaseUrl && supabaseKey)
 
 export const isSupabaseConfigured = !!supabase;
 
+// Lazy-load Node.js `fs` and `path` modules at runtime via `eval('require')`.
+// This hides them from webpack's static analysis so they don't end up in the
+// browser bundle, while still working correctly in the Node.js server runtime.
+// (The previous `eval('import')('fs/promises')` pattern was broken in CJS
+//  context — it threw "Cannot use import statement outside a module".)
+function nodeRequire(): { fs: typeof import('fs/promises'); path: typeof import('path') } {
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
+  const req = eval('require') as NodeRequire;
+  return {
+    fs: req('fs/promises'),
+    path: req('path'),
+  };
+}
+
+// Resolve the data directory lazily (only when actually needed in Node runtime).
+function getDataDir(): { data: string; proofs: string } {
+  const { path } = nodeRequire();
+  const data = path.join(process.cwd(), 'data');
+  return { data, proofs: path.join(data, 'payment-proofs') };
+}
+
 // ─── Generic KV store ────────────────────────────────────────────────
 // In Supabase: stored in `kv_store` table (key TEXT PK, value JSONB)
-// In local dev: stored in ./data/{key}.json
+// In local dev / standalone server: stored in ./data/{key}.json
+// On Vercel serverless without Supabase: silently no-ops (fs not writable).
 
 export async function kvGet<T = any>(key: string): Promise<T | null> {
   if (supabase) {
@@ -28,15 +55,12 @@ export async function kvGet<T = any>(key: string): Promise<T | null> {
     return data.value as T;
   }
 
-  // Fallback: JSON file (local dev only — not available on Vercel serverless)
-  if (process.env.VERCEL) return null; // Skip on Vercel to avoid fs warnings
+  // Vercel serverless: skip fs operations (filesystem is read-only)
+  if (process.env.VERCEL) return null;
   try {
-    const fs = await (eval('import') as any)('fs/promises');
-    const path = await (eval('import') as any)('path');
-    const raw = await fs.readFile(
-      path.join(process.cwd(), 'data', `${key}.json`),
-      'utf-8',
-    );
+    const { fs, path } = nodeRequire();
+    const { data: dataDir } = getDataDir();
+    const raw = await fs.readFile(path.join(dataDir, `${key}.json`), 'utf-8');
     return JSON.parse(raw) as T;
   } catch {
     return null;
@@ -59,15 +83,14 @@ export async function kvSet(key: string, value: any): Promise<void> {
     return;
   }
 
-  // Fallback: JSON file (local dev only — not available on Vercel serverless)
-  if (process.env.VERCEL) return; // Skip on Vercel to avoid fs warnings
+  // Vercel serverless: skip fs operations (filesystem is read-only)
+  if (process.env.VERCEL) return;
   try {
-    const fs = await (eval('import') as any)('fs/promises');
-    const path = await (eval('import') as any)('path');
-    const dir = path.join(process.cwd(), 'data');
-    await fs.mkdir(dir, { recursive: true });
+    const { fs, path } = nodeRequire();
+    const { data: dataDir } = getDataDir();
+    await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(
-      path.join(dir, `${key}.json`),
+      path.join(dataDir, `${key}.json`),
       JSON.stringify(value, null, 2),
       'utf-8',
     );
@@ -89,14 +112,12 @@ export async function storeFile(key: string, fileBuffer: Buffer, mimeType: strin
     return key; // Return the key as the "file path"
   }
 
-  // Fallback: local file (local dev only — not available on Vercel)
-  if (process.env.VERCEL) throw new Error('File storage not available on Vercel');
+  if (process.env.VERCEL) throw new Error('File storage not available on Vercel without Supabase');
   try {
-    const fs = await (eval('import') as any)('fs/promises');
-    const path = await (eval('import') as any)('path');
-    const dir = path.join(process.cwd(), 'data', 'payment-proofs');
-    await fs.mkdir(dir, { recursive: true });
-    const filePath = path.join(dir, key);
+    const { fs, path } = nodeRequire();
+    const { proofs: proofsDir } = getDataDir();
+    await fs.mkdir(proofsDir, { recursive: true });
+    const filePath = path.join(proofsDir, key);
     await fs.writeFile(filePath, fileBuffer);
     return filePath;
   } catch (err) {
@@ -114,12 +135,11 @@ export async function getFile(key: string): Promise<{ data: Buffer; mimeType: st
     };
   }
 
-  // Fallback: local file (local dev only — not available on Vercel)
   if (process.env.VERCEL) return null;
   try {
-    const fs = await (eval('import') as any)('fs/promises');
-    const path = await (eval('import') as any)('path');
-    const filePath = path.join(process.cwd(), 'data', 'payment-proofs', key);
+    const { fs, path } = nodeRequire();
+    const { proofs: proofsDir } = getDataDir();
+    const filePath = path.join(proofsDir, key);
     const data = await fs.readFile(filePath);
     // Guess mime from extension
     const ext = path.extname(key).toLowerCase();

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { STRINGS, type Lang } from '@/lib/landing-i18n';
 import { Logo } from '@/components/logo';
+import { Footer } from '@/components/footer';
 
 /* ─── Static data (icons + colors, language-agnostic) ──────────── */
 
@@ -94,12 +95,16 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#050508] text-white overflow-x-hidden">
+      {/* Skip-link a11y (visible on focus) */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-indigo-500 focus:text-white focus:rounded-lg focus:text-sm">
+        Aller au contenu
+      </a>
 
       {/* ═══════════════ Navigation ═══════════════ */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3.5">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <Logo size={32} className="transition-transform group-hover:scale-110" />
+            <Logo size={32} compact className="transition-transform group-hover:scale-110" />
             <span className="font-bold text-lg">AfriLaunch <span className="gradient-text">AI</span></span>
           </Link>
 
@@ -135,7 +140,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ═══════════════ 1. Hero ═══════════════ */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center pt-24 pb-12 mesh-bg">
+      <section id="main-content" ref={heroRef} className="relative min-h-screen flex items-center pt-24 pb-12 mesh-bg">
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-indigo-500/20 to-violet-500/20 blur-3xl animate-aurora" />
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-cyan-500/10 to-blue-500/10 blur-3xl animate-aurora delay-300" />
@@ -650,92 +655,8 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* ═══════════════ Footer ═══════════════ */}
-      <footer className="border-t border-white/5 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div className="col-span-2 md:col-span-1">
-              <Link href="/" className="flex items-center gap-2.5 mb-4">
-                <Logo size={32} />
-                <span className="font-bold">AfriLaunch <span className="gradient-text">AI</span></span>
-              </Link>
-              <p className="text-xs text-gray-500 leading-relaxed">{t.footer_tagline}</p>
-              {/* Contact info */}
-              <div className="mt-4 space-y-1.5">
-                <a href="mailto:contact@afrilaunch.ai" className="flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
-                  <span>✉️</span> contact@afrilaunch.ai
-                </a>
-                <a href="https://wa.me/237600000000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
-                  <span>💬</span> WhatsApp
-                </a>
-                <p className="flex items-center gap-2 text-xs text-gray-500">
-                  <span>📍</span> Douala, Cameroun
-                </p>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.footer_product}</p>
-              <ul className="space-y-2 text-xs text-gray-500 list-none p-0 m-0">
-                <li><Link href="/#features" className="hover:text-white transition-colors">{t.nav_features}</Link></li>
-                <li><Link href="/#agents" className="hover:text-white transition-colors">{t.nav_agents}</Link></li>
-                <li><Link href="/#pricing" className="hover:text-white transition-colors">{t.nav_pricing}</Link></li>
-                <li><Link href="/#usecases" className="hover:text-white transition-colors">{t.nav_usecases}</Link></li>
-                <li><Link href="/dashboard/agents" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link href="/api-docs" className="hover:text-white transition-colors">API Docs</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.footer_company}</p>
-              <ul className="space-y-2 text-xs text-gray-500 list-none p-0 m-0">
-                <li><Link href="/about" className="hover:text-white transition-colors">À propos</Link></li>
-                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
-                <li><Link href="/register" className="hover:text-white transition-colors">Créer un compte</Link></li>
-                <li><Link href="/login" className="hover:text-white transition-colors">Connexion</Link></li>
-                <li><a href="mailto:contact@afrilaunch.ai?subject=Contact" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="https://wa.me/237600000000" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Support WhatsApp</a></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.footer_legal}</p>
-              <ul className="space-y-2 text-xs text-gray-500 list-none p-0 m-0">
-                <li><Link href="/legal/terms" className="hover:text-white transition-colors">Conditions d'utilisation</Link></li>
-                <li><Link href="/legal/privacy" className="hover:text-white transition-colors">Politique de confidentialité</Link></li>
-                <li><Link href="/legal/security" className="hover:text-white transition-colors">Sécurité</Link></li>
-                <li><Link href="/legal/rgpd" className="hover:text-white transition-colors">RGPD</Link></li>
-              </ul>
-              {/* Newsletter */}
-              <div className="mt-4">
-                <p className="text-[10px] text-gray-600 mb-2">Newsletter</p>
-                <form onSubmit={(e) => { e.preventDefault(); window.location.href = 'mailto:contact@afrilaunch.ai?subject=Newsletter'; }} className="flex gap-1.5">
-                  <input type="email" placeholder="email" className="flex-1 glass rounded-lg px-2.5 py-1.5 border border-white/5 outline-none text-[11px]" />
-                  <button type="submit" className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 text-[11px] font-semibold">OK</button>
-                </form>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
-            <p className="text-xs text-gray-600">© {new Date().getFullYear()} AfriLaunch AI. {t.footer_rights}</p>
-            <div className="flex items-center gap-3">
-              {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
-                <a key={i} href="https://afrilaunch.ai" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg glass border border-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors">
-                  <Icon className="w-4 h-4" aria-hidden="true" />
-                </a>
-              ))}
-            </div>
-          </div>
-          {/* Payment methods badge */}
-          <div className="flex items-center justify-center gap-3 mt-6 opacity-50">
-            <span className="text-[10px] text-gray-600">Paiements acceptés:</span>
-            <span className="text-[10px] text-gray-500 font-semibold">MTN MoMo</span>
-            <span className="text-gray-700">·</span>
-            <span className="text-[10px] text-gray-500 font-semibold">Orange Money</span>
-            <span className="text-gray-700">·</span>
-            <span className="text-[10px] text-gray-500 font-semibold">Wave</span>
-            <span className="text-gray-700">·</span>
-            <span className="text-[10px] text-gray-500 font-semibold">Virement bancaire</span>
-          </div>
-        </div>
-      </footer>
+      {/* ═══════════════ Footer PRO (tous modules) ═══════════════ */}
+      <Footer lang={lang} onLangChange={setLang} />
     </div>
   );
 }

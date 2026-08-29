@@ -4,35 +4,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, createUserSession, sanitizeUser } from '@/lib/user-store';
 import { USER_COOKIE_OPTIONS } from '@/lib/auth-helpers';
+import {
+  validateEmail, validatePassword, validateFirstName, validateReferralCode,
+} from '@/lib/validators';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    if (!body) {
+    if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Body JSON invalide' }, { status: 400 });
     }
 
-    const { email, firstName, lastName, password, referredBy } = body as {
-      email?: string;
-      firstName?: string;
-      lastName?: string;
-      password?: string;
-      referredBy?: string;
-    };
+    // ─── Validate inputs ─────────────────────────────────────────────
+    const emailCheck = validateEmail((body as Record<string, unknown>).email);
+    if (!emailCheck.ok) return NextResponse.json({ error: emailCheck.error }, { status: 400 });
 
-    if (!email || !firstName || !password) {
-      return NextResponse.json(
-        { error: 'Champs requis manquants: email, firstName, password' },
-        { status: 400 },
-      );
-    }
+    const firstNameCheck = validateFirstName((body as Record<string, unknown>).firstName);
+    if (!firstNameCheck.ok) return NextResponse.json({ error: firstNameCheck.error }, { status: 400 });
 
+    const lastNameRaw = (body as Record<string, unknown>).lastName;
+    const lastName = (typeof lastNameRaw === 'string' && lastNameRaw.trim())
+      ? lastNameRaw.trim().slice(0, 80) : undefined;
+
+    const passwordCheck = validatePassword((body as Record<string, unknown>).password);
+    if (!passwordCheck.ok) return NextResponse.json({ error: passwordCheck.error }, { status: 400 });
+
+    const referralCheck = validateReferralCode((body as Record<string, unknown>).referredBy);
+    if (!referralCheck.ok) return NextResponse.json({ error: referralCheck.error }, { status: 400 });
+
+    // ─── Create user ─────────────────────────────────────────────────
     const result = await createUser({
-      email: String(email),
-      firstName: String(firstName),
-      lastName: lastName ? String(lastName) : undefined,
-      password: String(password),
-      referredBy: referredBy ? String(referredBy) : undefined,
+      email: emailCheck.value!,
+      firstName: firstNameCheck.value!,
+      lastName,
+      password: passwordCheck.value!,
+      referredBy: referralCheck.value,
     });
 
     if (!result.ok) {
@@ -48,8 +54,9 @@ export async function POST(req: NextRequest) {
     res.cookies.set('afrilaunch_user', token, USER_COOKIE_OPTIONS);
     return res;
   } catch (err) {
+    console.error('[register] error:', err);
     return NextResponse.json(
-      { error: 'Erreur serveur: ' + (err as Error).message },
+      { error: 'Erreur serveur' },
       { status: 500 },
     );
   }

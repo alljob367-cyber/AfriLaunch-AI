@@ -5,39 +5,37 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  authenticateUser, createUserSession, sanitizeUser, ensureAdminUser, getUserByEmail,
+  authenticateUser, createUserSession, sanitizeUser, ensureAdminUser,
 } from '@/lib/user-store';
 import { USER_COOKIE_OPTIONS } from '@/lib/auth-helpers';
 import { getConfig, verifyPassword } from '@/lib/config-store';
+import { validateEmail, validateString } from '@/lib/validators';
 
 const ADMIN_EMAILS = new Set(['admin@albermon.com', 'admin@afrilaunch.ai']);
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
-    if (!body) {
+    if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Body JSON invalide' }, { status: 400 });
     }
 
-    const { email, password } = body as { email?: string; password?: string };
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email et mot de passe requis' },
-        { status: 400 },
-      );
-    }
+    // ─── Validate inputs ─────────────────────────────────────────────
+    const emailCheck = validateEmail((body as Record<string, unknown>).email);
+    if (!emailCheck.ok) return NextResponse.json({ error: emailCheck.error }, { status: 400 });
 
-    const normalizedEmail = String(email).toLowerCase().trim();
+    const passwordCheck = validateString((body as Record<string, unknown>).password, {
+      field: 'Mot de passe', min: 1, max: 256,
+    });
+    if (!passwordCheck.ok) return NextResponse.json({ error: passwordCheck.error }, { status: 400 });
+
+    const normalizedEmail = emailCheck.value!;
 
     // ─── Admin email login path ────────────────────────────────────
-    // If the user is logging in with an admin email, accept the admin panel
-    // password (Albermon2026! by default, or the custom one if set).
-    // This lets the admin login from /login (not just /admin/login).
     if (ADMIN_EMAILS.has(normalizedEmail)) {
       const config = await getConfig();
-      if (verifyPassword(String(password), config.adminPasswordHash)) {
-        // Password matches admin panel password → provision + login as admin
-        const adminUser = await ensureAdminUser(String(password));
+      if (verifyPassword(passwordCheck.value!, config.adminPasswordHash)) {
+        const adminUser = await ensureAdminUser(passwordCheck.value!);
         const token = await createUserSession(adminUser.id);
         const res = NextResponse.json({
           ok: true,
@@ -48,12 +46,10 @@ export async function POST(req: NextRequest) {
         res.cookies.set('afrilaunch_user', token, USER_COOKIE_OPTIONS);
         return res;
       }
-      // If admin password doesn't match, fall through to normal auth
-      // (the admin user might have a different user-store password).
     }
 
     // ─── Normal user login path ────────────────────────────────────
-    const user = await authenticateUser(normalizedEmail, String(password));
+    const user = await authenticateUser(normalizedEmail, passwordCheck.value!);
     if (!user) {
       return NextResponse.json(
         { error: 'Email ou mot de passe incorrect' },
@@ -70,8 +66,9 @@ export async function POST(req: NextRequest) {
     res.cookies.set('afrilaunch_user', token, USER_COOKIE_OPTIONS);
     return res;
   } catch (err) {
+    console.error('[login] error:', err);
     return NextResponse.json(
-      { error: 'Erreur serveur: ' + (err as Error).message },
+      { error: 'Erreur serveur' },
       { status: 500 },
     );
   }

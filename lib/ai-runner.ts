@@ -57,6 +57,7 @@ const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
 const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
   openrouter: 'minimax/minimax-m3:free',     // tested OK with streaming
   cerebras: 'llama3.1-8b',           // Cerebras ultra-fast (1000+ tok/s)
+  groq: 'llama-3.1-8b-instant',              // Groq instant — fast + cheap
   mistral: 'mistral-small-latest',            // free tier, decent speed
 };
 
@@ -64,6 +65,7 @@ const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
 const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
   openrouter: 'minimax/minimax-m3:free',     // same — only free model that works
   cerebras: 'llama-3.3-70b',                 // Cerebras 70B for quality
+  groq: 'llama-3.3-70b-versatile',           // Groq default — good quality/speed
   mistral: 'mistral-large-latest',            // better quality
 };
 
@@ -168,6 +170,10 @@ function getEndpoint(provider: ProviderName, providerConfig: any): string {
   }
   if (provider === 'cerebras') {
     return (providerConfig.endpoint || 'https://api.cerebras.ai/v1') + '/chat/completions';
+  }
+  if (provider === 'groq') {
+    // Groq is OpenAI-compatible: https://api.groq.com/openai/v1/chat/completions
+    return (providerConfig.endpoint || 'https://api.groq.com/openai/v1') + '/chat/completions';
   }
   if (provider === 'mistral') {
     return (providerConfig.endpoint || 'https://api.mistral.ai/v1') + '/chat/completions';
@@ -442,10 +448,18 @@ async function callProvider(
   // so the user gets fast errors instead of hanging for 3 minutes.
   const timeoutMs = maxTokens <= 1000 ? 45000 : 180000;
 
-  // Mistral and Groq both use OpenAI-compatible /chat/completions endpoint
-  if (provider === 'mistral' || provider === 'cerebras') {
-    const endpoint = providerConfig.endpoint || (provider === 'mistral' ? 'https://api.mistral.ai/v1' : 'https://api.cerebras.ai/v1');
-    const model = providerConfig.model || (provider === 'mistral' ? 'mistral-large-latest' : 'llama-3.3-70b-versatile');
+  // Mistral, Cerebras, and Groq all use the OpenAI-compatible /chat/completions endpoint
+  if (provider === 'mistral' || provider === 'cerebras' || provider === 'groq') {
+    const defaultEndpoint =
+      provider === 'mistral' ? 'https://api.mistral.ai/v1'
+        : provider === 'cerebras' ? 'https://api.cerebras.ai/v1'
+          : 'https://api.groq.com/openai/v1';
+    const endpoint = providerConfig.endpoint || defaultEndpoint;
+    const defaultModel =
+      provider === 'mistral' ? 'mistral-large-latest'
+        : provider === 'cerebras' ? 'llama-3.3-70b-versatile'
+          : 'llama-3.3-70b-versatile';
+    const model = providerConfig.model || defaultModel;
 
     const messages = [
       { role: 'system', content: opts.systemPrompt },

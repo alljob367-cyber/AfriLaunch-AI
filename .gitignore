@@ -44,3 +44,4 @@ tsconfig.tsbuildinfo
 
 # Misc
 bun.lock
+tool-results/

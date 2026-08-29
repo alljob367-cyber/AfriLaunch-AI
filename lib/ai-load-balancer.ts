@@ -14,7 +14,7 @@
 // transient state and resets on cold start, which is fine because provider
 // state varies between Vercel serverless invocations anyway).
 
-export type ProviderName = 'openrouter' | 'cerebras' | 'mistral';
+export type ProviderName = 'openrouter' | 'cerebras' | 'groq' | 'mistral';
 
 interface ProviderHealth {
   name: ProviderName;
@@ -45,8 +45,15 @@ const HEALTH: Record<ProviderName, ProviderHealth> = {
     consecutiveErrors: 0, lastErrorAt: null, lastErrorKind: null,
     cooldownUntil: null, totalRequests: 0, totalSuccesses: 0, totalErrors: 0,
   },
+  // Groq is very fast (Llama 3.3 70B + 8B instant) and cheap (large free tier
+  // ≈ 43 200 req/day), so it sits right after cerebras in priority.
+  groq: {
+    name: 'groq', enabled: false, apiKey: false, priority: 3,
+    consecutiveErrors: 0, lastErrorAt: null, lastErrorKind: null,
+    cooldownUntil: null, totalRequests: 0, totalSuccesses: 0, totalErrors: 0,
+  },
   mistral: {
-    name: 'mistral', enabled: false, apiKey: false, priority: 3,
+    name: 'mistral', enabled: false, apiKey: false, priority: 4,
     consecutiveErrors: 0, lastErrorAt: null, lastErrorKind: null,
     cooldownUntil: null, totalRequests: 0, totalSuccesses: 0, totalErrors: 0,
   },

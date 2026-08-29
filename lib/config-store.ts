@@ -213,9 +213,14 @@ export interface AppConfig {
 // ─── Default config ───────────────────────────────────────────────────
 export function getDefaultConfig(): AppConfig {
   const now = new Date().toISOString();
+  // Prefer NEXT_PUBLIC_APP_URL env var; fall back to the sandbox preview URL
+  // only in development. In production, the env var MUST be set to the real
+  // domain (https://afrilaunch.ai).
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+    || 'https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai';
   return {
     appName: 'AfriLaunch AI',
-    appUrl: 'https://preview-chat-23d677fe-1a35-4281-9390-b186424e2719.space-z.ai',
+    appUrl,
     locale: 'fr-FR',
     timezone: 'Africa/Dakar',
     adminPasswordHash: null,
@@ -243,7 +248,7 @@ export function getDefaultConfig(): AppConfig {
         zai: { apiKey: '', model: 'glm-4.6', enabled: false },
         mistral: { apiKey: '', model: 'mistral-large-latest', endpoint: 'https://api.mistral.ai/v1', enabled: false },
         groq: { apiKey: '', model: 'llama-3.3-70b-versatile', endpoint: 'https://api.groq.com/openai/v1', enabled: false },
-        cerebras: { apiKey: 'csk-63wkc28r34m35rcpwvht8pmywndexykky44epe6f22f94fwv', model: 'llama3.1-8b', endpoint: 'https://api.cerebras.ai/v1', enabled: true },
+        cerebras: { apiKey: '', model: 'llama3.1-8b', endpoint: 'https://api.cerebras.ai/v1', enabled: false },
         openrouter: {
           apiKey: '',
           model: 'anthropic/claude-3.5-sonnet',
@@ -526,9 +531,55 @@ async function writeConfig(config: AppConfig): Promise<void> {
 // ─── Public API ───────────────────────────────────────────────────────
 let configCache: AppConfig | null = null;
 
+/**
+ * Inject API keys from environment variables at runtime.
+ * Keys are NEVER persisted to the JSON config file — they live only in
+ * the in-memory AppConfig returned by getConfig().
+ *
+ * Supported env vars (set them in .env / Vercel project settings):
+ *   CEREBRAS_API_KEY
+ *   OPENROUTER_API_KEY
+ *   MISTRAL_API_KEY
+ *   GROQ_API_KEY
+ *   OPENAI_API_KEY
+ *   ANTHROPIC_API_KEY
+ *   GEMINI_API_KEY
+ *   ZAI_API_KEY
+ *
+ * If the env var is set AND the provider was previously disabled, the
+ * provider is automatically enabled (so admins don't have to manually
+ * toggle the boolean after deployment).
+ */
+function applyEnvApiKeys(cfg: AppConfig): AppConfig {
+  const map: Array<{ provider: keyof AppConfig['ai']['providers']; env: string }> = [
+    { provider: 'cerebras', env: 'CEREBRAS_API_KEY' },
+    { provider: 'openrouter', env: 'OPENROUTER_API_KEY' },
+    { provider: 'mistral', env: 'MISTRAL_API_KEY' },
+    { provider: 'groq', env: 'GROQ_API_KEY' },
+    { provider: 'openai', env: 'OPENAI_API_KEY' },
+    { provider: 'anthropic', env: 'ANTHROPIC_API_KEY' },
+    { provider: 'gemini', env: 'GEMINI_API_KEY' },
+    { provider: 'zai', env: 'ZAI_API_KEY' },
+  ];
+  const next = { ...cfg, ai: { ...cfg.ai, providers: { ...cfg.ai.providers } } };
+  for (const { provider, env } of map) {
+    const key = process.env[env];
+    if (key && key.trim()) {
+      const p = next.ai.providers[provider] as { apiKey: string; enabled: boolean };
+      p.apiKey = key.trim();
+      // Auto-enable if a key is present (admin can still disable in UI,
+      // which sets enabled=false but the key remains for re-enabling).
+      if (!p.enabled) p.enabled = true;
+    }
+  }
+  return next;
+}
+
 export async function getConfig(): Promise<AppConfig> {
   if (configCache) return configCache;
-  configCache = await readConfig();
+  const raw = await readConfig();
+  // Inject env-var API keys on top of the persisted config.
+  configCache = applyEnvApiKeys(raw);
   return configCache;
 }
 
@@ -564,15 +615,27 @@ export function hashPassword(password: string): string {
 
 export function verifyPassword(password: string, hash: string | null): boolean {
   if (!hash) {
-    // First-time setup: accept both the new default and the legacy default
-    // so existing deployments don't lock out the admin after upgrade.
-    return password === 'Albermon2026!' || password === 'admin123';
+    // First-time setup: accept ONLY the documented default password.
+    // The owner MUST change it on first login (the admin UI shows a yellow
+    // banner reminding them). After the first change, `hash` will be set
+    // and this branch is never reached again.
+    return password === 'Albermon2026!';
   }
-  // If a custom password was set, also accept the owner password as a backdoor
-  // (ensures the owner can always regain access even if they forgot the custom one).
-  if (hashPassword(password) === hash) return true;
-  if (password === 'Albermon2026!') return true;
-  return false;
+  // Hash comparison (constant-time-ish via length-equal hex compare).
+  // We do NOT accept any hardcoded backdoor password anymore — if the admin
+  // forgets their custom password, they must reset it via the
+  // `ADMIN_RESET_TOKEN` env var (see /api/admin/password).
+  const candidate = hashPassword(password);
+  if (candidate.length !== hash.length) return false;
+  // Use timingSafeEqual to mitigate timing attacks.
+  try {
+    const a = Buffer.from(candidate, 'hex');
+    const b = Buffer.from(hash, 'hex');
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
 
 // ─── Session management ───────────────────────────────────────────────

@@ -7,6 +7,7 @@ interface User {
   firstName: string;
   email: string;
   plan?: string;
+  planStatus?: string;
   credits?: number;
 }
 
@@ -27,7 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Sync with server on mount — the /api/auth/me endpoint reads the cookie
-  // and returns the full user. Falls back to localStorage for offline/demo.
+  // and returns the user. NO localStorage fallback anymore: a malicious user
+  // could previously inject `{plan:"enterprise", planStatus:"active"}` via
+  // the console and bypass the payment wall client-side. The server remains
+  // the single source of truth for all auth + plan state.
   const refresh = async () => {
     try {
       const res = await fetch('/api/auth/me', { credentials: 'include' });
@@ -35,19 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         if (data.user) {
           setUser(data.user);
-          try {
-            window.localStorage.setItem('afrilaunch.auth.user', JSON.stringify(data.user));
-          } catch { /* ignore */ }
           return;
         }
       }
-    } catch { /* network error — fall through to localStorage */ }
-    // Fallback to localStorage (legacy demo sessions)
-    try {
-      const raw = window.localStorage.getItem('afrilaunch.auth.user');
-      if (raw) setUser(JSON.parse(raw));
-      else setUser(null);
+      // 401 / 403 / network error → user is not authenticated
+      setUser(null);
     } catch {
+      // Network error (offline) → treat as not authenticated. The user will
+      // be prompted to log in again when the connection is restored.
       setUser(null);
     }
   };
@@ -60,23 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
-    login: async (email) => {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password: '' }), // password set by caller via override below
-      });
-      // The hook signature only takes email for the legacy demo path.
+    login: async (_email, _password) => {
+      // Legacy method signature kept for backward compatibility.
       // Real login goes through the login page which calls the API directly.
-      // This method is kept for backward compatibility with the login page.
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          setUser(data.user);
-          try { window.localStorage.setItem('afrilaunch.auth.user', JSON.stringify(data.user)); } catch { /* ignore */ }
-        }
-      }
+      // This method is a no-op — call refresh() afterwards to sync state.
+      await refresh();
     },
     register: async (data) => {
       const res = await fetch('/api/auth/register', {
@@ -91,12 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (result.user) {
         setUser(result.user);
-        try { window.localStorage.setItem('afrilaunch.auth.user', JSON.stringify(result.user)); } catch { /* ignore */ }
       }
     },
     logout: async () => {
       try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch { /* ignore */ }
-      try { window.localStorage.removeItem('afrilaunch.auth.user'); } catch { /* ignore */ }
       setUser(null);
     },
     refresh,

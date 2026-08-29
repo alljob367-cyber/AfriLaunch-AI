@@ -23,6 +23,18 @@
       "connectedAt": "2026-08-27T15:29:31.436Z",
       "updatedAt": "2026-08-27T15:29:31.436Z",
       "accessToken": "d53271d721413748cae26c68db49f8d2"
+    },
+    {
+      "id": "soc_15ec57a0656311ac",
+      "userId": "usr_01bcea8c5bcda7d0018421b0",
+      "platform": "instagram",
+      "handle": "testbiz",
+      "displayName": "testbiz",
+      "followers": 0,
+      "connected": true,
+      "connectedAt": "2026-08-29T13:08:46.367Z",
+      "updatedAt": "2026-08-29T13:08:46.367Z",
+      "accessToken": "3890337e4c2c9129d8bd903f4764a2d1"
     }
   ]
 }
