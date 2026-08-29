@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import {
   Rocket, LayoutDashboard, Palette, Globe, PenSquare, Share2,
   Bot, Megaphone, CreditCard, BarChart3, Users, Settings,
-  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic, Loader2, Check, X, MessageCircle,
+  ChevronRight, Sparkles, Store, Gift, Send, Inbox, Wallet, Mic, Loader2, Check, X, MessageCircle, Youtube,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -29,6 +29,7 @@ const navSections = [
       { href: '/dashboard/identity', label: 'Identité de marque', icon: Palette },
       { href: '/dashboard/website', label: 'Site web', icon: Globe },
       { href: '/dashboard/content', label: 'Contenu', icon: PenSquare },
+      { href: '/dashboard/youtube', label: 'YouTube', icon: Youtube, color: 'text-red-400' },
       { href: '/dashboard/voice', label: 'Voix IA', icon: Mic },
     ],
   },
