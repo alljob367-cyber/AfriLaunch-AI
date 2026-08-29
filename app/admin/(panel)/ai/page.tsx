@@ -60,12 +60,22 @@ export default function AdminAiPage() {
   };
 
   const testElevenlabs = async (): Promise<{ ok: boolean; message: string }> => {
+    // Save the config first so /api/ai/voice reads the updated key
+    if (dirty) {
+      await save({ ai: draft.ai, elevenlabs: draft.elevenlabs });
+    }
+    // Small delay to ensure config is persisted
+    await new Promise((r) => setTimeout(r, 500));
+
     try {
       const res = await fetch('/api/ai/voice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ text: 'Connexion AfriLaunch AI OK' }),
+        body: JSON.stringify({
+          text: 'Connexion AfriLaunch AI OK',
+          voiceId: draft.elevenlabs.voiceId,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.ok && data.audioUrl) {

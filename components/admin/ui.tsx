@@ -144,11 +144,39 @@ export function TestButton({ onTest, label = 'Tester la connexion' }: {
   onTest: () => Promise<{ ok: boolean; message: string }>; label?: string;
 }) {
   const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   return (
-    <button type="button" onClick={async () => { setTesting(true); try { await onTest(); } finally { setTesting(false); } }} disabled={testing} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold glass border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-50">
-      {testing ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <FlaskConical className="w-4 h-4" aria-hidden="true" />}
-      {testing ? 'Test en cours...' : label}
-    </button>
+    <div className="space-y-2">
+      <button type="button" onClick={async () => {
+        setTesting(true);
+        setResult(null);
+        try {
+          const r = await onTest();
+          setResult(r);
+        } catch (err) {
+          setResult({ ok: false, message: (err as Error).message });
+        } finally {
+          setTesting(false);
+        }
+      }} disabled={testing} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold glass border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-50">
+        {testing ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <FlaskConical className="w-4 h-4" aria-hidden="true" />}
+        {testing ? 'Test en cours...' : label}
+      </button>
+      {result && (
+        <div className={cn(
+          'flex items-start gap-2 p-3 rounded-xl text-xs border',
+          result.ok
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-red-500/10 border-red-500/30 text-red-300',
+        )}>
+          {result.ok
+            ? <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            : <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" aria-hidden="true" />}
+          <span className="leading-relaxed">{result.message}</span>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'ElevenLabs non configuré. Activez-le dans /admin/ai' }, { status: 400 });
   }
 
-  let body: { text?: string; voiceId?: string };
+  let body: { text?: string; voiceId?: string; model?: string };
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'Body invalide' }, { status: 400 });
   }
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
   if (text.length > 5000) return NextResponse.json({ error: 'Texte trop long (max 5000 caractères)' }, { status: 400 });
 
   const voiceId = body.voiceId || config.elevenlabs.voiceId;
+  const model = body.model || config.elevenlabs.model || 'eleven_turbo_v2_5';
 
   try {
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         text,
-        model_id: config.elevenlabs.model,
+        model_id: model,
         voice_settings: {
           stability: config.elevenlabs.stability,
           similarity_boost: config.elevenlabs.similarityBoost,
@@ -80,9 +81,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       audioUrl: dataUrl,
-      duration: Math.ceil(text.length / 15), // rough estimate in seconds
+      duration: Math.ceil(text.length / 15),
       voiceId,
-      model: config.elevenlabs.model,
+      model,
     });
   } catch (err) {
     return NextResponse.json({ error: `Erreur réseau: ${(err as Error).message}` }, { status: 500 });
