@@ -29,9 +29,10 @@ export async function GET(req: NextRequest) {
   // Compute estimated capacity based on which providers are configured
   // (free-tier rate limits, summed)
   const CAPACITY_PER_PROVIDER: Record<string, number> = {
-    openrouter: 1000, // /day on :free models after $10 deposit
-    groq: 43200,      // 30 req/min × 60 × 24
-    mistral: 500,     // free tier ~500 req/day
+    openrouter: 1000,    // /day on :free models after $10 deposit
+    cerebras: 10000,     // free tier ~10 000 req/day (ultra-fast inference)
+    groq: 43200,         // 30 req/min × 60 × 24 (kept for backward compat)
+    mistral: 500,        // free tier ~500 req/day
   };
   const estimatedDailyCapacity = snapshot
     .filter((p) => p.enabled && p.apiKey)
