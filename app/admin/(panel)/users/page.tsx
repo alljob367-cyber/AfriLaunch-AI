@@ -90,26 +90,56 @@ export default function AdminUsersPage() {
     if (!confirm(`Supprimer définitivement ${user.firstName} (${user.email}) ?\n\nCette action est irréversible.`)) return;
     setDeletingId(user.id);
     try {
-      const res = await fetch(`/api/admin/users?id=${user.id}`, {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       const data = await res.json();
       if (data.ok) {
+        toast({ title: 'Utilisateur supprimé', description: `${user.firstName} a été retiré.`, variant: 'warning' });
+        await fetchUsers();
+      } else { toast({ title: 'Échec', description: data.error, variant: 'error' }); }
+    } catch (err) { toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' }); }
+    finally { setDeletingId(null); }
+  }
+
+  async function handleToggleStatus(user: RealUser) {
+    const newStatus = user.planStatus === 'active' ? 'pending_payment' : 'active';
+    const action = newStatus === 'active' ? 'activer' : 'suspendre';
+    if (!confirm(`${action === 'activer' ? 'Activer' : 'Suspendre'} ${user.firstName} (${user.email}) ?`)) return;
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ planStatus: newStatus }),
+      });
+      const data = await res.json();
+      if (data.ok) {
         toast({
-          title: 'Utilisateur supprimé',
-          description: `${user.firstName} a été retiré de la plateforme.`,
-          variant: 'warning',
+          title: newStatus === 'active' ? 'Utilisateur activé ✅' : 'Utilisateur suspendu ⏸️',
+          description: `${user.firstName} est maintenant ${newStatus === 'active' ? 'actif' : 'en attente de paiement'}.`,
+          variant: newStatus === 'active' ? 'success' : 'warning',
         });
         await fetchUsers();
-      } else {
-        toast({ title: 'Échec', description: data.error, variant: 'error' });
-      }
-    } catch (err) {
-      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
-    } finally {
-      setDeletingId(null);
-    }
+      } else { toast({ title: 'Échec', description: data.error, variant: 'error' }); }
+    } catch (err) { toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' }); }
+  }
+
+  async function handleChangePlan(user: RealUser, newPlan: string) {
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ plan: newPlan, planStatus: 'active' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast({ title: `Plan changé → ${newPlan} ✅`, description: `${user.firstName} est maintenant sur le plan ${newPlan}.`, variant: 'success' });
+        await fetchUsers();
+      } else { toast({ title: 'Échec', description: data.error, variant: 'error' }); }
+    } catch (err) { toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' }); }
   }
 
   function handleInvite() {
@@ -233,18 +263,46 @@ export default function AdminUsersPage() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {!isAdmin && (
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(user)}
-                            disabled={deletingId === user.id}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-60"
-                            aria-label={`Supprimer ${user.email}`}
-                          >
-                            {deletingId === user.id
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                              : <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />}
-                            <span className="hidden sm:inline">Supprimer</span>
-                          </button>
+                          <>
+                            {/* Plan selector */}
+                            <select
+                              value={user.plan}
+                              onChange={(e) => handleChangePlan(user, e.target.value)}
+                              className="text-xs glass rounded-lg px-2 py-1.5 border border-white/10 outline-none"
+                              aria-label={`Changer le plan de ${user.email}`}
+                            >
+                              <option value="starter" className="bg-gray-900">Starter</option>
+                              <option value="pro" className="bg-gray-900">Pro</option>
+                              <option value="business" className="bg-gray-900">Business</option>
+                              <option value="enterprise" className="bg-gray-900">Enterprise</option>
+                            </select>
+                            {/* Activate/Suspend toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleStatus(user)}
+                              className={cn(
+                                'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors',
+                                user.planStatus === 'active'
+                                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20',
+                              )}
+                              aria-label={user.planStatus === 'active' ? `Suspendre ${user.email}` : `Activer ${user.email}`}
+                            >
+                              {user.planStatus === 'active' ? 'Suspendre' : 'Activer'}
+                            </button>
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(user)}
+                              disabled={deletingId === user.id}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-60"
+                              aria-label={`Supprimer ${user.email}`}
+                            >
+                              {deletingId === user.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                                : <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />}
+                            </button>
+                          </>
                         )}
                       </div>
                     </li>
