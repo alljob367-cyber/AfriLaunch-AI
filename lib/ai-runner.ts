@@ -35,10 +35,10 @@ export { resetHealth, getHealthSnapshot, type ProviderName };
 //   - long-form (≤3000):   minimax m3 free (good quality/price ratio)
 //   - website (≤6000):     minimax m3 free (needs longer context)
 const PLAN_MODELS_FAST: Record<PlanId, string> = {
-  starter: 'meta-llama/llama-3.1-8b-instruct:free',
-  pro: 'meta-llama/llama-3.1-8b-instruct:free',
-  business: 'meta-llama/llama-3.1-8b-instruct:free',
-  enterprise: 'meta-llama/llama-3.1-8b-instruct:free',
+  starter: 'minimax/minimax-m3:free',
+  pro: 'minimax/minimax-m3:free',
+  business: 'minimax/minimax-m3:free',
+  enterprise: 'minimax/minimax-m3:free',
 };
 
 const PLAN_MODELS_QUALITY: Record<PlanId, string> = {

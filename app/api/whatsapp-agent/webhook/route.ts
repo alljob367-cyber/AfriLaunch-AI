@@ -180,23 +180,35 @@ export async function POST(req: NextRequest) {
       // Force OpenRouter provider
       response = await callOpenRouterDirectly(systemPrompt, messageText, maxTokens);
     } else {
-      // 'auto' → use load balancer (OpenRouter → Mistral → Groq)
-      const result = await runAIForPlanFast({
+      // 'auto' → use streaming load balancer (OpenRouter → Mistral → Groq with fallback)
+      // Collect the full response from the stream
+      let fullReply = '';
+      let streamError: string | null = null;
+      for await (const evt of runAIForPlanFastStream({
         systemPrompt,
         userMessage: messageText,
         maxTokens,
-      }, 'starter');
-
-      if (result.ok && result.reply) {
-        response = result.reply;
+      }, 'starter')) {
+        if (evt.chunk) fullReply += evt.chunk;
+        else if (evt.error) streamError = evt.error;
+        else if (evt.done) break;
+      }
+      if (fullReply.trim()) {
+        response = fullReply.trim();
       } else {
-        console.error('WhatsApp AI error:', result.error);
-        response = '⚠️ Désolé, je rencontre un problème technique. Réessayez dans un instant.';
+        console.error('WhatsApp AI error (stream):', streamError);
+        // Last resort: try direct OpenRouter call
+        response = await callOpenRouterDirectly(systemPrompt, messageText, maxTokens);
       }
     }
   } catch (err) {
     console.error('WhatsApp AI exception:', err);
-    response = '⚠️ Désolé, je rencontre un problème technique. Réessayez dans un instant.';
+    // Final fallback: try Mistral directly
+    try {
+      response = await callMistralDirectly(systemPrompt, messageText, maxTokens);
+    } catch {
+      response = '⚠️ Désolé, je rencontre un problème technique. Réessayez dans un instant.';
+    }
   }
 
   // Enforce max length (safety net)
