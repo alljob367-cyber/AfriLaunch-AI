@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { STRINGS, type Lang } from '@/lib/landing-i18n';
 import { Logo } from '@/components/logo';
+import { LogoLockup } from '@/components/logo-lockup';
 import { Footer } from '@/components/footer';
 import { MobileMockup } from '@/components/landing/mobile-mockup';
 import { DashboardPreview } from '@/components/landing/dashboard-preview';
@@ -108,7 +109,7 @@ export default function LandingPage() {
       {/* ═══════════════ Navigation ═══════════════ */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3.5">
-          <Link href="/" className="flex items-center gap-2.5 group">
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="AfriLaunch AI — accueil">
             <Logo size={32} compact className="transition-transform group-hover:scale-110" />
             <span className="font-bold text-lg">AfriLaunch <span className="gradient-text">AI</span></span>
           </Link>

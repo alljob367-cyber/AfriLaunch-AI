@@ -14,6 +14,7 @@ import {
   ShieldCheck, Lock, Scale, Cookie, Check,
 } from 'lucide-react';
 import { Logo } from '@/components/logo';
+import { LogoLockup } from '@/components/logo-lockup';
 import { STRINGS, type Lang } from '@/lib/landing-i18n';
 import { cn } from '@/lib/utils';
 
@@ -280,11 +281,16 @@ export function Footer({ lang: langProp, variant = 'full', onLangChange, classNa
 
           {/* Brand block */}
           <div className="col-span-2 md:col-span-3 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5 mb-4 group">
-              <Logo size={36} className="transition-transform group-hover:scale-110" />
-              <span className="font-bold text-base">AfriLaunch <span className="gradient-text">AI</span></span>
+            <Link href="/" className="block mb-4 group" aria-label="AfriLaunch AI — accueil">
+              <LogoLockup
+                iconSize={36}
+                variant="horizontal"
+                showSlogan
+                slogan={t.footer_slogan}
+                animated
+                className="transition-transform group-hover:scale-105"
+              />
             </Link>
-            <p className="text-[10px] font-bold tracking-[0.18em] text-indigo-400 mb-3">{t.footer_slogan}</p>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">{t.footer_tagline}</p>
 
             {/* Contact info */}

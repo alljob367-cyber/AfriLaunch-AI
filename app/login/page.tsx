@@ -6,7 +6,7 @@ import { ArrowRight, Mail, Lock, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/components/providers/toast-provider';
-import { Logo } from '@/components/logo';
+import { LogoLockup } from '@/components/logo-lockup';
 import { Footer } from '@/components/footer';
 
 export default function LoginPage() {
@@ -48,9 +48,14 @@ export default function LoginPage() {
         <div className="absolute inset-0 dot-pattern opacity-20" />
 
         <div className="relative z-10 w-full max-w-md">
-          <Link href="/" className="flex items-center justify-center gap-2.5 mb-8 group">
-            <Logo size={40} compact className="transition-transform group-hover:scale-110" />
-            <span className="font-bold text-xl">AfriLaunch <span className="gradient-text">AI</span></span>
+          <Link href="/" className="flex justify-center mb-8 group" aria-label="AfriLaunch AI — accueil">
+            <LogoLockup
+              iconSize={40}
+              variant="horizontal"
+              showSlogan
+              animated
+              className="transition-transform group-hover:scale-105"
+            />
           </Link>
 
           <div className="glass rounded-3xl p-8 border border-white/10">

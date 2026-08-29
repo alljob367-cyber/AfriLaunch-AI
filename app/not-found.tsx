@@ -1,7 +1,7 @@
 // AfriLaunch AI — Custom 404 page (FR, dark, server-rendered)
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { Logo } from '@/components/logo';
+import { LogoLockup } from '@/components/logo-lockup';
 
 export const metadata: Metadata = {
   title: '404 — Page introuvable',
@@ -18,12 +18,15 @@ export default function NotFound() {
       </div>
 
       <main className="relative z-10 max-w-2xl w-full text-center">
-        {/* Logo */}
-        <Link href="/" className="inline-flex items-center gap-2.5 mb-10 group" aria-label="AfriLaunch AI — Accueil">
-          <Logo size={48} compact className="transition-transform group-hover:scale-110" />
-          <span className="font-bold text-xl">
-            AfriLaunch <span className="gradient-text">AI</span>
-          </span>
+        {/* Logo lockup */}
+        <Link href="/" className="inline-flex justify-center mb-10 group" aria-label="AfriLaunch AI — Accueil">
+          <LogoLockup
+            iconSize={48}
+            variant="horizontal"
+            showSlogan
+            animated
+            className="transition-transform group-hover:scale-105"
+          />
         </Link>
 
         {/* 404 huge */}

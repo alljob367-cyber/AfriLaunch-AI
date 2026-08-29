@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/providers/toast-provider';
+import { LogoLockup } from '@/components/logo-lockup';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -68,14 +69,14 @@ export default function AdminLoginPage() {
       <div className="absolute inset-0 dot-pattern opacity-20" />
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg">
-            <Shield className="w-6 h-6 text-white" aria-hidden="true" />
-          </div>
-          <div>
-            <p className="font-bold text-xl">AfriLaunch <span className="gradient-text">AI</span></p>
-            <p className="text-xs text-gray-500 uppercase tracking-widest">Panneau d'administration</p>
-          </div>
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <LogoLockup
+            iconSize={48}
+            variant="vertical"
+            showSlogan
+            animated
+          />
+          <p className="text-xs text-gray-500 uppercase tracking-widest">Panneau d'administration</p>
         </div>
 
         <div className="glass rounded-3xl p-8 border border-red-500/20">
