@@ -153,7 +153,9 @@ export default function AdminAiPage() {
           {/* Providers */}
           {(Object.keys(PROVIDER_META) as ProviderKey[]).map((key) => {
             const meta = PROVIDER_META[key];
-            const provider = draft.ai.providers[key];
+            const provider = draft.ai.providers[key] as any;
+            // Safety: if provider is undefined (old config without cerebras), skip
+            if (!provider) return null;
             const customProvider = key === 'custom' ? (provider as ProviderMap['custom']) : null;
             const mistralProvider = key === 'mistral' ? (provider as ProviderMap['mistral']) : null;
             const groqProvider = key === 'groq' ? (provider as ProviderMap['groq']) : null;

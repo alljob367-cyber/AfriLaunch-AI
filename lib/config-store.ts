@@ -486,9 +486,35 @@ async function readConfig(): Promise<AppConfig> {
     await writeConfig(defaults);
     return defaults;
   }
-  // Merge with defaults to handle schema evolution
+  // Deep merge with defaults to handle schema evolution
+  // (e.g. new provider 'cerebras' added after initial config was saved)
   const defaults = getDefaultConfig();
-  return { ...defaults, ...parsed } as AppConfig;
+  const merged = deepMergeConfig(defaults, parsed);
+  return merged as AppConfig;
+}
+
+// Deep merge specifically for AppConfig — ensures new providers/fields
+// from defaults are preserved even if the saved config doesn't have them.
+function deepMergeConfig(defaults: AppConfig, saved: Partial<AppConfig>): AppConfig {
+  const result: any = { ...defaults, ...saved };
+  // Deep merge ai.providers
+  if (defaults.ai?.providers && (saved as any).ai?.providers) {
+    result.ai = {
+      ...(saved as any).ai,
+      providers: {
+        ...defaults.ai.providers,
+        ...(saved as any).ai.providers,
+      },
+    };
+  }
+  // Deep merge other nested objects if needed
+  if (defaults.twilio && (saved as any).twilio) {
+    result.twilio = { ...defaults.twilio, ...(saved as any).twilio };
+  }
+  if (defaults.elevenlabs && (saved as any).elevenlabs) {
+    result.elevenlabs = { ...defaults.elevenlabs, ...(saved as any).elevenlabs };
+  }
+  return result as AppConfig;
 }
 
 async function writeConfig(config: AppConfig): Promise<void> {
