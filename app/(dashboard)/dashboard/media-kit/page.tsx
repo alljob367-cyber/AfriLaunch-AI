@@ -158,6 +158,63 @@ export default function MediaKitPage() {
     toast({ title: 'Téléchargement', description: `${safeName}-${asset.type}.png`, variant: 'success' });
   }
 
+  async function handleDeleteKit(kitId: string) {
+    if (!confirm('Supprimer ce kit média ? Les images seront perdues.')) return;
+    try {
+      const res = await fetch(`/api/media-kit/${kitId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await fetchKits();
+        toast({ title: 'Kit supprimé', variant: 'warning' });
+      } else {
+        toast({ title: 'Échec', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' });
+    }
+  }
+
+  async function handleRetryAsset(kitId: string, assetType: string) {
+    try {
+      const res = await fetch(`/api/media-kit/${kitId}/generate-asset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ assetType }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await fetchKits();
+        toast({ title: 'Image régénérée ✓', variant: 'success' });
+      } else {
+        toast({ title: 'Échec régénération', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' });
+    }
+  }
+
+  async function handleDeleteWebsite(configId: string) {
+    if (!confirm('Supprimer ce site web ?')) return;
+    try {
+      const res = await fetch(`/api/website-builder/config?id=${configId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast({ title: 'Site supprimé', variant: 'warning' });
+        // Refresh the page to update the list
+        window.location.reload();
+      }
+    } catch (err) {
+      toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' });
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen mesh-bg flex items-center justify-center">
@@ -264,9 +321,19 @@ export default function MediaKitPage() {
                         <p className="text-[11px] text-gray-500">{kit.businessName} · {kit.industry}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold gradient-text">{doneCount}/{totalCount}</p>
-                      <p className="text-[10px] text-gray-500">livrables prêts</p>
+                    <div className="text-right flex items-start gap-2">
+                      <div>
+                        <p className="text-sm font-bold gradient-text">{doneCount}/{totalCount}</p>
+                        <p className="text-[10px] text-gray-500">livrables prêts</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteKit(kit.id)}
+                        aria-label="Supprimer le kit"
+                        className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      </button>
                     </div>
                   </div>
 
@@ -335,10 +402,15 @@ export default function MediaKitPage() {
                                 <Loader2 className="w-5 h-5 animate-spin text-orange-400" />
                               </div>
                             ) : asset.status === 'failed' ? (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
-                                <AlertCircle className="w-4 h-4 text-red-400 mb-1" />
-                                <span className="text-[9px] text-red-400">Échec</span>
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRetryAsset(kit.id, asset.type)}
+                                className="absolute inset-0 flex flex-col items-center justify-center p-2 hover:bg-red-500/10 transition-colors"
+                                aria-label="Régénérer"
+                              >
+                                <RefreshCw className="w-4 h-4 text-red-400 mb-1" />
+                                <span className="text-[9px] text-red-400">Réessayer</span>
+                              </button>
                             ) : (
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <ImageIcon className="w-5 h-5 text-gray-600" />

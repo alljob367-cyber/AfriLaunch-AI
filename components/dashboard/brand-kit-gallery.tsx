@@ -232,6 +232,27 @@ export function BrandKitGallery() {
     }
   }
 
+  async function retryBrandAsset(assetType: string) {
+    if (!activeKit) return;
+    try {
+      const res = await fetch(`/api/brand-kit/${activeKit.id}/generate-asset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ assetType }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        await fetchFullKit(activeKit.id);
+        toast({ title: 'Image régénérée ✓', variant: 'success' });
+      } else {
+        toast({ title: 'Échec régénération', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' });
+    }
+  }
+
   // ── Client-side cache (localStorage) ────────────────────────────────
   // Stores downloaded asset dataUrls so re-downloading or offline viewing
   // doesn't require a new API call. Cache is keyed by kitId + assetType
@@ -479,10 +500,15 @@ export function BrandKitGallery() {
                           <Loader2 className="w-5 h-5 animate-spin text-violet-400" aria-hidden="true" />
                         </div>
                       ) : asset.status === 'failed' ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
-                          <AlertCircle className="w-4 h-4 text-red-400 mb-1" aria-hidden="true" />
-                          <span className="text-[9px] text-red-400 text-center">Échec</span>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => retryBrandAsset(asset.type)}
+                          className="absolute inset-0 flex flex-col items-center justify-center p-2 hover:bg-red-500/10 transition-colors"
+                          aria-label="Régénérer"
+                        >
+                          <RefreshCw className="w-4 h-4 text-red-400 mb-1" aria-hidden="true" />
+                          <span className="text-[9px] text-red-400 text-center">Réessayer</span>
+                        </button>
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <ImageIcon className="w-5 h-5 text-gray-600" aria-hidden="true" />

@@ -498,20 +498,41 @@ export default function WebsiteBuilderPage() {
         </AnimatePresence>
 
         {/* Saved sites */}
-        {savedConfigs.filter((c) => c.generatedHtml).length > 0 && (
+        {savedConfigs.length > 0 && (
           <div className="mt-8">
             <h3 className="text-sm font-bold mb-3">Mes sites créés</h3>
             <div className="space-y-2">
-              {savedConfigs.filter((c) => c.generatedHtml).map((c) => (
-                <button key={c.id} type="button" onClick={() => { setConfig(c); setPreviewHtml(c.generatedHtml!); setStep(5); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl glass border border-white/5 hover:border-blue-500/30 text-left">
-                  <Globe className="w-5 h-5 text-blue-400" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{c.businessName}</p>
-                    <p className="text-[10px] text-gray-500">{c.services.length} services · {c.businessType} · {new Date(c.generatedAt || c.updatedAt).toLocaleDateString('fr-FR')}</p>
-                  </div>
-                  <span className="text-[10px] text-emerald-400">✓ Généré</span>
-                </button>
+              {savedConfigs.map((c) => (
+                <div key={c.id} className="w-full flex items-center gap-3 p-3 rounded-xl glass border border-white/5 hover:border-blue-500/30 text-left">
+                  <button type="button" onClick={() => {
+                    if (c.generatedHtml) { setConfig(c); setPreviewHtml(c.generatedHtml); setStep(5); }
+                    else { setConfig(c); setStep(0); }
+                  }} className="flex items-center gap-3 flex-1 min-w-0">
+                    <Globe className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{c.businessName || '(sans nom)'}</p>
+                      <p className="text-[10px] text-gray-500">{c.services.length} services · {c.businessType} · {new Date(c.updatedAt).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                  </button>
+                  {c.generatedHtml
+                    ? <span className="text-[10px] text-emerald-400 flex-shrink-0">✓ Généré</span>
+                    : <span className="text-[10px] text-gray-500 flex-shrink-0">Brouillon</span>}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm(`Supprimer "${c.businessName || 'ce site'}" ?`)) return;
+                      try {
+                        await fetch(`/api/website-builder/config?id=${c.id}`, { method: 'DELETE', credentials: 'include' });
+                        toast({ title: 'Site supprimé', variant: 'warning' });
+                        await fetchConfigs();
+                      } catch (err) { toast({ title: 'Erreur', description: (err as Error).message, variant: 'error' }); }
+                    }}
+                    aria-label="Supprimer"
+                    className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 flex-shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               ))}
             </div>
           </div>
