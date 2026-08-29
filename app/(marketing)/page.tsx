@@ -660,44 +660,79 @@ export default function LandingPage() {
                 <span className="font-bold">AfriLaunch <span className="gradient-text">AI</span></span>
               </Link>
               <p className="text-xs text-gray-500 leading-relaxed">{t.footer_tagline}</p>
+              {/* Contact info */}
+              <div className="mt-4 space-y-1.5">
+                <a href="mailto:contact@afrilaunch.ai" className="flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
+                  <span>✉️</span> contact@afrilaunch.ai
+                </a>
+                <a href="https://wa.me/237600000000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors">
+                  <span>💬</span> WhatsApp
+                </a>
+                <p className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>📍</span> Douala, Cameroun
+                </p>
+              </div>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.footer_product}</p>
-              <ul className="space-y-2 text-xs text-gray-500">
-                <li><Link href="#features" className="hover:text-white transition-colors">{t.nav_features}</Link></li>
-                <li><Link href="#agents" className="hover:text-white transition-colors">{t.nav_agents}</Link></li>
-                <li><Link href="#pricing" className="hover:text-white transition-colors">{t.nav_pricing}</Link></li>
-                <li><Link href="#usecases" className="hover:text-white transition-colors">{t.nav_usecases}</Link></li>
+              <ul className="space-y-2 text-xs text-gray-500 list-none p-0 m-0">
+                <li><Link href="/#features" className="hover:text-white transition-colors">{t.nav_features}</Link></li>
+                <li><Link href="/#agents" className="hover:text-white transition-colors">{t.nav_agents}</Link></li>
+                <li><Link href="/#pricing" className="hover:text-white transition-colors">{t.nav_pricing}</Link></li>
+                <li><Link href="/#usecases" className="hover:text-white transition-colors">{t.nav_usecases}</Link></li>
+                <li><Link href="/dashboard/agents" className="hover:text-white transition-colors">Dashboard</Link></li>
+                <li><Link href="/api-docs" className="hover:text-white transition-colors">API Docs</Link></li>
               </ul>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.footer_company}</p>
-              <ul className="space-y-2 text-xs text-gray-500">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+              <ul className="space-y-2 text-xs text-gray-500 list-none p-0 m-0">
+                <li><Link href="/about" className="hover:text-white transition-colors">À propos</Link></li>
+                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Créer un compte</Link></li>
+                <li><Link href="/login" className="hover:text-white transition-colors">Connexion</Link></li>
+                <li><a href="mailto:contact@afrilaunch.ai?subject=Contact" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="https://wa.me/237600000000" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Support WhatsApp</a></li>
               </ul>
             </div>
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{t.footer_legal}</p>
-              <ul className="space-y-2 text-xs text-gray-500">
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">RGPD</a></li>
+              <ul className="space-y-2 text-xs text-gray-500 list-none p-0 m-0">
+                <li><Link href="/legal/terms" className="hover:text-white transition-colors">Conditions d'utilisation</Link></li>
+                <li><Link href="/legal/privacy" className="hover:text-white transition-colors">Politique de confidentialité</Link></li>
+                <li><Link href="/legal/security" className="hover:text-white transition-colors">Sécurité</Link></li>
+                <li><Link href="/legal/rgpd" className="hover:text-white transition-colors">RGPD</Link></li>
               </ul>
+              {/* Newsletter */}
+              <div className="mt-4">
+                <p className="text-[10px] text-gray-600 mb-2">Newsletter</p>
+                <form onSubmit={(e) => { e.preventDefault(); window.location.href = 'mailto:contact@afrilaunch.ai?subject=Newsletter'; }} className="flex gap-1.5">
+                  <input type="email" placeholder="email" className="flex-1 glass rounded-lg px-2.5 py-1.5 border border-white/5 outline-none text-[11px]" />
+                  <button type="submit" className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 text-[11px] font-semibold">OK</button>
+                </form>
+              </div>
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/5">
             <p className="text-xs text-gray-600">© {new Date().getFullYear()} AfriLaunch AI. {t.footer_rights}</p>
             <div className="flex items-center gap-3">
               {[Twitter, Linkedin, Instagram, Facebook].map((Icon, i) => (
-                <a key={i} href="#" className="w-8 h-8 rounded-lg glass border border-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors">
+                <a key={i} href="https://afrilaunch.ai" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-lg glass border border-white/5 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors">
                   <Icon className="w-4 h-4" aria-hidden="true" />
                 </a>
               ))}
             </div>
+          </div>
+          {/* Payment methods badge */}
+          <div className="flex items-center justify-center gap-3 mt-6 opacity-50">
+            <span className="text-[10px] text-gray-600">Paiements acceptés:</span>
+            <span className="text-[10px] text-gray-500 font-semibold">MTN MoMo</span>
+            <span className="text-gray-700">·</span>
+            <span className="text-[10px] text-gray-500 font-semibold">Orange Money</span>
+            <span className="text-gray-700">·</span>
+            <span className="text-[10px] text-gray-500 font-semibold">Wave</span>
+            <span className="text-gray-700">·</span>
+            <span className="text-[10px] text-gray-500 font-semibold">Virement bancaire</span>
           </div>
         </div>
       </footer>
