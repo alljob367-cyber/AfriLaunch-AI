@@ -11,7 +11,7 @@ import { useConfig } from '@/hooks/use-config';
 import type { AppConfig } from '@/lib/config-store';
 import { cn } from '@/lib/utils';
 
-type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'openrouter' | 'custom';
+type ProviderKey = 'openai' | 'anthropic' | 'gemini' | 'zai' | 'mistral' | 'groq' | 'cerebras' | 'openrouter' | 'custom';
 
 type ProviderMap = AppConfig['ai']['providers'];
 
@@ -22,6 +22,7 @@ const PROVIDER_META: Record<ProviderKey, { label: string; defaultModel: string; 
   zai: { label: 'Z.ai (GLM)', defaultModel: 'glm-4.6', gradient: 'from-violet-500 to-purple-600' },
   mistral: { label: 'Mistral AI', defaultModel: 'mistral-large-latest', gradient: 'from-rose-500 to-orange-600', description: 'LLM français — idéal pour le marché africain francophone' },
   groq: { label: 'Groq', defaultModel: 'llama-3.3-70b-versatile', gradient: 'from-orange-500 to-red-600', description: 'Inférence ultra-rapide (Llama, Mixtral, Gemma) — idéal pour les agents temps réel' },
+  cerebras: { label: 'Cerebras ⚡', defaultModel: 'llama3.1-8b', gradient: 'from-amber-500 to-yellow-600', description: 'Inference la plus rapide au monde (1000+ tok/s) — free tier disponible' },
   openrouter: { label: 'OpenRouter ⭐', defaultModel: 'anthropic/claude-3.5-sonnet', gradient: 'from-purple-500 to-pink-600', description: 'Multi-provider: GPT-4o, Claude 3.5, Gemini, Llama 3.1, Mistral — 1 clé API, 300+ modèles' },
   custom: { label: 'Custom (OpenAI-compatible)', defaultModel: 'your-model', gradient: 'from-gray-500 to-slate-600' },
 };
@@ -156,6 +157,7 @@ export default function AdminAiPage() {
             const customProvider = key === 'custom' ? (provider as ProviderMap['custom']) : null;
             const mistralProvider = key === 'mistral' ? (provider as ProviderMap['mistral']) : null;
             const groqProvider = key === 'groq' ? (provider as ProviderMap['groq']) : null;
+            const cerebrasProvider = key === 'cerebras' ? (provider as ProviderMap['cerebras']) : null;
             const openrouterProvider = key === 'openrouter' ? (provider as ProviderMap['openrouter']) : null;
             const isConfigured = !!provider.apiKey || (!!customProvider && !!customProvider.baseUrl);
             return (
@@ -203,6 +205,15 @@ export default function AdminAiPage() {
                       hint="Endpoint officiel Groq. Ne changez que si vous utilisez un proxy."
                     />
                   )}
+                  {key === 'cerebras' && cerebrasProvider && (
+                    <AdminInput
+                      label="Endpoint API"
+                      value={cerebrasProvider.endpoint}
+                      onChange={(v) => updateProvider('cerebras', { endpoint: v })}
+                      placeholder="https://api.cerebras.ai/v1"
+                      hint="Endpoint officiel Cerebras. Ne changez que si vous utilisez un proxy."
+                    />
+                  )}
                   {key === 'openrouter' && openrouterProvider && (
                     <>
                       <AdminInput
@@ -236,14 +247,14 @@ export default function AdminAiPage() {
                     onChange={(v) => updateProvider(key, { apiKey: v })}
                     secret
                     placeholder={key === 'custom' ? 'sk-... (optionnel)' : 'sk-...'}
-                    hint={key === 'mistral' ? 'Clé API depuis console.mistral.ai → API Keys' : (key === 'groq' ? 'Clé API depuis console.groq.com → API Keys (format: gsk_...)' : (key === 'openrouter' ? 'Clé API depuis openrouter.ai/keys (format: sk-or-...). 1 clé = accès à 300+ modèles.' : (key === 'custom' ? 'Laissez vide si votre endpoint n\'requiert pas d\'authentification' : undefined)))}
+                    hint={key === 'mistral' ? 'Clé API depuis console.mistral.ai → API Keys' : (key === 'groq' ? 'Clé API depuis console.groq.com → API Keys (format: gsk_...)' : (key === 'cerebras' ? 'Clé API depuis cloud.cerebras.ai → API Keys (format: csk_...)' : (key === 'openrouter' ? 'Clé API depuis openrouter.ai/keys (format: sk-or-...). 1 clé = accès à 300+ modèles.' : (key === 'custom' ? 'Laissez vide si votre endpoint n\'requiert pas d\'authentification' : undefined))))}
                   />
                   <AdminInput
                     label="Modèle"
                     value={provider.model}
                     onChange={(v) => updateProvider(key, { model: v })}
                     placeholder={meta.defaultModel}
-                    hint={key === 'mistral' ? 'Modèles disponibles: mistral-large-latest, mistral-medium-latest, mistral-small-latest, open-mistral-7b, open-mixtral-8x7b' : (key === 'groq' ? 'Modèles: llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768, gemma2-9b-it' : (key === 'openrouter' ? 'Modèles: anthropic/claude-3.5-sonnet, openai/gpt-4o, google/gemini-flash-1.5, meta-llama/llama-3.1-405b-instruct, mistralai/mistral-large' : `Modèle par défaut: ${meta.defaultModel}`))}
+                    hint={key === 'mistral' ? 'Modèles disponibles: mistral-large-latest, mistral-medium-latest, mistral-small-latest, open-mistral-7b, open-mixtral-8x7b' : (key === 'groq' ? 'Modèles: llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768, gemma2-9b-it' : (key === 'cerebras' ? 'Modèles: llama3.1-8b (fast), llama-3.3-70b (quality)' : (key === 'openrouter' ? 'Modèles: anthropic/claude-3.5-sonnet, openai/gpt-4o, google/gemini-flash-1.5, meta-llama/llama-3.1-405b-instruct, mistralai/mistral-large' : `Modèle par défaut: ${meta.defaultModel}`)))}
                   />
                   {key === 'mistral' && (
                     <div className="flex flex-wrap gap-2">
@@ -266,6 +277,20 @@ export default function AdminAiPage() {
                           key={m}
                           type="button"
                           onClick={() => updateProvider('groq', { model: m })}
+                          className="text-xs px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-colors"
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {key === 'cerebras' && (
+                    <div className="flex flex-wrap gap-2">
+                      {['llama3.1-8b', 'llama-3.3-70b'].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => updateProvider('cerebras', { model: m })}
                           className="text-xs px-3 py-1.5 rounded-lg glass hover:bg-white/10 transition-colors"
                         >
                           {m}
