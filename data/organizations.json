@@ -29,6 +29,21 @@
       "id": "org_0ffaaefe777fefff1d1f257f",
       "createdAt": "2026-08-27T13:17:52.566Z",
       "updatedAt": "2026-08-27T16:03:11.079Z"
+    },
+    {
+      "userId": "usr_admin_7bbca010222cb656",
+      "name": "Test Corp",
+      "description": "",
+      "country": "Cameroun",
+      "industry": "Tech",
+      "website": "",
+      "email": "admin@albermon.com",
+      "phone": "+237600000000",
+      "address": "Douala",
+      "logo": null,
+      "id": "org_55b37086d2de6b7ce306b36b",
+      "createdAt": "2026-08-29T20:51:16.416Z",
+      "updatedAt": "2026-08-29T20:51:16.416Z"
     }
   ]
 }

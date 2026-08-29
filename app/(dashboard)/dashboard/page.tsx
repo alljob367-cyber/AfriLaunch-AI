@@ -38,11 +38,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { stats } = useStats();
-  const { checklist, recommendations, recentActivity } = useDashboardData<{
-    checklist: ChecklistItem[];
-    recommendations: Recommendation[];
-    recentActivity: ActivityItem[];
-  }>();
+  const { checklist, recommendations, recentActivity } = useDashboardData();
   const [greeting, setGreeting] = useState<string | null>(null);
 
   useEffect(() => {
