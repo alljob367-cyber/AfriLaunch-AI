@@ -1,4 +1,5 @@
 // AfriLaunch AI — Brand Kit generation API
+import { generateImage } from '@/lib/image-gen';
 // POST /api/brand-kit/generate { businessName, industry, country, style }
 //
 // Generates a complete brand kit for the user:
@@ -28,8 +29,6 @@ import { getOrganizationByUserId } from '@/lib/org-store';
 import { getConfig } from '@/lib/config-store';
 import { sendEmail } from '@/lib/email-sender';
 import type { PlanId } from '@/lib/user-types';
-import ZAI from 'z-ai-web-dev-sdk';
-import { ensureZaiConfig } from '@/lib/zai-init';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -259,9 +258,8 @@ Réponds UNIQUEMENT avec le JSON.`;
   const ctx: AssetPromptCtx = { businessName, industry, style, paletteDesc };
 
   // ── Step 2: Generate each visual asset (with cache) ──────────────
-  let zai: any = null;
-  await ensureZaiConfig();
-  let zaiInitFailed = false;
+  
+
 
   for (const def of ASSET_DEFS) {
     const prompt = def.promptBuilder(ctx);
@@ -285,29 +283,12 @@ Réponds UNIQUEMENT avec le JSON.`;
       }
     }
 
-    // ── Generate via Z.AI ──────────────────────────────────────────
-    if (!zai && !zaiInitFailed) {
-      try {
-        zai = await ZAI.create();
-      } catch (err) {
-        console.error('ZAI init failed:', err);
-        zaiInitFailed = true;
-      }
-    }
-
-    if (zaiInitFailed) {
-      await updateBrandAsset(kitId, def.type, { status: 'failed', error: 'Image generation SDK indisponible', completedAt: Date.now() });
-      continue;
-    }
-
+    // ── Generate via Pollinations.ai ──────────────────────────────
     try {
-      const response = await zai.images.generations.create({
-        prompt,
-        size: def.size as any,
-      });
-      const base64 = response.data?.[0]?.base64;
-      if (!base64) throw new Error('Réponse image vide');
-      const dataUrl = `data:image/png;base64,${base64}`;
+      const [w, h] = def.size.split('x').map(n => parseInt(n));
+      const imgResult = await generateImage({ prompt, width: w, height: h });
+      if (!imgResult.ok || !imgResult.dataUrl) throw new Error(imgResult.error || 'Échec génération');
+      const dataUrl = imgResult.dataUrl;
       await updateBrandAsset(kitId, def.type, {
         status: 'done',
         dataUrl,

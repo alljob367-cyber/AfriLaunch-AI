@@ -1,11 +1,11 @@
 // AfriLaunch AI — Generate a single media kit asset (synchronous)
 // POST /api/media-kit/[id]/generate-asset { assetType }
+// Uses Pollinations.ai for image generation
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-helpers';
 import { kvGet, kvSet } from '@/lib/db';
-import ZAI from 'z-ai-web-dev-sdk';
-import { ensureZaiConfig } from '@/lib/zai-init';
+import { generateImage } from '@/lib/image-gen';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,30 +33,29 @@ export async function POST(
   const asset = kit.assets?.find((a: any) => a.type === body.assetType);
   if (!asset) return NextResponse.json({ error: 'Asset introuvable' }, { status: 404 });
 
-  // Already done?
   if (asset.status === 'done' && asset.dataUrl) {
     return NextResponse.json({ ok: true, cached: true });
   }
 
-  // Mark as generating
   asset.status = 'generating';
   await kvSet('media-kits', store);
 
   try {
-    await ensureZaiConfig();
-    const zai = await ZAI.create();
-    const response = await zai.images.generations.create({
+    // Parse size from asset.size (format "WIDTHxHEIGHT")
+    const [w, h] = (asset.size || '1024x1024').split('x').map((n: string) => parseInt(n));
+    const imgResult = await generateImage({
       prompt: asset.prompt || `Professional design for ${kit.industry} business, ${kit.style} style, high quality`,
-      size: asset.size as any,
+      width: w || 1024,
+      height: h || 1024,
     });
-    const base64 = response.data?.[0]?.base64;
-    if (!base64) throw new Error('Réponse vide');
 
-    const dataUrl = `data:image/png;base64,${base64}`;
+    if (!imgResult.ok || !imgResult.dataUrl) {
+      throw new Error(imgResult.error || 'Échec génération');
+    }
+
     asset.status = 'done';
-    asset.dataUrl = dataUrl;
+    asset.dataUrl = imgResult.dataUrl;
 
-    // Update overall kit status
     const allDone = kit.assets.every((a: any) => a.status === 'done' || a.status === 'failed');
     kit.status = allDone ? 'done' : 'running';
 

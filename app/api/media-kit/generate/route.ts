@@ -1,3 +1,4 @@
+import { generateImage } from '@/lib/image-gen';
 // AfriLaunch AI — Media Kit generation API
 // POST /api/media-kit/generate { type: 'social' | 'ads', businessName, industry, style, platform }
 //
@@ -14,8 +15,6 @@ import { runAIForPlanStream } from '@/lib/ai-runner';
 import { getOrganizationByUserId } from '@/lib/org-store';
 import { kvGet, kvSet } from '@/lib/db';
 import type { PlanId } from '@/lib/user-types';
-import ZAI from 'z-ai-web-dev-sdk';
-import { ensureZaiConfig } from '@/lib/zai-init';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -194,90 +193,9 @@ Réponds UNIQUEMENT avec le JSON.`;
     console.error('Copy generation failed:', err);
   }
 
-  // Step 2: Generate images
-  let zai: any = null;
-  await ensureZaiConfig();
-  try {
-    zai = await ZAI.create();
-  } catch (err) {
-    console.error('ZAI init failed:', err);
-    // Mark all as failed
-    const store = await kvGet<{ kits: MediaKit[] }>('media-kits');
-    if (store) {
-      const kit = store.kits.find((k) => k.id === kitId);
-      if (kit) {
-        kit.assets.forEach((a) => { a.status = 'failed'; a.error = 'SDK image indisponible'; });
-        kit.status = 'failed';
-        await kvSet('media-kits', store);
-      }
-    }
-    return;
-  }
-
-  for (const def of assetDefs) {
-    const prompt = def.promptTpl
-      .replace('{industry}', industry || 'business')
-      .replace('{style}', style);
-
-    // Update asset status
-    const store = await kvGet<{ kits: MediaKit[] }>('media-kits');
-    if (store) {
-      const kit = store.kits.find((k) => k.id === kitId);
-      if (kit) {
-        const asset = kit.assets.find((a) => a.type === def.type);
-        if (asset) {
-          asset.status = 'generating';
-          asset.prompt = prompt;
-        }
-        await kvSet('media-kits', store);
-      }
-    }
-
-    try {
-      const response = await zai.images.generations.create({ prompt, size: def.size as any });
-      const base64 = response.data?.[0]?.base64;
-      if (!base64) throw new Error('Réponse vide');
-
-      const dataUrl = `data:image/png;base64,${base64}`;
-      const store2 = await kvGet<{ kits: MediaKit[] }>('media-kits');
-      if (store2) {
-        const kit = store2.kits.find((k) => k.id === kitId);
-        if (kit) {
-          const asset = kit.assets.find((a) => a.type === def.type);
-          if (asset) {
-            asset.status = 'done';
-            asset.dataUrl = dataUrl;
-          }
-          // Update overall status
-          const allDone = kit.assets.every((a) => a.status === 'done' || a.status === 'failed');
-          if (allDone) kit.status = kit.assets.every((a) => a.status === 'done') ? 'done' : 'done';
-          await kvSet('media-kits', store2);
-        }
-      }
-    } catch (err) {
-      const store2 = await kvGet<{ kits: MediaKit[] }>('media-kits');
-      if (store2) {
-        const kit = store2.kits.find((k) => k.id === kitId);
-        if (kit) {
-          const asset = kit.assets.find((a) => a.type === def.type);
-          if (asset) {
-            asset.status = 'failed';
-            asset.error = (err as Error).message;
-          }
-          await kvSet('media-kits', store2);
-        }
-      }
-    }
-  }
-
-  // Final status update
-  const store3 = await kvGet<{ kits: MediaKit[] }>('media-kits');
-  if (store3) {
-    const kit = store3.kits.find((k) => k.id === kitId);
-    if (kit) {
-      const allDone = kit.assets.every((a) => a.status === 'done' || a.status === 'failed');
-      kit.status = allDone ? 'done' : 'running';
-      await kvSet('media-kits', store3);
-    }
-  }
+  // Step 2: Generate images (client-driven via generate-asset endpoint)
+  // This background function only generates the AI copy. Images are generated
+  // by the client calling /api/media-kit/[id]/generate-asset for each asset.
+  // No Z.AI needed here — just mark assets as pending.
+  return;
 }
