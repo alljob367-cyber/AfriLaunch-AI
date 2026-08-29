@@ -40,6 +40,12 @@ export async function POST(req: NextRequest) {
   const voiceId = body.voiceId || config.elevenlabs.voiceId;
   const model = body.model || config.elevenlabs.model || 'eleven_turbo_v2_5';
 
+  if (!voiceId) {
+    return NextResponse.json({
+      error: 'Aucun Voice ID configuré. Allez dans Admin → AI → ElevenLabs et sélectionnez une voix dans la liste déroulante (chargée automatiquement depuis votre compte ElevenLabs).',
+    }, { status: 400 });
+  }
+
   try {
     const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: 'POST',

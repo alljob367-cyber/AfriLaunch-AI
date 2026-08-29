@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Bot, Activity, RefreshCw, Zap, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { Bot, Activity, RefreshCw, Zap, CheckCircle2, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import {
   AdminPageHeader, AdminCard, AdminInput, AdminSelect, AdminToggle, AdminNumber,
   SaveBar, LoadingState, TestButton, StatusBadge,
@@ -327,12 +327,11 @@ export default function AdminAiPage() {
                 placeholder="sk_..."
                 hint="Clé API depuis elevenlabs.io → Profile → API Keys"
               />
-              <AdminInput
-                label="Voice ID"
-                value={draft.elevenlabs.voiceId}
-                onChange={(v) => updateElevenlabs({ voiceId: v })}
-                placeholder="21m00Tcm4TlvDq8ikWAM"
-                hint="Voice ID depuis elevenlabs.io → Voices. Défaut: 21m00Tcm4TlvDq8ikWAM (Rachel)"
+              {/* Voice selector — fetches available voices from ElevenLabs */}
+              <VoiceSelector
+                currentVoiceId={draft.elevenlabs.voiceId}
+                apiKey={draft.elevenlabs.apiKey}
+                onChange={(voiceId) => updateElevenlabs({ voiceId })}
               />
               <AdminSelect
                 label="Modèle"
@@ -527,6 +526,117 @@ function ProviderHealthPanel() {
           {resetting ? 'Reset…' : 'Reset health'}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Voice Selector ───────────────────────────────────────────────────
+// Fetches available voices from ElevenLabs API and lets the admin pick.
+// Highlights which voices are "premade" (free tier accessible).
+function VoiceSelector({ currentVoiceId, apiKey, onChange }: {
+  currentVoiceId: string;
+  apiKey: string;
+  onChange: (voiceId: string) => void;
+}) {
+  const [voices, setVoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string>('');
+
+  const fetchVoices = useCallback(async () => {
+    if (!apiKey) {
+      setError('Entrez une clé API ElevenLabs d\'abord.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/elevenlabs/voices', { credentials: 'include' });
+      const data = await res.json();
+      if (data.ok) {
+        setVoices(data.voices || []);
+        setNote(data.note || '');
+        if (data.voices?.length > 0 && !data.voices.find((v: any) => v.voice_id === currentVoiceId)) {
+          // Auto-select first premade voice if current one is not in the list
+          const firstPremade = data.voices.find((v: any) => v.category === 'premade');
+          if (firstPremade) {
+            onChange(firstPremade.voice_id);
+          }
+        }
+      } else {
+        setError(data.error || 'Échec du chargement des voix.');
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiKey, currentVoiceId, onChange]);
+
+  // Auto-fetch when apiKey changes
+  useEffect(() => {
+    if (apiKey) {
+      const timeout = setTimeout(fetchVoices, 500); // debounce
+      return () => clearTimeout(timeout);
+    }
+  }, [apiKey, fetchVoices]);
+
+  return (
+    <div>
+      <label className="text-xs font-semibold text-gray-400 mb-1.5 block uppercase tracking-wide">
+        Voice ID
+      </label>
+      {voices.length === 0 ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={currentVoiceId}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="Chargement des voix..."
+              className="flex-1 glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-violet-500/40 outline-none text-sm font-mono"
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={fetchVoices}
+              disabled={loading || !apiKey}
+              className="px-3 py-2.5 rounded-xl glass border border-white/10 hover:bg-white/10 text-xs font-semibold disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" /> : <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />}
+              Charger
+            </button>
+          </div>
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          {!error && !loading && !apiKey && (
+            <p className="text-xs text-gray-600">Entrez une clé API pour charger les voix disponibles.</p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <select
+            value={currentVoiceId}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-violet-500/40 outline-none text-sm"
+          >
+            {voices.map((v: any) => (
+              <option key={v.voice_id} value={v.voice_id} className="bg-gray-900">
+                {v.name} ({v.category}) — {v.voice_id}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-600">
+            {note}
+          </p>
+          <button
+            type="button"
+            onClick={fetchVoices}
+            className="text-xs text-gray-500 hover:text-white flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" aria-hidden="true" /> Recharger les voix
+          </button>
+        </div>
+      )}
     </div>
   );
 }
