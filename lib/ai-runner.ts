@@ -31,14 +31,19 @@ export { resetHealth, getHealthSnapshot, type ProviderName };
 
 // Plan-based model routing on OpenRouter (cost optimization + speed)
 // Fast, free models — chosen for ≤2s response time on short prompts.
-//   - chat (≤800 tokens):  llama 3.1 8b (fast, free, multilingual)
+//   - chat (≤800 tokens):  minimax m3 free (only reliable free model on OR)
 //   - long-form (≤3000):   minimax m3 free (good quality/price ratio)
 //   - website (≤6000):     minimax m3 free (needs longer context)
+//
+// NOTE (2025-08): OpenRouter retired `meta-llama/llama-3.1-8b-instruct:free`.
+// The only reliably-working free model on OpenRouter right now is
+// `minimax/minimax-m3:free` (tested OK with streaming). We use it for all
+// plan tiers. Groq provides the ultra-fast path via the load balancer.
 const PLAN_MODELS_FAST: Record<PlanId, string> = {
-  starter: 'meta-llama/llama-3.1-8b-instruct:free',
-  pro: 'meta-llama/llama-3.1-8b-instruct:free',
-  business: 'meta-llama/llama-3.1-8b-instruct:free',
-  enterprise: 'meta-llama/llama-3.1-8b-instruct:free',
+  starter: 'minimax/minimax-m3:free',
+  pro: 'minimax/minimax-m3:free',
+  business: 'minimax/minimax-m3:free',
+  enterprise: 'minimax/minimax-m3:free',
 };
 
 const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
@@ -113,15 +118,97 @@ export async function runAIForPlan(opts: RunOptions, plan: PlanId): Promise<RunR
 
 // Fast variant: uses smaller, faster models for short chat replies (≤800 tokens).
 // Use this for interactive agent chat where latency matters more than depth.
+// Uses the load balancer with automatic fallback across all enabled providers
+// (OpenRouter → Cerebras → Groq → Mistral) so a single provider failing
+// (e.g. model retired, rate limit) doesn't crash the caller.
 export async function runAIForPlanFast(opts: RunOptions, plan: PlanId): Promise<RunResult> {
   const config = await getConfig();
-  const openrouter = config.ai.providers.openrouter;
-  if (openrouter?.enabled && openrouter.apiKey) {
-    const targetModel = PLAN_MODELS_FAST[plan] || PLAN_MODELS_FAST.starter;
-    const providerConfig = { ...openrouter, model: targetModel };
-    return callProvider('openrouter', providerConfig, opts, config);
+  syncHealthFromConfig(config);
+  const maxTokens = opts.maxTokens ?? 800;
+  const timeoutMs = maxTokens <= 1000 ? 45000 : 180000;
+
+  // Get the ordered list of providers to try (load balancer)
+  const chain = pickProviderChain(4);
+
+  // Fallback path: no provider configured at all → legacy single-provider call
+  if (chain.length === 0) {
+    const openrouter = config.ai.providers.openrouter;
+    if (openrouter?.enabled && openrouter.apiKey) {
+      const targetModel = PLAN_MODELS_FAST[plan] || PLAN_MODELS_FAST.starter;
+      const providerConfig = { ...openrouter, model: targetModel };
+      return callProvider('openrouter', providerConfig, opts, config);
+    }
+    return runAIForPlan(opts, plan);
   }
-  return runAIForPlan(opts, plan);
+
+  // Try each provider in the chain (load-balanced fallback)
+  let lastError: string | null = null;
+  for (const provider of chain) {
+    const providerConfig = (config.ai.providers as any)[provider];
+    if (!providerConfig?.apiKey) continue;
+
+    const model = FAST_MODELS_PER_PROVIDER[provider];
+    const endpoint = getEndpoint(provider, providerConfig);
+    const headers = buildHeaders(provider, providerConfig);
+
+    let res: Response;
+    try {
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: buildChatBody(model, opts, maxTokens, false),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (err) {
+      markError(provider, 'network');
+      lastError = `${provider} réseau: ${(err as Error).message}`;
+      continue;
+    }
+
+    if (!res.ok) {
+      const kind = classifyError(res.status);
+      const errText = await res.text().catch(() => '');
+      let errMsg = `HTTP ${res.status}`;
+      try {
+        const errJson = JSON.parse(errText);
+        errMsg = errJson.message || errJson.error?.message || errMsg;
+      } catch { /* not JSON */ }
+      markError(provider, kind);
+      lastError = `${provider}: ${errMsg}`;
+      continue;
+    }
+
+    // Success — parse the response
+    try {
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content;
+      if (reply && typeof reply === 'string') {
+        markSuccess(provider);
+        return {
+          ok: true,
+          reply,
+          provider,
+          model,
+          usage: data.usage
+            ? { prompt_tokens: data.usage.prompt_tokens, completion_tokens: data.usage.completion_tokens, total_tokens: data.usage.total_tokens }
+            : undefined,
+        };
+      }
+      markError(provider, 'server');
+      lastError = `${provider}: réponse vide`;
+      continue;
+    } catch (err) {
+      markError(provider, 'network');
+      lastError = `${provider} parse: ${(err as Error).message}`;
+      continue;
+    }
+  }
+
+  // All providers failed
+  return {
+    ok: false,
+    error: lastError || 'Tous les providers IA ont échoué. Vérifiez la configuration dans /admin/ai ou réessayez dans 1 minute.',
+  };
 }
 
 // Streaming variant — yields chunks as they arrive from the LLM.
