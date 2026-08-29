@@ -15,6 +15,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useOrganization } from '@/hooks/use-organization';
 import { useBackgroundJobs } from '@/hooks/use-background-jobs';
 import { AICoworker } from '@/components/dashboard/ai-coworker';
+import { Logo } from '@/components/logo';
 
 const navSections = [
   {
@@ -27,6 +28,7 @@ const navSections = [
     label: 'Création',
     items: [
       { href: '/dashboard/identity', label: 'Identité de marque', icon: Palette },
+      { href: '/dashboard/media-kit', label: 'Kit Média', icon: Megaphone, color: 'text-orange-400' },
       { href: '/dashboard/website', label: 'Site web', icon: Globe },
       { href: '/dashboard/content', label: 'Contenu', icon: PenSquare },
       { href: '/dashboard/youtube', label: 'YouTube', icon: Youtube, color: 'text-red-400' },
@@ -90,9 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="p-5 border-b border-white/5">
           <Link href="/" className="flex items-center gap-2" aria-label="Accueil AfriLaunch AI">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-              <Rocket className="w-4 h-4 text-white" aria-hidden="true" />
-            </div>
+            <Logo size={32} />
             <span className="font-bold">AfriLaunch <span className="gradient-text">AI</span></span>
           </Link>
         </div>
@@ -189,9 +189,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 glass border-b border-white/5 px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2" aria-label="Accueil AfriLaunch AI">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-            <Rocket className="w-3.5 h-3.5 text-white" aria-hidden="true" />
-          </div>
+          <Logo size={28} />
           <span className="font-bold text-sm">AfriLaunch <span className="gradient-text">AI</span></span>
         </Link>
         <Link

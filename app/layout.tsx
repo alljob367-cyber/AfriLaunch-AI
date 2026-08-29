@@ -57,6 +57,11 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true },
   },
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export const viewport: Viewport = {

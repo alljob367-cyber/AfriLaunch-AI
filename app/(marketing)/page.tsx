@@ -14,6 +14,7 @@ import {
   UtensilsCrossed, type LucideIcon,
 } from 'lucide-react';
 import { STRINGS, type Lang } from '@/lib/landing-i18n';
+import { Logo } from '@/components/logo';
 
 /* ─── Static data (icons + colors, language-agnostic) ──────────── */
 
@@ -98,8 +99,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3.5">
           <Link href="/" className="flex items-center gap-2.5 group">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="AfriLaunch AI" className="w-8 h-8 transition-transform group-hover:scale-110" />
+            <Logo size={32} className="transition-transform group-hover:scale-110" />
             <span className="font-bold text-lg">AfriLaunch <span className="gradient-text">AI</span></span>
           </Link>
 
@@ -656,8 +656,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-2 md:col-span-1">
               <Link href="/" className="flex items-center gap-2.5 mb-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.svg" alt="AfriLaunch AI" className="w-8 h-8" />
+                <Logo size={32} />
                 <span className="font-bold">AfriLaunch <span className="gradient-text">AI</span></span>
               </Link>
               <p className="text-xs text-gray-500 leading-relaxed">{t.footer_tagline}</p>
