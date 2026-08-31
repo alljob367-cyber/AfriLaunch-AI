@@ -221,15 +221,33 @@ async function generateInBackground(
   style: string,
 ) {
   // ── Step 1: Generate textual brand identity via AI agent ──────────
-  const systemPrompt = `Tu es le Branding Agent d'AfriLaunch AI. Tu génères des identités de marque COMPLÈTES au format JSON strict.
-Réponse = objet JSON valide (sans markdown, sans backticks):
-{"brandName":"string","tagline":"string","description":"string","palette":{"primary":"#hex","secondary":"#hex","accent":"#hex","background":"#hex","text":"#hex"},"typography":{"heading":"string Google Font","body":"string Google Font"},"voice":{"tone":"string"},"socialKit":{"instagram":{"bio":"string max 150 chars","hashtags":["array of 5-10"]},"twitter":{"bio":"string max 160 chars"}}}
-Réponds UNIQUEMENT avec le JSON.`;
-  const userPrompt = `Crée une identité pour:
+  // Improved system prompt: more specific instructions for high-quality,
+  // culturally-relevant African brand identities. The JSON schema is strict
+  // and the model is asked to think about each field carefully.
+  const systemPrompt = `Tu es le Branding Agent d'AfriLaunch AI, un expert en identité de marque spécialisé sur le marché africain.
+
+Ta mission : créer une identité de marque PROFESSIONNELLE, mémorable et adaptée au contexte africain (Cameroun, Sénégal, Côte d'Ivoire, Nigeria, etc.).
+
+CONTRAINTES CRITIQUES :
+1. Réponds UNIQUEMENT avec un objet JSON valide (pas de markdown, pas de backticks, pas de texte avant/après)
+2. Le tagline doit être percutant, court (max 8 mots) et refléter la promesse du business
+3. La palette doit être harmonieuse : 1 couleur primaire dominante + 1 secondaire + 1 accent contrasté + 1 fond neutre + 1 texte lisible
+4. Les couleurs hex doivent être réelles et testées (pas de #000 ou #fff seuls)
+5. La typographie doit utiliser des Google Fonts populaires et lisibles (Inter, Poppins, Montserrat, Playfair Display, etc.)
+6. Le ton de voix doit correspondre à l'industrie et au public cible africain
+7. Les bios Instagram/Twitter doivent être optimisées pour l'engagement (emojis stratégiques, hashtags populaires en Afrique)
+
+FORMAT JSON STRICT :
+{"brandName":"string","tagline":"string max 8 mots","description":"string 2-3 phrases","palette":{"primary":"#hex","secondary":"#hex","accent":"#hex","background":"#hex","text":"#hex"},"typography":{"heading":"Google Font name","body":"Google Font name"},"voice":{"tone":"string décrivant le ton"},"socialKit":{"instagram":{"bio":"string max 150 chars avec emojis","hashtags":["5-10 hashtags pertinents"]},"twitter":{"bio":"string max 160 chars"}}}
+
+IMPORTANT : Réponds UNIQUEMENT avec le JSON, rien d'autre.`;
+  const userPrompt = `Crée une identité de marque premium pour:
 - Nom du business: ${businessName}
 - Industrie/Secteur: ${industry || 'général'}
 - Pays/Région: ${country}
-- Style souhaité: ${style}`;
+- Style souhaité: ${style}
+
+Génère un brand kit complet, créatif et professionnel.`;
 
   let identity: any = {};
   try {
