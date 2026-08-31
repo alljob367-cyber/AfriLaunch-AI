@@ -83,6 +83,7 @@ export default function WhatsAppAgentConfigPage() {
   const { user } = useAuth();
   const [config, setConfig] = useState<WhatsAppAgentConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState('Bonjour, présentez-vous');
@@ -93,9 +94,23 @@ export default function WhatsAppAgentConfigPage() {
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/whatsapp-agent/config', { credentials: 'include' });
+      if (!res.ok) {
+        // 401 = not authenticated, 500 = server error (Supabase not configured on Vercel)
+        setLoadError(res.status === 401
+          ? 'Vous devez être connecté pour configurer l\'Agent WhatsApp.'
+          : 'Erreur serveur. Si le problème persiste, vérifiez que Supabase est configuré.');
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
-      if (data.ok) setConfig(data.config);
-    } catch { /* ignore */ }
+      if (data.ok) {
+        setConfig(data.config);
+      } else {
+        setLoadError(data.error || 'Configuration introuvable.');
+      }
+    } catch (err) {
+      setLoadError('Erreur réseau. Vérifiez votre connexion.');
+    }
     setLoading(false);
   }, []);
 
@@ -214,10 +229,41 @@ export default function WhatsAppAgentConfigPage() {
     });
   }
 
-  if (loading || !config) {
+  if (loading) {
     return (
       <div className="min-h-screen mesh-bg flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-green-500" aria-hidden="true" />
+      </div>
+    );
+  }
+
+  if (loadError || !config) {
+    return (
+      <div className="min-h-screen mesh-bg flex items-center justify-center p-6">
+        <div className="glass rounded-2xl p-8 border border-red-500/20 max-w-md w-full text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/15 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-7 h-7 text-red-400" aria-hidden="true" />
+          </div>
+          <h1 className="text-lg font-bold text-white mb-2">Agent WhatsApp indisponible</h1>
+          <p className="text-sm text-gray-400 mb-6 leading-relaxed">
+            {loadError || 'Configuration introuvable.'}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              setLoadError(null);
+              fetchConfig();
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-green-500 to-emerald-600 hover:scale-105 transition-transform"
+          >
+            <Loader2 className="w-4 h-4" aria-hidden="true" />
+            Réessayer
+          </button>
+          <p className="text-[10px] text-gray-600 mt-4">
+            Si le problème persiste, vérifiez que Supabase est configuré dans les variables d'environnement.
+          </p>
+        </div>
       </div>
     );
   }

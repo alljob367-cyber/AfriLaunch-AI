@@ -173,12 +173,13 @@ export default function YouTubePage() {
       });
       return;
     }
-    // Validate size (500MB max — matches /api/youtube/upload)
+    // Validate size (50MB max — storage backend is Supabase KV, not designed
+    // for large blobs. For larger videos, use a direct YouTube URL.)
     const sizeMB = file.size / 1024 / 1024;
-    if (sizeMB > 500) {
+    if (sizeMB > 50) {
       toast({
         title: 'Fichier trop volumineux',
-        description: `${sizeMB.toFixed(1)} Mo. Maximum: 500 Mo.`,
+        description: `${sizeMB.toFixed(1)} Mo. Maximum: 50 Mo. Pour les vidéos plus grandes, utilisez un lien YouTube direct.`,
         variant: 'error',
       });
       return;
