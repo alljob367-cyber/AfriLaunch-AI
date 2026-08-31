@@ -56,31 +56,31 @@ export interface CreditPack {
 export const PLANS: Record<PlanId, Plan> = {
   starter: {
     id: 'starter', name: 'Starter', priceMonthly: 5000, priceAnnual: 48000, creditsPerMonth: 500,
-    features: ['500 crédits IA / mois', '2 organisations', '13 agents IA + marketplace', 'Bot Telegram partagé', '3 agents IA en parallèle', 'Planification de contenu', 'Support email 48h'],
+    features: ['500 crédits IA / mois', '13 agents IA spécialisés', 'Site web basique', '2 réseaux sociaux', 'Agent WhatsApp IA', 'Support email 48h'],
     botType: 'shared', whiteLabel: false, maxTeamMembers: 1, apiAccess: false,
   },
   pro: {
     id: 'pro', name: 'Pro', priceMonthly: 15000, priceAnnual: 144000, creditsPerMonth: 5000,
-    features: ['5 000 crédits IA / mois', '5 organisations', 'Tous les agents IA + marketplace', 'Bot Telegram dédié (votre token)', 'Campagnes marketing IA', 'Analytics avancés', 'Accès API limité', 'Support prioritaire 24h'],
+    features: ['5 000 crédits IA / mois', '13 agents IA + marketplace', 'Site web premium + domaine', '5 réseaux sociaux', 'Agent WhatsApp IA', 'Analytics avancés', 'Support prioritaire 24h'],
     popular: true, botType: 'dedicated', whiteLabel: false, maxTeamMembers: 5, apiAccess: true,
   },
   business: {
-    id: 'business', name: 'Business', priceMonthly: 50000, priceAnnual: 480000, creditsPerMonth: 50000,
-    features: ['50 000 crédits IA / mois', 'Organisations illimitées', 'Tous les agents + marketplace premium', 'Bot Telegram white-label', 'Marque blanche disponible', 'Intégrations CRM', 'Analytics avancés', 'Manager de compte dédié', 'SLA 99.9%', 'Accès API complet'],
+    id: 'business', name: 'Business', priceMonthly: 40000, priceAnnual: 384000, creditsPerMonth: 50000,
+    features: ['50 000 crédits IA / mois', '13 agents IA + marketplace premium', 'Site e-commerce + publication', '6 réseaux sociaux', 'Agent WhatsApp multi-langues', 'Voix IA (5 min/mois)', 'Multi-utilisateurs (20)', 'Account manager dédié', 'SLA 99.9%'],
     botType: 'dedicated', whiteLabel: true, maxTeamMembers: 20, apiAccess: true,
   },
   enterprise: {
     id: 'enterprise', name: 'Enterprise', priceMonthly: 150000, priceAnnual: 1440000, creditsPerMonth: -1,
-    features: ['Crédits illimités', 'Organisations illimitées', 'Déploiement sur site', 'SLA personnalisé', 'Intégrations sur mesure', 'Formation personnalisée', 'Support 24/7 dédié'],
+    features: ['Crédits illimités', 'Agents illimités', 'Infrastructure dédiée', 'Voix IA illimitée', 'SLA 99.99%', 'Intégrations sur-mesure', 'Support 24/7 dédié'],
     botType: 'dedicated', whiteLabel: true, maxTeamMembers: -1, apiAccess: true,
   },
 };
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 'pack_1000', credits: 1000, price: 2500, discount: 0 },
-  { id: 'pack_5000', credits: 5000, price: 10000, discount: 20, popular: true },
-  { id: 'pack_25000', credits: 25000, price: 45000, discount: 30 },
-  { id: 'pack_100000', credits: 100000, price: 150000, discount: 40 },
+  { id: 'pack_500',    credits: 500,   price: 2500,   discount: 0,  },
+  { id: 'pack_2000',   credits: 2000,  price: 8000,   discount: 10, popular: true },
+  { id: 'pack_10000',  credits: 10000, price: 32000,  discount: 20 },
+  { id: 'pack_50000',  credits: 50000, price: 120000, discount: 30 },
 ];
 
 // ─── Action costs (variable credits per action) ──────────────────────

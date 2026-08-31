@@ -30,48 +30,58 @@ export interface RunResult {
 export { resetHealth, getHealthSnapshot, type ProviderName };
 
 // Plan-based model routing on OpenRouter (cost optimization + speed)
-// Fast, free models — chosen for ≤2s response time on short prompts.
-//   - chat (≤800 tokens):  minimax m3 free (only reliable free model on OR)
-//   - long-form (≤3000):   minimax m3 free (good quality/price ratio)
-//   - website (≤6000):     minimax m3 free (needs longer context)
+// ──────────────────────────────────────────────────────────────────
+// Each plan targets a specific provider + model for cost/quality balance:
+//   - Starter    → Groq Llama 3.3 70B ($0.59/$0.79 per M tokens, 300 tok/s)
+//   - Pro        → Claude Haiku 4.5 via OpenRouter ($1/$5 per M tokens)
+//   - Business   → Mistral Large 2 ($2/$6 per M tokens, FR-native, RGPD)
+//   - Enterprise → GPT-5 via OpenRouter ($1.25/$10 per M tokens)
 //
-// NOTE (2025-08): OpenRouter retired `meta-llama/llama-3.1-8b-instruct:free`.
-// The only reliably-working free model on OpenRouter right now is
-// `minimax/minimax-m3:free` (tested OK with streaming). We use it for all
-// plan tiers. Groq provides the ultra-fast path via the load balancer.
+// The load balancer tries the plan's preferred provider FIRST, then falls
+// back to other enabled providers on failure (cooldown, rate limit, etc.).
+// This keeps quality high while staying resilient.
+//
+// NOTE: Pro/Business/Enterprise models require a paid OpenRouter/Mistral key.
+// If the key is missing or invalid, the load balancer falls back to Groq
+// (Starter quality) so the user still gets a response.
 const PLAN_MODELS_FAST: Record<PlanId, string> = {
-  starter: 'minimax/minimax-m3:free',
-  pro: 'minimax/minimax-m3:free',
-  business: 'minimax/minimax-m3:free',
-  enterprise: 'minimax/minimax-m3:free',
+  starter: 'minimax/minimax-m3:free',                 // free fallback
+  pro: 'anthropic/claude-haiku-4.5',                  // $1/$5 per M
+  business: 'mistralai/mistral-large-2411',           // $2/$6 per M (OpenRouter slug)
+  enterprise: 'openai/gpt-5',                         // $1.25/$10 per M
 };
 
 const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
   starter: 'minimax/minimax-m3:free',
-  pro: 'minimax/minimax-m3:free',
-  business: 'minimax/minimax-m3:free',
-  enterprise: 'minimax/minimax-m3:free',
+  pro: 'anthropic/claude-haiku-4.5',
+  business: 'mistralai/mistral-large-2411',
+  enterprise: 'openai/gpt-5',
+};
+
+// Preferred provider per plan (used by the load balancer to order the chain).
+// The plan's provider is tried first; others serve as fallback.
+const PLAN_PREFERRED_PROVIDER: Record<PlanId, ProviderName> = {
+  starter: 'groq',          // ultra-fast + cheap
+  pro: 'openrouter',        // Claude Haiku 4.5 via OR
+  business: 'mistral',      // Mistral Large 2 direct (RGPD, FR-native)
+  enterprise: 'openrouter', // GPT-5 via OR
 };
 
 // Per-provider fast chat models (used by runAIForPlanFastStream + load balancer).
-// All free-tier — chosen for speed + multilingual support.
-// NOTE (2025-08): OpenRouter retired `meta-llama/llama-3.1-8b-instruct:free`.
-// The only reliably-working free model on OpenRouter right now is
-// `minimax/minimax-m3:free` (tested OK with streaming). We use it for both
-// fast chat and quality long-form on OpenRouter — Groq provides the speed.
+// These are the FALLBACK models when the plan's preferred provider fails.
 const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
-  openrouter: 'minimax/minimax-m3:free',     // tested OK with streaming
-  cerebras: 'llama3.1-8b',           // Cerebras ultra-fast (1000+ tok/s)
-  groq: 'llama-3.1-8b-instant',              // Groq instant — fast + cheap
+  openrouter: 'minimax/minimax-m3:free',     // free fallback (works without paid key)
+  cerebras: 'llama3.1-8b',                    // Cerebras ultra-fast (1000+ tok/s)
+  groq: 'llama-3.3-70b-versatile',            // Groq default — good quality/speed
   mistral: 'mistral-small-latest',            // free tier, decent speed
 };
 
 // Per-provider quality models (used by long-form generation: identity/website)
 const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
-  openrouter: 'minimax/minimax-m3:free',     // same — only free model that works
+  openrouter: 'minimax/minimax-m3:free',     // free fallback
   cerebras: 'llama-3.3-70b',                 // Cerebras 70B for quality
   groq: 'llama-3.3-70b-versatile',           // Groq default — good quality/speed
-  mistral: 'mistral-large-latest',            // better quality
+  mistral: 'mistral-large-latest',           // better quality
 };
 
 // Backward-compatible alias (used by long-form generation paths).
@@ -118,20 +128,27 @@ export async function runAIForPlan(opts: RunOptions, plan: PlanId): Promise<RunR
 
 // Fast variant: uses smaller, faster models for short chat replies (≤800 tokens).
 // Use this for interactive agent chat where latency matters more than depth.
-// Uses the load balancer with automatic fallback across all enabled providers
-// (OpenRouter → Cerebras → Groq → Mistral) so a single provider failing
-// (e.g. model retired, rate limit) doesn't crash the caller.
+//
+// ROUTING BY PLAN:
+//   - Starter    → Groq Llama 3.3 70B (ultra-fast, 300 tok/s)
+//   - Pro        → Claude Haiku 4.5 via OpenRouter (quality + speed)
+//   - Business   → Mistral Large 2 (FR-native, RGPD)
+//   - Enterprise → GPT-5 via OpenRouter (frontier quality)
+//
+// The plan's preferred provider is tried FIRST with the plan-specific model.
+// On failure (auth, rate limit, server error), falls back to other enabled
+// providers using their FAST_MODELS_PER_PROVIDER defaults.
 export async function runAIForPlanFast(opts: RunOptions, plan: PlanId): Promise<RunResult> {
   const config = await getConfig();
   syncHealthFromConfig(config);
   const maxTokens = opts.maxTokens ?? 800;
   const timeoutMs = maxTokens <= 1000 ? 45000 : 180000;
 
-  // Get the ordered list of providers to try (load balancer)
-  const chain = pickProviderChain(4);
-
-  // Fallback path: no provider configured at all → legacy single-provider call
-  if (chain.length === 0) {
+  // Build an ordered chain: plan's preferred provider first, then the rest
+  const preferred = PLAN_PREFERRED_PROVIDER[plan] || 'groq';
+  const allProviders = pickProviderChain(4);
+  if (allProviders.length === 0) {
+    // Fallback path: no provider configured at all → legacy single-provider call
     const openrouter = config.ai.providers.openrouter;
     if (openrouter?.enabled && openrouter.apiKey) {
       const targetModel = PLAN_MODELS_FAST[plan] || PLAN_MODELS_FAST.starter;
@@ -141,70 +158,85 @@ export async function runAIForPlanFast(opts: RunOptions, plan: PlanId): Promise<
     return runAIForPlan(opts, plan);
   }
 
+  // Order: preferred first, then others (dedup)
+  const chain: ProviderName[] = [preferred, ...allProviders.filter((p) => p !== preferred)];
+
   // Try each provider in the chain (load-balanced fallback)
   let lastError: string | null = null;
   for (const provider of chain) {
     const providerConfig = (config.ai.providers as any)[provider];
     if (!providerConfig?.apiKey) continue;
 
-    const model = FAST_MODELS_PER_PROVIDER[provider];
-    const endpoint = getEndpoint(provider, providerConfig);
-    const headers = buildHeaders(provider, providerConfig);
+    // Two models to try per provider:
+    // 1. Plan-specific model (high quality, may require paid key)
+    // 2. Provider default (free fallback, always works if key is valid)
+    const modelsToTry = provider === preferred
+      ? [PLAN_MODELS_FAST[plan] || FAST_MODELS_PER_PROVIDER[provider], FAST_MODELS_PER_PROVIDER[provider]]
+      : [FAST_MODELS_PER_PROVIDER[provider]];
+    // Dedup (if plan model === default model, only try once)
+    const uniqueModels = [...new Set(modelsToTry.filter(Boolean))];
 
-    let res: Response;
-    try {
-      res = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: buildChatBody(model, opts, maxTokens, false),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-    } catch (err) {
-      markError(provider, 'network');
-      lastError = `${provider} réseau: ${(err as Error).message}`;
-      continue;
-    }
+    for (const model of uniqueModels) {
+      const endpoint = getEndpoint(provider, providerConfig);
+      const headers = buildHeaders(provider, providerConfig);
 
-    if (!res.ok) {
-      const kind = classifyError(res.status);
-      const errText = await res.text().catch(() => '');
-      let errMsg = `HTTP ${res.status}`;
+      let res: Response;
       try {
-        const errJson = JSON.parse(errText);
-        errMsg = errJson.message || errJson.error?.message || errMsg;
-      } catch { /* not JSON */ }
-      markError(provider, kind);
-      lastError = `${provider}: ${errMsg}`;
-      continue;
-    }
-
-    // Success — parse the response
-    try {
-      const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content;
-      if (reply && typeof reply === 'string') {
-        markSuccess(provider);
-        return {
-          ok: true,
-          reply,
-          provider,
-          model,
-          usage: data.usage
-            ? { prompt_tokens: data.usage.prompt_tokens, completion_tokens: data.usage.completion_tokens, total_tokens: data.usage.total_tokens }
-            : undefined,
-        };
+        res = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: buildChatBody(model, opts, maxTokens, false),
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+      } catch (err) {
+        lastError = `${provider} réseau: ${(err as Error).message}`;
+        break; // network error → skip to next provider, don't retry with different model
       }
-      markError(provider, 'server');
-      lastError = `${provider}: réponse vide`;
-      continue;
-    } catch (err) {
-      markError(provider, 'network');
-      lastError = `${provider} parse: ${(err as Error).message}`;
-      continue;
+
+      if (!res.ok) {
+        const kind = classifyError(res.status);
+        const errText = await res.text().catch(() => '');
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errJson = JSON.parse(errText);
+          errMsg = errJson.message || errJson.error?.message || errMsg;
+        } catch { /* not JSON */ }
+        lastError = `${provider}/${model}: ${errMsg}`;
+        // Don't markError for model-specific failures (e.g. 404 model not found,
+        // 403 model requires paid key) — only mark for provider-level auth errors
+        if (kind === 'auth' && res.status !== 403) {
+          markError(provider, kind);
+        }
+        // Try next model on this provider (might be a free-tier fallback)
+        continue;
+      }
+
+      // Success — parse the response
+      try {
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content;
+        if (reply && typeof reply === 'string') {
+          markSuccess(provider);
+          return {
+            ok: true,
+            reply,
+            provider,
+            model,
+            usage: data.usage
+              ? { prompt_tokens: data.usage.prompt_tokens, completion_tokens: data.usage.completion_tokens, total_tokens: data.usage.total_tokens }
+              : undefined,
+          };
+        }
+        lastError = `${provider}/${model}: réponse vide`;
+        continue;
+      } catch (err) {
+        lastError = `${provider}/${model} parse: ${(err as Error).message}`;
+        continue;
+      }
     }
   }
 
-  // All providers failed
+  // All providers/models failed
   return {
     ok: false,
     error: lastError || 'Tous les providers IA ont échoué. Vérifiez la configuration dans /admin/ai ou réessayez dans 1 minute.',
