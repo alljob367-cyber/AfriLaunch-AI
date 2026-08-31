@@ -29,26 +29,31 @@ export interface RunResult {
 // Re-export load balancer utilities for admin API
 export { resetHealth, getHealthSnapshot, type ProviderName };
 
-// Plan-based model routing on OpenRouter (cost optimization + speed)
+// Plan-based model routing — ALL PLANS USE OPENROUTER
 // ──────────────────────────────────────────────────────────────────
-// Each plan targets a specific provider + model for cost/quality balance:
-//   - Starter    → Groq Llama 3.3 70B ($0.59/$0.79 per M tokens, 300 tok/s)
-//   - Pro        → Claude Haiku 4.5 via OpenRouter ($1/$5 per M tokens)
-//   - Business   → Mistral Large 2 ($2/$6 per M tokens, FR-native, RGPD)
-//   - Enterprise → GPT-5 via OpenRouter ($1.25/$10 per M tokens)
+// OpenRouter is the single LLM gateway for AfriLaunch AI. It aggregates
+// 300+ models from OpenAI, Anthropic, Google, Mistral, Meta, DeepSeek, etc.
+// under one API key, one billing, one endpoint. This simplifies ops:
+//   - Only 1 API key to manage (OPENROUTER_API_KEY)
+//   - One invoice, one dashboard, one rate-limit pool
+//   - Switch models per plan without changing providers
 //
-// The load balancer tries the plan's preferred provider FIRST, then falls
-// back to other enabled providers on failure (cooldown, rate limit, etc.).
-// This keeps quality high while staying resilient.
+// Per-plan routing on OpenRouter:
+//   - Starter    → meta-llama/llama-3.3-70b-instruct (free, fast, multilingual)
+//   - Pro        → anthropic/claude-haiku-4.5 ($1/$5 per M, quality + speed)
+//   - Business   → mistralai/mistral-large-2411 ($2/$6 per M, FR-native)
+//   - Enterprise → openai/gpt-5 ($1.25/$10 per M, frontier quality)
 //
-// NOTE: Pro/Business/Enterprise models require a paid OpenRouter/Mistral key.
-// If the key is missing or invalid, the load balancer falls back to Groq
-// (Starter quality) so the user still gets a response.
+// Fallback chain (only if OpenRouter is down or rate-limited):
+//   1. OpenRouter with the plan's model
+//   2. OpenRouter with the free fallback model (minimax-m3:free)
+//   3. Groq / Cerebras / Mistral direct (if their API keys are configured)
+//      — these are optional, kept as emergency fallbacks.
 const PLAN_MODELS_FAST: Record<PlanId, string> = {
-  starter: 'minimax/minimax-m3:free',                 // free fallback
-  pro: 'anthropic/claude-haiku-4.5',                  // $1/$5 per M
-  business: 'mistralai/mistral-large-2411',           // $2/$6 per M (OpenRouter slug)
-  enterprise: 'openai/gpt-5',                         // $1.25/$10 per M
+  starter: 'minimax/minimax-m3:free',                    // only reliable free model (Aug 2026)
+  pro: 'anthropic/claude-haiku-4.5',                     // $1/$5 per M (requires credits)
+  business: 'mistralai/mistral-large-2411',              // $2/$6 per M (requires credits)
+  enterprise: 'openai/gpt-5',                            // $1.25/$10 per M (requires credits)
 };
 
 const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
@@ -58,30 +63,28 @@ const PLAN_MODELS_QUALITY: Record<PlanId, string> = {
   enterprise: 'openai/gpt-5',
 };
 
-// Preferred provider per plan (used by the load balancer to order the chain).
-// The plan's provider is tried first; others serve as fallback.
+// Preferred provider per plan — ALWAYS OpenRouter (single gateway).
 const PLAN_PREFERRED_PROVIDER: Record<PlanId, ProviderName> = {
-  starter: 'groq',          // ultra-fast + cheap
-  pro: 'openrouter',        // Claude Haiku 4.5 via OR
-  business: 'mistral',      // Mistral Large 2 direct (RGPD, FR-native)
-  enterprise: 'openrouter', // GPT-5 via OR
+  starter: 'openrouter',
+  pro: 'openrouter',
+  business: 'openrouter',
+  enterprise: 'openrouter',
 };
 
-// Per-provider fast chat models (used by runAIForPlanFastStream + load balancer).
-// These are the FALLBACK models when the plan's preferred provider fails.
+// Per-provider fast chat models (FALLBACK only — OpenRouter is primary).
 const FAST_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
-  openrouter: 'minimax/minimax-m3:free',     // free fallback (works without paid key)
+  openrouter: 'minimax/minimax-m3:free',     // only reliable free model (Aug 2026)
   cerebras: 'llama3.1-8b',                    // Cerebras ultra-fast (1000+ tok/s)
-  groq: 'llama-3.3-70b-versatile',            // Groq default — good quality/speed
-  mistral: 'mistral-small-latest',            // free tier, decent speed
+  groq: 'llama-3.3-70b-versatile',            // Groq default
+  mistral: 'mistral-small-latest',            // Mistral direct
 };
 
 // Per-provider quality models (used by long-form generation: identity/website)
 const QUALITY_MODELS_PER_PROVIDER: Record<ProviderName, string> = {
-  openrouter: 'minimax/minimax-m3:free',     // free fallback
-  cerebras: 'llama-3.3-70b',                 // Cerebras 70B for quality
-  groq: 'llama-3.3-70b-versatile',           // Groq default — good quality/speed
-  mistral: 'mistral-large-latest',           // better quality
+  openrouter: 'minimax/minimax-m3:free',
+  cerebras: 'llama-3.3-70b',
+  groq: 'llama-3.3-70b-versatile',
+  mistral: 'mistral-large-latest',
 };
 
 // Backward-compatible alias (used by long-form generation paths).
