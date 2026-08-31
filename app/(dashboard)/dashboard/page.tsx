@@ -48,8 +48,15 @@ export default function DashboardPage() {
     else setGreeting('Bonsoir');
   }, []);
 
-  const completedSteps = checklist.filter((item) => item.completed).length;
-  const totalSteps = checklist.length || 10;
+  // Safety guards — ensure arrays are always defined (prevents "Cannot read
+  // properties of undefined (reading 'length')" if the API returns unexpected
+  // shapes on Vercel without Supabase configured)
+  const safeChecklist = Array.isArray(checklist) ? checklist : [];
+  const safeRecommendations = Array.isArray(recommendations) ? recommendations : [];
+  const safeRecentActivity = Array.isArray(recentActivity) ? recentActivity : [];
+
+  const completedSteps = safeChecklist.filter((item) => item.completed).length;
+  const totalSteps = safeChecklist.length || 10;
   const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const displayName = user?.firstName ?? 'Entrepreneur';
 
@@ -200,7 +207,7 @@ export default function DashboardPage() {
                       <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">{progressPercent}%</span>
                     </div>
                   </div>
-                  <ProgressChecklist items={checklist} />
+                  <ProgressChecklist items={safeChecklist} />
                 </div>
               </motion.section>
 
@@ -212,7 +219,7 @@ export default function DashboardPage() {
                       Recommandations IA
                     </h2>
                   </div>
-                  <AIRecommendations recommendations={recommendations} />
+                  <AIRecommendations recommendations={safeRecommendations} />
                 </div>
               </motion.section>
 
@@ -246,7 +253,7 @@ export default function DashboardPage() {
                       Activités récentes
                     </h2>
                   </div>
-                  <RecentActivity items={recentActivity} />
+                  <RecentActivity items={safeRecentActivity} />
                 </div>
               </motion.section>
 
