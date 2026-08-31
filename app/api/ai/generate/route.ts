@@ -6,13 +6,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runAI, runAIForPlan } from '@/lib/ai-runner';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
+import { getActionCost, type ActionType } from '@/lib/user-types';
 
+// Centralized action costs — see lib/user-types.ts ACTION_CREDITS
 const CREDIT_COSTS: Record<string, number> = {
-  identity: 5,       // JSON branding kit (~3000 tokens) — text only
-  website: 10,       // full HTML/CSS generation (~6000 tokens)
-  content: 1,        // single piece of content (~800 tokens)
-  content_batch: 3,  // 3 variants (~2400 tokens)
-  // Note: visual brand kit (with images) costs 20 credits — see /api/brand-kit/generate
+  identity: getActionCost('identity'),       // 5 credits — JSON branding kit
+  website: getActionCost('website'),         // 10 credits — full HTML/CSS
+  content: getActionCost('content'),         // 1 credit — single content
+  content_batch: getActionCost('content_batch'), // 3 credits — 3 variants
 };
 
 interface GenerateRequest {

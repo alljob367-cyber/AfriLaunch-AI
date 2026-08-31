@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
+import { getActionCost } from '@/lib/user-types';
 import { getAgentById } from '@/lib/agents';
 import { runAIForPlanFastStream } from '@/lib/ai-runner';
 import {
@@ -23,7 +24,7 @@ import { getOrganizationByUserId } from '@/lib/org-store';
 import { getSocialAccounts } from '@/lib/social-store';
 import type { PlanId } from '@/lib/user-types';
 
-const CREDIT_COST = 1; // cheap: 1 credit per agent message
+const CREDIT_COST = getActionCost('chat'); // 1 credit per agent message
 const MAX_TOKENS = 800; // fast responses (≤2s on free models)
 const MAX_HISTORY = 6;  // last 6 messages (3 turns) — keeps prompt small
 

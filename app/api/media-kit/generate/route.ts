@@ -14,13 +14,13 @@ import { consumeCredits } from '@/lib/user-store';
 import { runAIForPlanStream } from '@/lib/ai-runner';
 import { getOrganizationByUserId } from '@/lib/org-store';
 import { kvGet, kvSet } from '@/lib/db';
-import type { PlanId } from '@/lib/user-types';
+import { getActionCost, type PlanId } from '@/lib/user-types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-const CREDIT_COST = 25; // media kit = more images than brand kit
+const CREDIT_COST = getActionCost('media_kit'); // 20 credits — full media kit with 6 images
 
 interface MediaAsset {
   id: string;

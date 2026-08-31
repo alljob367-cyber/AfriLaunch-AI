@@ -1,12 +1,12 @@
 // AfriLaunch AI — YouTube module (import videos + auto-publish calendar)
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Youtube, Sparkles, Loader2, Save, Plus, Trash2, Calendar, Clock,
-  Send, Check, AlertCircle, Video, ExternalLink, Edit3, X,
+  Send, Check, AlertCircle, Video, ExternalLink, Edit3, X, Upload, Film,
 } from 'lucide-react';
 import { ModuleHeader } from '@/components/dashboard/module-header';
 import { useToast } from '@/components/providers/toast-provider';
@@ -72,6 +72,10 @@ export default function YouTubePage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [generatedContent, setGeneratedContent] = useState<any>(null);
   const [scheduledAt, setScheduledAt] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; sizeMB: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -159,6 +163,72 @@ export default function YouTubePage() {
     }
   }
 
+  async function handleUploadVideo(file: File) {
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: 'Format non supporté',
+        description: 'Sélectionnez un fichier vidéo (MP4, MOV, AVI, WebM, MKV, 3GP, FLV, MPEG, OGG).',
+        variant: 'error',
+      });
+      return;
+    }
+    // Validate size (500MB max — matches /api/youtube/upload)
+    const sizeMB = file.size / 1024 / 1024;
+    if (sizeMB > 500) {
+      toast({
+        title: 'Fichier trop volumineux',
+        description: `${sizeMB.toFixed(1)} Mo. Maximum: 500 Mo.`,
+        variant: 'error',
+      });
+      return;
+    }
+
+    setUploading(true);
+    setUploadedFile(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file, file.name);
+      fd.append('title', topic || file.name.replace(/\.[^.]+$/, ''));
+
+      const res = await fetch('/api/youtube/upload', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setVideoUrl(data.videoUrl);
+        setUploadedFile({ name: data.fileName, sizeMB: data.fileSizeMB });
+        toast({
+          title: 'Vidéo importée ✅',
+          description: `${data.fileName} (${data.fileSizeMB} Mo) prête à publier.`,
+          variant: 'success',
+        });
+      } else {
+        toast({ title: 'Échec upload', description: data.error, variant: 'error' });
+      }
+    } catch (err) {
+      toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleUploadVideo(file);
+    // Reset input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleUploadVideo(file);
+  }
+
   async function handleCreateVideo() {
     if (!generatedContent && !topic.trim()) {
       toast({ title: 'Générez le contenu d\'abord', variant: 'warning' });
@@ -208,23 +278,44 @@ export default function YouTubePage() {
   async function handlePublishNow(video: VideoPost) {
     setPublishing(video.id);
     try {
-      const res = await fetch('/api/youtube/publish', {
+      // Try auto-publish first (real upload to YouTube via Data API v3)
+      // Falls back to YouTube Studio deep link if OAuth not configured
+      const res = await fetch('/api/youtube/auto-publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ videoId: video.id }),
       });
       const data = await res.json();
-      if (data.ok && data.studioUrl) {
-        window.open(data.studioUrl, '_blank', 'noopener,noreferrer');
+
+      if (data.ok && data.youtubeUrl) {
+        // ✅ Auto-published successfully
         toast({
-          title: 'YouTube Studio ouvert 🎬',
-          description: 'Uploadez votre fichier vidéo dans la fenêtre ouverte, puis publiez.',
+          title: 'Vidéo publiée automatiquement 🎉',
+          description: `Disponible sur YouTube : ${data.youtubeUrl}`,
           variant: 'success',
         });
         await fetchAll();
+      } else if (data.fallbackStudioUrl) {
+        // Fallback: open YouTube Studio with prefilled fields
+        window.open(data.fallbackStudioUrl, '_blank', 'noopener,noreferrer');
+        toast({
+          title: 'YouTube Studio ouvert 🎬',
+          description: 'Publication auto non configurée. Uploadez votre vidéo dans la fenêtre ouverte, puis publiez.',
+          variant: 'warning',
+        });
+        await fetchAll();
+      } else if (data.connectUrl) {
+        // User needs to connect their YouTube account
+        toast({
+          title: 'YouTube non connecté',
+          description: data.error,
+          variant: 'warning',
+        });
+        // Optionally redirect
+        // window.location.href = data.connectUrl;
       } else {
-        toast({ title: 'Échec', description: data.error, variant: 'error' });
+        toast({ title: 'Échec publication', description: data.error, variant: 'error' });
       }
     } catch (err) {
       toast({ title: 'Erreur réseau', description: (err as Error).message, variant: 'error' });
@@ -612,18 +703,78 @@ export default function YouTubePage() {
                   </motion.div>
                 )}
 
-                {/* Step 2: Video URL */}
+                {/* Step 2: Video source — upload file OR paste URL */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-400 mb-1.5 block">URL DE LA VIDÉO *</label>
+                  <label className="text-xs font-semibold text-gray-400 mb-1.5 block">SOURCE DE LA VIDÉO *</label>
+
+                  {/* Dropzone for file upload */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={cn(
+                      'relative cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-all',
+                      dragOver
+                        ? 'border-red-500/60 bg-red-500/10'
+                        : uploadedFile
+                          ? 'border-emerald-500/40 bg-emerald-500/5'
+                          : 'border-white/10 hover:border-red-500/40 hover:bg-white/5',
+                    )}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    {uploading ? (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-red-400" aria-hidden="true" />
+                        <p className="text-xs text-gray-400">Upload en cours...</p>
+                      </div>
+                    ) : uploadedFile ? (
+                      <div className="flex flex-col items-center gap-1.5 py-1">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                          <Film className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+                        </div>
+                        <p className="text-xs font-semibold text-emerald-300">{uploadedFile.name}</p>
+                        <p className="text-[10px] text-gray-500">{uploadedFile.sizeMB} Mo · Cliquez pour changer</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 py-1">
+                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-300">Importer une vidéo</p>
+                        <p className="text-[10px] text-gray-500">Glissez-déposez ou cliquez · MP4, MOV, WebM · max 500 Mo</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* OR separator */}
+                  <div className="flex items-center gap-3 my-2.5">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <span className="text-[10px] text-gray-600 uppercase">OU</span>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+
+                  {/* URL input */}
                   <input
                     type="url"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://youtu.be/... ou https://drive.google.com/... ou URL directe"
+                    value={videoUrl.startsWith('/api/youtube/file') ? '' : videoUrl}
+                    onChange={(e) => {
+                      setVideoUrl(e.target.value);
+                      setUploadedFile(null);
+                    }}
+                    placeholder="https://youtu.be/... ou https://drive.google.com/..."
                     className="w-full glass rounded-xl px-4 py-2.5 border border-white/5 focus:border-red-500/40 outline-none text-sm"
                   />
                   <p className="text-[10px] text-gray-600 mt-1">
-                    Collez le lien de votre vidéo déjà uploadée (YouTube, Drive, etc.).
+                    {uploadedFile
+                      ? `✅ Fichier importé prêt à publier`
+                      : 'Importez votre fichier ou collez un lien YouTube/Drive déjà uploadé.'}
                   </p>
                 </div>
 

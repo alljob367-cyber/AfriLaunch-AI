@@ -7,13 +7,13 @@ import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
 import { runAIForPlanStream } from '@/lib/ai-runner';
 import { getOrganizationByUserId } from '@/lib/org-store';
-import type { PlanId } from '@/lib/user-types';
+import { getActionCost, type PlanId } from '@/lib/user-types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
-const CREDIT_COST = 3;
+const CREDIT_COST = getActionCost('youtube_content'); // 3 credits — script + metadata generation
 
 export async function POST(req: NextRequest) {
   const user = await requireUser(req);

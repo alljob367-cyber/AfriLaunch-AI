@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runAIForPlanStream } from '@/lib/ai-runner';
 import { requireUser } from '@/lib/auth-helpers';
 import { consumeCredits } from '@/lib/user-store';
-import type { PlanId } from '@/lib/user-types';
+import { getActionCost, type PlanId } from '@/lib/user-types';
 import { kvGet, kvSet } from '@/lib/db';
 
 interface GenJob {
@@ -63,7 +63,10 @@ async function saveJob(job: GenJob): Promise<void> {
 }
 
 const CREDIT_COSTS: Record<string, number> = {
-  identity: 5, website: 10, content: 1, content_batch: 3,
+  identity: getActionCost('identity'),
+  website: getActionCost('website'),
+  content: getActionCost('content'),
+  content_batch: getActionCost('content_batch'),
 };
 
 export async function POST(req: NextRequest) {

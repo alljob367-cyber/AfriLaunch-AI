@@ -4,7 +4,7 @@
 import crypto from 'crypto';
 import { kvGet, kvSet } from './db';
 
-export type SocialPlatform = 'instagram' | 'tiktok' | 'facebook' | 'whatsapp' | 'linkedin' | 'twitter';
+export type SocialPlatform = 'instagram' | 'tiktok' | 'facebook' | 'whatsapp' | 'linkedin' | 'twitter' | 'youtube';
 
 export interface SocialAccount {
   id: string;
